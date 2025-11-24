@@ -1,0 +1,27 @@
+module MicroLend.Script where
+
+import Daml.Script
+import MicroLend.Lending
+import DA.Date (date)
+import DA.Date.Types (Month(..))
+
+setup : Script ()
+setup = script do
+  borrower <- allocateParty "Borrower"
+  lender <- allocateParty "Lender"
+  let amount = 100.0
+  let rate = 0.10
+  let due = date 2025 Dec 31
+  reqCid <- submit borrower do
+    createCmd LoanRequest with borrower = borrower, lender = lender, amount = amount, rate = rate, dueDate = due
+  actCid <- submit lender do
+    exerciseCmd reqCid Approve
+  _ <- submit borrower do
+    exerciseCmd actCid (Repay with amount = 110.0)
+  req2 <- submit borrower do
+    createCmd LoanRequest with borrower = borrower, lender = lender, amount = 50.0, rate = 0.10, dueDate = date 2025 Jan 10
+  act2 <- submit lender do
+    exerciseCmd req2 Approve
+  _ <- submit lender do
+    exerciseCmd act2 (MarkOverdue with currentDate = date 2025 Feb 01)
+  pure ()

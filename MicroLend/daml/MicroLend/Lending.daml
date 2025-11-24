@@ -1,0 +1,78 @@
+module MicroLend.Lending where
+
+data LoanStatus = Approved | Repaid | Overdue deriving (Eq, Show)
+
+template LoanRequest
+  with
+    borrower : Party
+    lender : Party
+    amount : Decimal
+    rate : Decimal
+    dueDate : Date
+  where
+    signatory borrower
+    observer lender
+
+    choice Approve : ContractId LoanActive
+      controller lender
+      do
+        create LoanActive with
+          borrower = borrower
+          lender = lender
+          principal = amount
+          rate = rate
+          dueDate = dueDate
+          outstanding = amount + amount * rate
+          status = Approved
+
+    choice Reject : ()
+      controller lender
+      do
+        pure ()
+
+template LoanActive
+  with
+    borrower : Party
+    lender : Party
+    principal : Decimal
+    rate : Decimal
+    dueDate : Date
+    outstanding : Decimal
+    status : LoanStatus
+  where
+    signatory borrower, lender
+
+    choice Repay : ContractId LoanRepaid
+      with
+        amount : Decimal
+      controller borrower
+      do
+        assert (amount == outstanding)
+        create LoanRepaid with
+          borrower = borrower
+          lender = lender
+          principal = principal
+          rate = rate
+          paidAmount = amount
+          dueDate = dueDate
+          status = Repaid
+
+    choice MarkOverdue : ContractId LoanActive
+      with
+        currentDate : Date
+      controller lender
+      do
+        assert (currentDate > dueDate)
+        create this with status = Overdue
+
+template LoanRepaid
+  with
+    borrower : Party
+    lender : Party
+    principal : Decimal
+    rate : Decimal
+    paidAmount : Decimal
+    dueDate : Date
+    status : LoanStatus
+  where
+    signatory borrower, lender
