@@ -9,19 +9,78 @@ setup : Script ()
 setup = script do
   borrower <- allocateParty "Borrower"
   lender <- allocateParty "Lender"
+  
   let amount = 100.0
   let rate = 0.10
   let due = date 2025 Dec 31
+  let collateralRequired = amount + (amount * rate)  -- 110.0
+
+  debug $ "=== Skenario 1: Pinjaman dengan Jaminan (Sukses Bayar) ==="
+  debug $ "Amount: " <> show amount
+  debug $ "Rate: " <> show rate
+  debug $ "Collateral Required: " <> show collateralRequired
+
+  -- Step 1: Borrower membuat loan request (jaminan belum disetor)
   reqCid <- submit borrower do
-    createCmd LoanRequest with borrower = borrower, lender = lender, amount = amount, rate = rate, dueDate = due
+    createCmd LoanRequest with 
+      borrower = borrower
+      lender = lender
+      amount = amount
+      rate = rate
+      dueDate = due
+      collateralDeposited = False
+
+  -- Step 2: Borrower menyetorkan jaminan (110 token)
+  (reqCidWithCollateral, collateralCid) <- submit borrower do
+    exerciseCmd reqCid DepositCollateral
+
+  debug "Collateral deposited: 110.0 tokens"
+
+  -- Step 3: Lender menyetujui pinjaman (setelah jaminan disetor)
   actCid <- submit lender do
-    exerciseCmd reqCid Approve
+    exerciseCmd reqCidWithCollateral (Approve with collateralCid = collateralCid)
+
+  debug "Loan approved by lender"
+
+  -- Step 4: Borrower membayar pinjaman (jaminan dikembalikan)
   _ <- submit borrower do
     exerciseCmd actCid (Repay with amount = 110.0)
+
+  debug "Loan repaid, collateral returned to borrower"
+
+  -- ===========================================
+  debug $ "=== Skenario 2: Pinjaman Gagal Bayar (Jaminan Disita) ==="
+  
+  -- Pinjaman kedua dengan jaminan
   req2 <- submit borrower do
-    createCmd LoanRequest with borrower = borrower, lender = lender, amount = 50.0, rate = 0.10, dueDate = date 2025 Jan 10
+    createCmd LoanRequest with 
+      borrower = borrower
+      lender = lender
+      amount = 50.0
+      rate = 0.10
+      dueDate = date 2025 Jan 10
+      collateralDeposited = False
+
+  -- Setor jaminan (55 token untuk pinjaman 50 dengan rate 10%)
+  (req2WithCollateral, collateral2Cid) <- submit borrower do
+    exerciseCmd req2 DepositCollateral
+
+  debug "Collateral deposited: 55.0 tokens for second loan"
+
+  -- Lender approve
   act2 <- submit lender do
-    exerciseCmd req2 Approve
-  _ <- submit lender do
+    exerciseCmd req2WithCollateral (Approve with collateralCid = collateral2Cid)
+
+  -- Mark as overdue
+  act2Overdue <- submit lender do
     exerciseCmd act2 (MarkOverdue with currentDate = date 2025 Feb 01)
+
+  debug "Loan marked as overdue"
+
+  -- Sita jaminan karena gagal bayar
+  _ <- submit lender do
+    exerciseCmd act2Overdue SeizeCollateralFromLoan
+
+  debug "Collateral seized by lender due to default"
+
   pure ()

@@ -2,6 +2,28 @@ module MicroLend.Lending where
 
 data LoanStatus = Approved | Repaid | Overdue deriving (Eq, Show)
 
+template CollateralHold
+  with
+    owner : Party           -- borrower yang menyetor jaminan
+    holder : Party          -- lender yang memegang jaminan
+    amount : Decimal        -- jumlah token yang dijaminkan
+    loanRequestCid : ContractId LoanRequest  -- referensi ke loan request terkait
+  where
+    signatory owner
+    observer holder
+
+    -- Choice untuk melepaskan jaminan (dikembalikan ke borrower)
+    choice ReleaseCollateral : ()
+      controller holder
+      do
+        pure ()
+
+    -- Choice untuk menyita jaminan (jika overdue)
+    choice SeizeCollateral : ()
+      controller holder
+      do
+        pure ()
+
 template LoanRequest
   with
     borrower : Party
@@ -9,21 +31,44 @@ template LoanRequest
     amount : Decimal
     rate : Decimal
     dueDate : Date
+    collateralDeposited : Bool  -- menandakan apakah jaminan sudah disetor
   where
     signatory borrower
     observer lender
 
+    -- Choice untuk borrower menyetorkan jaminan
+    choice DepositCollateral : (ContractId LoanRequest, ContractId CollateralHold)
+      controller borrower
+      do
+        let collateralAmount = amount + (amount * rate)
+        -- Buat contract CollateralHold
+        collateralCid <- create CollateralHold with
+          owner = borrower
+          holder = lender
+          amount = collateralAmount
+          loanRequestCid = self
+        -- Update LoanRequest dengan status collateral deposited
+        newRequestCid <- create this with collateralDeposited = True
+        pure (newRequestCid, collateralCid)
+
+    -- Approve hanya bisa dilakukan jika jaminan sudah disetor
     choice Approve : ContractId LoanActive
+      with
+        collateralCid : ContractId CollateralHold
       controller lender
       do
+        assert collateralDeposited  -- pastikan jaminan sudah disetor
+        let collateralAmount = amount + (amount * rate)
         create LoanActive with
           borrower = borrower
           lender = lender
           principal = amount
           rate = rate
           dueDate = dueDate
-          outstanding = amount + amount * rate
+          outstanding = amount + (amount * rate)
           status = Approved
+          collateralAmount = collateralAmount
+          collateralCid = collateralCid
 
     choice Reject : ()
       controller lender
@@ -39,15 +84,20 @@ template LoanActive
     dueDate : Date
     outstanding : Decimal
     status : LoanStatus
+    collateralAmount : Decimal              -- jumlah jaminan yang disetor
+    collateralCid : ContractId CollateralHold  -- referensi ke contract jaminan
   where
     signatory borrower, lender
 
+    -- Repay: bayar pinjaman dan kembalikan jaminan
     choice Repay : ContractId LoanRepaid
       with
         amount : Decimal
       controller borrower
       do
         assert (amount == outstanding)
+        -- Lepaskan jaminan (kembalikan ke borrower)
+        exercise collateralCid ReleaseCollateral
         create LoanRepaid with
           borrower = borrower
           lender = lender
@@ -56,7 +106,9 @@ template LoanActive
           paidAmount = amount
           dueDate = dueDate
           status = Repaid
+          collateralReturned = True
 
+    -- MarkOverdue: tandai sebagai overdue dan sita jaminan
     choice MarkOverdue : ContractId LoanActive
       with
         currentDate : Date
@@ -64,6 +116,20 @@ template LoanActive
       do
         assert (currentDate > dueDate)
         create this with status = Overdue
+
+    -- Choice baru: Sita jaminan jika status Overdue
+    choice SeizeCollateralFromLoan : ContractId LoanDefaulted
+      controller lender
+      do
+        assert (status == Overdue)
+        exercise collateralCid SeizeCollateral
+        create LoanDefaulted with
+          borrower = borrower
+          lender = lender
+          principal = principal
+          rate = rate
+          dueDate = dueDate
+          collateralSeized = collateralAmount
 
 template LoanRepaid
   with
@@ -74,5 +140,18 @@ template LoanRepaid
     paidAmount : Decimal
     dueDate : Date
     status : LoanStatus
+    collateralReturned : Bool  -- menandakan jaminan sudah dikembalikan
+  where
+    signatory borrower, lender
+
+-- Template baru untuk pinjaman yang gagal bayar (defaulted)
+template LoanDefaulted
+  with
+    borrower : Party
+    lender : Party
+    principal : Decimal
+    rate : Decimal
+    dueDate : Date
+    collateralSeized : Decimal  -- jumlah jaminan yang disita
   where
     signatory borrower, lender
