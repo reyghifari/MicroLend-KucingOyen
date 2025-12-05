@@ -68,3 +68,93 @@ Small loans are often:
 
 ### Solution Flow
 
+
+### Concept Highlights
+
+- ✅ Stablecoin collateral for secure lending
+- ✅ Borrower reputation tiering (4 levels)
+- ✅ Tier determines interest discount without reducing lender yield
+- ✅ Collateral requirements adjust by tier
+- ✅ Privacy-preserving visibility for borrower and lender only
+- ✅ Fully auditable action history for compliance
+
+---
+
+## 🔄 Workflow
+
+
+
+
+### Prototype Workflow Overview
+
+1. **Connect** - Users connect with their Party ID
+2. **Create Request** - Borrowers create loan requests (lender, amount, interest rate, due date, collateral)
+3. **Review** - Lenders see requests with collateral value and borrower tier
+4. **Approve** - After approval, collateral becomes locked within the `LoanActive` contract
+5. **Repay** - Borrowers repay through the interface, releasing collateral
+6. **Complete** - Loan moves to completed, reputation score updates
+
+---
+
+## 🏆 Borrower Tier System
+
+A tier system that is **fair for both sides**:
+
+### Tier Structure
+
+| Tier | Level | Interest Discount | Collateral LTV |
+|------|-------|-------------------|----------------|
+| 🥉 Tier 1 | **Starter** | Base Rate (0%) | 100% |
+| 🥈 Tier 2 | **Reliable** | -5% | 90% |
+| 🥇 Tier 3 | **Trusted** | -10% | 85% |
+| 💎 Tier 4 | **Prime** | -15% | 80% |
+
+### Risk-Weighted Reputation Score
+
+Score is calculated based on:
+- 📈 Repayment behavior
+- 💰 Collateral quality
+- ⏰ On-time performance
+- 🔄 Loan consistency
+
+### Fairness Guarantee
+
+
+---
+
+## 🛠 Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| **Blockchain** | Canton Network |
+| **Smart Contracts** | Daml |
+| **Privacy** | Canton's privacy-preserving architecture |
+| **Collateral** | Stablecoin-based |
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- [Daml SDK](https://docs.daml.com/getting-started/installation.html)
+- [Canton](https://www.canton.network/developers)
+- Node.js (for frontend, if applicable)
+
+### Installation
+
+```bash
+# Clone repository
+git clone https://github.com/[your-username]/canton-microlend.git
+cd canton-microlend
+
+# Install Daml dependencies
+daml build
+
+# Start Canton sandbox
+daml start
+
+# (Optional) Start frontend
+cd ui
+npm install
+npm start
