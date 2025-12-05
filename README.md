@@ -12,24 +12,6 @@ Canton MicroLend is a privacy-preserving micro-lending prototype built on the Ca
 
 ---
 
-## 📋 Table of Contents
-
-- [Overview](#-overview)
-- [Key Features](#-key-features)
-- [Problem Statement](#-problem-statement)
-- [Solution](#-solution)
-- [Workflow](#-workflow)
-- [Borrower Tier System](#-borrower-tier-system)
-- [Tech Stack](#-tech-stack)
-- [Getting Started](#-getting-started)
-- [Project Structure](#-project-structure)
-- [Demo](#-demo)
-- [Future Development](#-future-development)
-- [Team](#-team)
-- [License](#-license)
-
----
-
 ## 🌟 Overview
 
 Canton MicroLend delivers a micro-lending system that is:
@@ -68,6 +50,9 @@ Small loans are often:
 
 ### Solution Flow
 
+<p align="center">
+  <img src="assets/microlend.png" alt="Canton MicroLend Workflow Diagram" width="800"/>
+</p>
 
 ### Concept Highlights
 
@@ -80,11 +65,6 @@ Small loans are often:
 
 ---
 
-## 🔄 Workflow
-
-
-
-
 ### Prototype Workflow Overview
 
 1. **Connect** - Users connect with their Party ID
@@ -94,6 +74,26 @@ Small loans are often:
 5. **Repay** - Borrowers repay through the interface, releasing collateral
 6. **Complete** - Loan moves to completed, reputation score updates
 
+### UI
+
+<p align="center">
+  <img src="assets/login-loan.png" alt="Canton MicroLend Workflow Diagram" width="800"/>
+</p>
+<p align="center">
+  <img src="assets/dashboard-loan.png" alt="Canton MicroLend Workflow Diagram" width="800"/>
+</p>
+<p align="center">
+  <img src="assets/active-loan.png" alt="Canton MicroLend Workflow Diagram" width="800"/>
+</p>
+<p align="center">
+  <img src="assets/create-loan.png" alt="Canton MicroLend Workflow Diagram" width="800"/>
+</p>
+<p align="center">
+  <img src="assets/completed-loan.png" alt="Canton MicroLend Workflow Diagram" width="800"/>
+</p>
+<p align="center">
+  <img src="assets/loan-request.png" alt="Canton MicroLend Workflow Diagram" width="800"/>
+</p>
 ---
 
 ## 🏆 Borrower Tier System
@@ -145,7 +145,7 @@ Score is calculated based on:
 
 ```bash
 # Clone repository
-git clone https://github.com/[your-username]/canton-microlend.git
+git clone https://github.com/[your-username]/MicroLend-KucingOyen.git
 cd canton-microlend
 
 # Install Daml dependencies
