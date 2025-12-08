@@ -146,7 +146,7 @@ Score is calculated based on:
 ```bash
 # Clone repository
 git clone https://github.com/[your-username]/MicroLend-KucingOyen.git
-cd canton-microlend
+cd microlend
 
 # Install Daml dependencies
 daml build
