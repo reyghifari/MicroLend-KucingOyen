@@ -1,2 +1,0 @@
--keep,allowobfuscation,allowshrinking class com.kucingoyen.dashboard.screen.DashboardViewModel
--keep,allowobfuscation,allowshrinking class com.kucingoyen.dashboard.screen.DashboardViewModel
