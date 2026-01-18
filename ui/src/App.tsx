@@ -3,8 +3,8 @@ import { makeToken, makeListToken } from "./token";
 import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
 import { ErrorBox } from "./components/ErrorBox";
-import { ConnectView } from "./components/ConnectView";
 import { MainContent } from "./components/MainContent";
+import { LandingPage } from "./LandingPage"; // Import Landing Page
 import { styles } from "./styles";
 import {
   Contract,
@@ -33,17 +33,23 @@ import { calculateCollateral } from "./utils";
 import { apiService } from "./apiService";
 
 export default function App() {
+  // State Login: Menggantikan ConnectView
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // State Koneksi
   const [party, setParty] = useState("");
-  const [knownParties, setKnownParties] = useState<string[]>([]);
+  const [token, setToken] = useState("");
+  const [isConnected, setIsConnected] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+
+  // Data State
+  const [knownParties, setKnownParties] = useState<string[]>([]);
   const [borrowerForm, setBorrowerForm] = useState<BorrowerFormState>({
     lender: "",
     amount: "",
     rate: "0.10",
     dueDate: "2025-12-31",
   });
-  const [token, setToken] = useState("");
-  const [isConnected, setIsConnected] = useState(false);
 
   const headers = useMemo(
     () => ({
@@ -58,6 +64,8 @@ export default function App() {
   const [actives, setActives] = useState<Contract<LoanActive>[]>([]);
   const [repaids, setRepaids] = useState<Contract<LoanRepaid>[]>([]);
   const [defaulteds, setDefaulteds] = useState<Contract<LoanDefaulted>[]>([]);
+
+  // --- LOGIKA LOAD DATA ---
 
   const loadParties = useCallback(async () => {
     if (USE_HARDCODED_DATA) {
@@ -134,29 +142,46 @@ export default function App() {
   }, [headers, token]);
 
   useEffect(() => {
-    loadParties();
-  }, [loadParties]);
-
-  useEffect(() => {
     if (isConnected) {
+      loadParties();
       loadContracts();
     }
-  }, [isConnected, loadContracts]);
+  }, [isConnected, loadParties, loadContracts]);
 
-  const handleConnect = async () => {
+  // --- LOGIKA AUTH BARU (Auto Connect) ---
+
+  const handleLoginSuccess = async (backendPartyId: string) => {
+    // 1. Terima PartyID dari Landing Page
+    setParty(backendPartyId);
+
+    // 2. Logic Koneksi Token (Auto-Connect)
     if (USE_HARDCODED_DATA) {
       setToken("hardcoded-token");
       setIsConnected(true);
+      setIsLoggedIn(true);
     } else {
-      const newToken = await makeToken(party, ledgerId, applicationId, sharedSecret);
-      setToken(newToken);
-      setIsConnected(true);
+      try {
+        // Jika backendPartyId kosong (user login biasa tanpa ID khusus), 
+        // Anda mungkin perlu logic default. Di sini kita asumsikan ID valid.
+        // Jika kosong, biasanya kita minta user input manual (tapi di sini kita skip).
+        const partyToUse = backendPartyId || "Alice::default";
+
+        const newToken = await makeToken(partyToUse, ledgerId, applicationId, sharedSecret);
+        setToken(newToken);
+        setParty(partyToUse);
+        setIsConnected(true);
+        setIsLoggedIn(true);
+      } catch (e: any) {
+        console.error(e);
+        setErrorMsg("Failed to auto-connect wallet: " + e.message);
+      }
     }
   };
 
   const handleDisconnect = () => {
     setToken("");
     setIsConnected(false);
+    setIsLoggedIn(false); // Kembali ke Landing Page
     setParty("");
     setRequests([]);
     setCollaterals([]);
@@ -164,6 +189,8 @@ export default function App() {
     setRepaids([]);
     setDefaulteds([]);
   };
+
+  // --- ACTIONS (DAML) ---
 
   const createRequest = useCallback(async () => {
     if (USE_HARDCODED_DATA) {
@@ -427,40 +454,39 @@ export default function App() {
     [headers, party, loadContracts, actives, defaulteds]
   );
 
+  // --- RENDER ---
+
+  // 1. Jika belum Login, tampilkan Landing Page
+  if (!isLoggedIn) {
+    return <LandingPage onLoginSuccess={handleLoginSuccess} />;
+  }
+
+  // 2. Jika sudah Login, langsung tampilkan MainContent (Dashboard)
+  // ConnectView di-skip karena logic handleLoginSuccess sudah menangani koneksi
   return (
     <div style={styles.container}>
       <Header isConnected={isConnected} party={party} onDisconnect={handleDisconnect} />
 
       <ErrorBox message={errorMsg} onClose={() => setErrorMsg("")} />
 
-      {!isConnected ? (
-        <ConnectView
-          party={party}
-          knownParties={knownParties}
-          onPartyChange={setParty}
-          onConnect={handleConnect}
-          onRefreshParties={loadParties}
-        />
-      ) : (
-        <MainContent
-          party={party}
-          knownParties={knownParties}
-          borrowerForm={borrowerForm}
-          requests={requests}
-          collaterals={collaterals}
-          actives={actives}
-          repaids={repaids}
-          defaulteds={defaulteds}
-          onFormChange={setBorrowerForm}
-          onCreateRequest={createRequest}
-          onDepositCollateral={depositCollateral}
-          onApprove={approve}
-          onReject={reject}
-          onRepay={repay}
-          onMarkOverdue={markOverdue}
-          onSeizeCollateral={seizeCollateral}
-        />
-      )}
+      <MainContent
+        party={party}
+        knownParties={knownParties}
+        borrowerForm={borrowerForm}
+        requests={requests}
+        collaterals={collaterals}
+        actives={actives}
+        repaids={repaids}
+        defaulteds={defaulteds}
+        onFormChange={setBorrowerForm}
+        onCreateRequest={createRequest}
+        onDepositCollateral={depositCollateral}
+        onApprove={approve}
+        onReject={reject}
+        onRepay={repay}
+        onMarkOverdue={markOverdue}
+        onSeizeCollateral={seizeCollateral}
+      />
 
       <Footer />
     </div>
