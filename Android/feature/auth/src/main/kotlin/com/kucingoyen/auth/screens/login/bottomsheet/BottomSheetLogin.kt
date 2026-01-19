@@ -26,7 +26,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavHostController
 import com.kucingoyen.auth.screens.AuthViewModel
 import com.kucingoyen.core.R
 import com.kucingoyen.core.components.bottomsheet.BaseBottomSheet

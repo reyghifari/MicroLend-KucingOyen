@@ -15,7 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kucingoyen.core.theme.BaseColor
-import com.kucingoyen.dashboard.screen.DashboardViewModel
+import com.kucingoyen.dashboard.DashboardViewModel
 
 @Composable
 fun WalletTopBar(
@@ -31,14 +31,14 @@ fun WalletTopBar(
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = "raihan",
+                text = dashboardViewModel.getEmailUser(),
                 color = BaseColor.JetBlack.Normal,
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
                 fontFamily = FontFamily.Monospace
             )
             Text(
-                text = "(nightly::12...0af6c48aca9)",
+                text = dashboardViewModel.getPartyId(),
                 color = BaseColor.JetBlack.Minus20,
                 fontSize = 12.sp,
                 fontFamily = FontFamily.Monospace

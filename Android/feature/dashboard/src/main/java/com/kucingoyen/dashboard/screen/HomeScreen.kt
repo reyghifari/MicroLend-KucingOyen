@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kucingoyen.core.theme.BaseColor
+import com.kucingoyen.dashboard.DashboardViewModel
 import com.kucingoyen.dashboard.screen.component.TabsSection
 import com.kucingoyen.dashboard.screen.component.WalletCard
 
@@ -39,7 +40,7 @@ fun HomeScreen(dashboardViewModel: DashboardViewModel, paddingValues: PaddingVal
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "No tokens found...",
+                text = "No Activity found...",
                 color = BaseColor.JetBlack.Normal,
                 fontSize = 16.sp
             )

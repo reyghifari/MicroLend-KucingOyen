@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kucingoyen.core.theme.BaseColor
+import com.kucingoyen.dashboard.DashboardViewModel
 import com.kucingoyen.dashboard.screen.component.LoanDetailsCard
 import com.kucingoyen.dashboard.screen.component.LoanModel
 

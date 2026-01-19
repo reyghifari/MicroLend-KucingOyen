@@ -24,7 +24,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavHostController
 import com.kucingoyen.auth.screens.AuthViewModel
 import com.kucingoyen.auth.screens.login.bottomsheet.BottomSheetLogin
 import com.kucingoyen.auth.screens.login.bottomsheet.BottomSheetRegister

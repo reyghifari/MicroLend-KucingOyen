@@ -7,7 +7,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kucingoyen.core.theme.BaseColor
-import com.kucingoyen.dashboard.screen.DashboardViewModel
 import com.kucingoyen.dashboard.screen.HomeScreen
 import com.kucingoyen.dashboard.screen.LoanScreen
 import com.kucingoyen.dashboard.screen.ProfileScreen

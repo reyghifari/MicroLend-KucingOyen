@@ -14,8 +14,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kucingoyen.core.theme.BaseColor
+import com.kucingoyen.dashboard.DashboardViewModel
 import com.kucingoyen.dashboard.TextGray
-import com.kucingoyen.dashboard.screen.DashboardViewModel
 
 @Composable
 fun WalletBottomBar(
