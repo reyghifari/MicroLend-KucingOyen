@@ -124,7 +124,7 @@ fun LoginScreen(
         }
 
         Spacer(modifier = Modifier.height(32.dp))
-        BottomSheetLogin(authViewModel = viewModel, onLogin = onLogin)
+        BottomSheetLogin(authViewModel = viewModel, onGoogleLogin = onLogin)
         BottomSheetRegister(authViewModel = viewModel)
     }
 }
