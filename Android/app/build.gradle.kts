@@ -18,6 +18,9 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
+
+        buildConfigField("String", "WEB_CLIENT_ID", "\"1086989456704-i6qirasl1vuli1lm5lkaqeb3qgffmpsl.apps.googleusercontent.com\"")
+
     }
 
 
@@ -36,11 +39,13 @@ android {
     productFlavors {
         create("dev") {
             dimension = "default"
+            applicationId = "com.kucingoyen.microlend"
             applicationIdSuffix = ".dev"
             buildConfigField("String", "BASE_URL", "\"https://jsonplaceholder.typicode.com/\"")
         }
         create("prod") {
             dimension = "prod"
+            applicationId = "com.kucingoyen.microlend"
             buildConfigField("String", "BASE_URL", "\"https://api.example.com/\"")
         }
     }

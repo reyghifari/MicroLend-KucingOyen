@@ -31,6 +31,10 @@ object AppModule {
 	fun provideDebugMode(): Boolean = BuildConfig.DEBUG
 
 	@Provides
+	@Named(TagInjection.WEB_CLIENT_ID)
+	fun provideWebClientId(): String = BuildConfig.WEB_CLIENT_ID
+
+	@Provides
 	fun provideResources(@ApplicationContext context: Context) = context.resources
 
 	@Provides

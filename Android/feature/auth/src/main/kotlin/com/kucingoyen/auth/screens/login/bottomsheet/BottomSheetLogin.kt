@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedButton
@@ -18,20 +17,18 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
 import com.kucingoyen.auth.screens.AuthViewModel
 import com.kucingoyen.core.R
-import com.kucingoyen.core.components.CustomTextField
 import com.kucingoyen.core.components.bottomsheet.BaseBottomSheet
 import com.kucingoyen.core.theme.BaseColor
 
@@ -39,12 +36,10 @@ import com.kucingoyen.core.theme.BaseColor
 @Composable
 fun BottomSheetLogin(
     authViewModel: AuthViewModel,
-    onGoogleLogin: () -> Unit // Ubah nama parameter agar lebih jelas
+    onGoogleLogin: () -> Unit
 ) {
     val showLoginSheet by authViewModel.showSheetLogin.collectAsStateWithLifecycle()
-
-    // State untuk email dan password sudah dihapus
-
+    val context = LocalContext.current
     if (showLoginSheet){
         BaseBottomSheet(
             bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
@@ -55,7 +50,7 @@ fun BottomSheetLogin(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 16.dp), // Sedikit menambah padding horizontal
+                    .padding(horizontal = 24.dp, vertical = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
@@ -69,7 +64,10 @@ fun BottomSheetLogin(
                 Spacer(modifier = Modifier.height(32.dp))
 
                 OutlinedButton(
-                    onClick = { onGoogleLogin() },
+                    onClick = {
+                        authViewModel.loginWithGoogle(context){
+                        onGoogleLogin()
+                    } },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),

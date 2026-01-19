@@ -19,7 +19,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "BaseAppCompose"
+rootProject.name = "Microlend By KucingOyen"
 include(":app")
 include(":core")
 include(":data")
