@@ -1,0 +1,49 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: microlend-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: microlend
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+    ports:
+      - "5437:5432"
+    volumes:
+      - microlend-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U auth_user -d auth_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  daml-sandbox:
+    image: digitalasset/daml-sdk:latest
+    container_name: daml-sandbox
+    command: >
+      daml sandbox
+      --wall-clock-time
+      --ledger-id sandbox
+      --port 6865
+    ports:
+      - "6865:6865"
+
+  daml-json-api:
+    image: digitalasset/daml-sdk:latest
+    container_name: daml-json-api
+    depends_on:
+      - daml-sandbox
+    command: >
+      daml json-api
+      --ledger-host daml-sandbox
+      --ledger-port 6865
+      --http-port 7575
+      --allow-insecure-tokens
+    ports:
+      - "7575:7575"
+
+volumes:
+  microlend-postgres-data:
+
+#networks:
+#  auth-network:
+#    driver: bridge
