@@ -21,7 +21,7 @@ import com.kucingoyen.dashboard.screen.component.TabsSection
 import com.kucingoyen.dashboard.screen.component.WalletCard
 
 @Composable
-fun HomeScreen(dashboardViewModel: DashboardViewModel, paddingValues: PaddingValues) {
+fun HomeScreen(dashboardViewModel: DashboardViewModel, paddingValues: PaddingValues, onClickSend : () -> Unit = {}) {
     Column(
         modifier = Modifier
             .background(BaseColor.JetBlack.Minus80)
@@ -30,7 +30,9 @@ fun HomeScreen(dashboardViewModel: DashboardViewModel, paddingValues: PaddingVal
             .padding(horizontal = 16.dp)
     ) {
         Spacer(modifier = Modifier.height(16.dp))
-        WalletCard()
+        WalletCard{
+            onClickSend()
+        }
         Spacer(modifier = Modifier.height(24.dp))
         TabsSection()
         Spacer(modifier = Modifier.height(40.dp))

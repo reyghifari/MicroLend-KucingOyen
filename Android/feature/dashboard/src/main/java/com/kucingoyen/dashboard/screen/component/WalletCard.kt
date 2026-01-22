@@ -34,7 +34,10 @@ import com.kucingoyen.core.theme.BaseColor
 import com.kucingoyen.dashboard.TextGray
 
 @Composable
-fun WalletCard() {
+fun WalletCard(
+    onClickSend : () -> Unit = {},
+    onClickDeposit : () -> Unit = {}
+) {
     Card(
         shape = RoundedCornerShape(24.dp),
         modifier = Modifier
@@ -100,8 +103,12 @@ fun WalletCard() {
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         modifier = Modifier.padding(bottom = 8.dp)
                     ) {
-                        ActionButton(icon = Icons.Default.Add, label = "Deposit")
-                        ActionButton(icon = Icons.Default.Send, label = "Send")
+                        ActionButton(icon = Icons.Default.Add, label = "Deposit"){
+                            onClickDeposit()
+                        }
+                        ActionButton(icon = Icons.Default.Send, label = "Send"){
+                            onClickSend()
+                        }
                     }
                 }
             }

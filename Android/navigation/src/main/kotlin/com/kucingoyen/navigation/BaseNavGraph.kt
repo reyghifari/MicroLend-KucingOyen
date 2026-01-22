@@ -10,6 +10,7 @@ import com.kucingoyen.auth.screens.login.LoginScreen
 import com.kucingoyen.auth.screens.splash.SplashScreen
 import com.kucingoyen.dashboard.DashboardScreen
 import com.kucingoyen.dashboard.DashboardViewModel
+import com.kucingoyen.dashboard.deposit.RequestBalanceScreen
 import com.kucingoyen.dashboard.screen.DetailRequestLoanScreen
 
 @Composable
@@ -38,12 +39,19 @@ fun BaseNavGraph(navController : NavHostController){
             startDestination = BaseNav.Dashboard.DashboardScreen.name,
             route = NavModule.DashboardModule.name){
             composable(route = BaseNav.Dashboard.DashboardScreen.name) { navBackStackEntry ->
-                DashboardScreen(dashboardViewModel){
+                DashboardScreen(dashboardViewModel, onClickSend = {
+                    navController.navigate(BaseNav.Dashboard.RequestBalanceScreen.name)
+                }, requestLoan = {
                     navController.navigate(BaseNav.Dashboard.DetailRequestLoanScreen.name)
-                }
+                })
             }
             composable(route = BaseNav.Dashboard.DetailRequestLoanScreen.name) { navBackStackEntry ->
                 DetailRequestLoanScreen(dashboardViewModel)
+            }
+            composable(route = BaseNav.Dashboard.RequestBalanceScreen.name) { navBackStackEntry ->
+                RequestBalanceScreen(dashboardViewModel){
+                    navController.navigateUp()
+                }
             }
         }
     }

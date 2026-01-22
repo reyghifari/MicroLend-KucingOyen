@@ -7,7 +7,7 @@ sealed interface BaseNav {
     }
 
     enum class Dashboard : BaseNav {
-        DashboardScreen, DetailRequestLoanScreen
+        DashboardScreen, DetailRequestLoanScreen, RequestBalanceScreen
     }
 
 }

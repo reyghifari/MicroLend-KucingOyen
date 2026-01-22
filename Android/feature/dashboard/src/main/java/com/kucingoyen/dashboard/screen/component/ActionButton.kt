@@ -1,6 +1,7 @@
 package com.kucingoyen.dashboard.screen.component
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -20,13 +21,16 @@ import com.kucingoyen.core.theme.BaseColor
 import com.kucingoyen.dashboard.TextGray
 
 @Composable
-fun ActionButton(icon: ImageVector, label: String) {
+fun ActionButton(icon: ImageVector, label: String, onClick : () -> Unit) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = Modifier
                 .size(48.dp)
                 .clip(CircleShape)
-                .background(BaseColor.White), // Button Color
+                .background(BaseColor.White)
+                .clickable {
+                    onClick()
+                }, // Button Color
             contentAlignment = Alignment.Center
         ) {
             Icon(icon, contentDescription = label, tint = BaseColor.OceanBlue.Normal)
