@@ -12,38 +12,44 @@ services:
     volumes:
       - microlend-postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U auth_user -d auth_db"]
+      test: [ "CMD-SHELL", "pg_isready -U admin -d microlend" ]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - microlend-net
+
   daml-sandbox:
-    image: digitalasset/daml-sdk:latest
+    image: digitalasset/daml-sdk:2.10.2
     container_name: daml-sandbox
     command: >
-      daml sandbox
-      --wall-clock-time
-      --ledger-id sandbox
-      --port 6865
+      daml sandbox --wall-clock-time --port 6865 -c /canton-sandbox.conf
+    volumes:
+      - ./canton-sandbox.conf:/canton-sandbox.conf:ro
     ports:
       - "6865:6865"
+    networks:
+      - microlend-net
 
   daml-json-api:
-    image: digitalasset/daml-sdk:latest
+    image: digitalasset/daml-sdk:2.10.2
     container_name: daml-json-api
     depends_on:
-      - daml-sandbox
+      daml-sandbox:
+        condition: service_started
     command: >
-      daml json-api
-      --ledger-host daml-sandbox
-      --ledger-port 6865
-      --http-port 7575
-      --allow-insecure-tokens
+      daml json-api --ledger-host daml-sandbox --ledger-port 6865 --address 0.0.0.0 --http-port 7575 --allow-insecure-tokens
     ports:
       - "7575:7575"
+    networks:
+      - microlend-net
 
 volumes:
   microlend-postgres-data:
 
-#networks:
-#  auth-network:
-#    driver: bridge
+
+networks:
+  microlend-net:
+    #networks:
+    #  auth-network:
+    #    driver: bridge

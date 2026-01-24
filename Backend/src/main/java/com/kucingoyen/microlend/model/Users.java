@@ -37,10 +37,9 @@ public class Users extends BaseModel implements Serializable {
     @Column(name = "full_name")
     private String fullName;
 
-    @NotNull
     @Column(unique = true, name = "daml_party_id")
     private String damlPartyId;
 
     @Column(unique = true)
-    private String googleId;
+    private String googleSub;
 }
