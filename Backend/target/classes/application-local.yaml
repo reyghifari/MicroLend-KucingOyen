@@ -38,6 +38,12 @@ jwt:
   secret: ${JWT_SECRET}
   expiration-ms: 3600000
 
+daml:
+  json-api:
+    url: http://localhost:7575
+  admin:
+    token: ${DAML_ADMIN_TOKEN:}
+
 logging:
   level:
     org.springframework.security: INFO
