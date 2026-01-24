@@ -1,0 +1,325 @@
+-- | Test scenarios for MicroLend lending protocol
+module MicroLend.Test where
+
+import Daml.Script
+import MicroLend.Types
+import MicroLend.Oracle
+import MicroLend.Lending
+
+-- | Test setup: Create parties and initial tokens
+data TestParties = TestParties
+  with
+    borrower : Party
+    lender : Party
+    oracleProvider : Party
+    tokenIssuer : Party
+  deriving (Eq, Show)
+
+setupParties : Script TestParties
+setupParties = do
+  borrower <- allocateParty "Borrower"
+  lender <- allocateParty "Lender"
+  oracleProvider <- allocateParty "OracleProvider"
+  tokenIssuer <- allocateParty "TokenIssuer"
+  pure TestParties{..}
+
+-- | Helper to issue tokens
+issueTokensHelper : Party -> ContractId TokenIssuer -> Party -> AssetId -> Decimal -> Script (ContractId TokenHolding)
+issueTokensHelper issuer issuerCid recipient assetId amount = do
+  submit issuer do
+    exerciseCmd issuerCid IssueTokens with
+      recipient
+      assetId
+      amount
+
+-- | Happy path test: Create loan, approve, and repay
+testHappyPath : Script ()
+testHappyPath = do
+  parties@TestParties{..} <- setupParties
+  
+  -- Setup token issuer
+  issuerCid <- submit tokenIssuer do
+    createCmd TokenIssuer with issuer = tokenIssuer
+
+  -- Issue CC tokens to borrower (100 CC at $10 each = $1000 value)
+  borrowerCollateralCid <- issueTokensHelper tokenIssuer issuerCid borrower (ccTokenId tokenIssuer) 100.0
+
+  -- Issue stablecoins to lender (500 USDC for the loan)
+  lenderStablecoinCid <- issueTokensHelper tokenIssuer issuerCid lender (stablecoinId tokenIssuer) 500.0
+
+  -- Create price oracle (CC Token = $10)
+  oracleFactoryCid <- submit oracleProvider do
+    createCmd PriceOracleFactory with provider = oracleProvider
+  
+  oracleCid <- submit oracleProvider do
+    exerciseCmd oracleFactoryCid CreateOracle with
+      assetId = ccTokenId tokenIssuer
+      initialPrice = 10.0
+      initialObservers = [borrower, lender]
+
+  -- Create lending service
+  lendingServiceCid <- submit oracleProvider do
+    createCmd LendingService with
+      operator = oracleProvider
+      borrower
+      lender
+      ltvParams = defaultLTVParams
+
+  -- Borrower creates loan request
+  -- Requesting $500 with $1000 collateral = 50% LTV (under 70% max)
+  loanRequestCid <- submit borrower do
+    exerciseCmd lendingServiceCid CreateLoanRequest with
+      collateralCid = borrowerCollateralCid
+      requestedAmount = 500.0
+      interestRate = 0.10  -- 10% annual
+      durationDays = 30
+
+  -- Lender approves the loan
+  activeLoanCid <- submit lender do
+    exerciseCmd loanRequestCid ApproveLoan with
+      stablecoinCid = lenderStablecoinCid
+      oracleCid
+
+  -- Check loan health
+  (ltv, healthStatus) <- submit borrower do
+    exerciseCmd activeLoanCid CheckHealthByBorrower with
+      currentOracleCid = oracleCid
+  
+  debug $ "Current LTV: " <> show ltv <> " - Status: " <> healthStatus
+
+  -- Issue stablecoins to borrower for repayment (need to cover interest)
+  -- Principal: $500, Interest: $500 * 10% * (30/365) = ~$4.11
+  repaymentCid <- issueTokensHelper tokenIssuer issuerCid borrower (stablecoinId tokenIssuer) 510.0
+
+  -- Borrower repays the loan
+  returnedCollateralCid <- submit borrower do
+    exerciseCmd activeLoanCid RepayLoan with
+      repaymentCid
+
+  debug "Happy path test completed successfully!"
+
+-- | Test: Loan request with LTV too high should fail
+testLTVTooHigh : Script ()
+testLTVTooHigh = do
+  parties@TestParties{..} <- setupParties
+  
+  -- Setup token issuer
+  issuerCid <- submit tokenIssuer do
+    createCmd TokenIssuer with issuer = tokenIssuer
+
+  -- Issue CC tokens to borrower (100 CC at $10 each = $1000 value)
+  borrowerCollateralCid <- issueTokensHelper tokenIssuer issuerCid borrower (ccTokenId tokenIssuer) 100.0
+
+  -- Issue stablecoins to lender (800 USDC - too much for collateral)
+  lenderStablecoinCid <- issueTokensHelper tokenIssuer issuerCid lender (stablecoinId tokenIssuer) 800.0
+
+  -- Create price oracle (CC Token = $10, so 100 CC = $1000)
+  oracleFactoryCid <- submit oracleProvider do
+    createCmd PriceOracleFactory with provider = oracleProvider
+  
+  oracleCid <- submit oracleProvider do
+    exerciseCmd oracleFactoryCid CreateOracle with
+      assetId = ccTokenId tokenIssuer
+      initialPrice = 10.0
+      initialObservers = [borrower, lender]
+
+  -- Create lending service
+  lendingServiceCid <- submit oracleProvider do
+    createCmd LendingService with
+      operator = oracleProvider
+      borrower
+      lender
+      ltvParams = defaultLTVParams
+
+  -- Borrower creates loan request
+  -- Requesting $800 with $1000 collateral = 80% LTV (over 70% max)
+  loanRequestCid <- submit borrower do
+    exerciseCmd lendingServiceCid CreateLoanRequest with
+      collateralCid = borrowerCollateralCid
+      requestedAmount = 800.0  -- This would be 80% LTV
+      interestRate = 0.10
+      durationDays = 30
+
+  -- Lender tries to approve - this should FAIL
+  submitMustFail lender do
+    exerciseCmd loanRequestCid ApproveLoan with
+      stablecoinCid = lenderStablecoinCid
+      oracleCid
+
+  debug "LTV too high test passed - approval correctly rejected!"
+
+-- | Test: Liquidation when price drops
+testLiquidation : Script ()
+testLiquidation = do
+  parties@TestParties{..} <- setupParties
+  
+  -- Setup token issuer
+  issuerCid <- submit tokenIssuer do
+    createCmd TokenIssuer with issuer = tokenIssuer
+
+  -- Issue CC tokens to borrower (100 CC at $10 each = $1000 value)
+  borrowerCollateralCid <- issueTokensHelper tokenIssuer issuerCid borrower (ccTokenId tokenIssuer) 100.0
+
+  -- Issue stablecoins to lender
+  lenderStablecoinCid <- issueTokensHelper tokenIssuer issuerCid lender (stablecoinId tokenIssuer) 600.0
+
+  -- Create price oracle (CC Token = $10)
+  oracleFactoryCid <- submit oracleProvider do
+    createCmd PriceOracleFactory with provider = oracleProvider
+  
+  oracleCid <- submit oracleProvider do
+    exerciseCmd oracleFactoryCid CreateOracle with
+      assetId = ccTokenId tokenIssuer
+      initialPrice = 10.0
+      initialObservers = [borrower, lender]
+
+  -- Create lending service
+  lendingServiceCid <- submit oracleProvider do
+    createCmd LendingService with
+      operator = oracleProvider
+      borrower
+      lender
+      ltvParams = defaultLTVParams
+
+  -- Borrower creates loan request: $600 with $1000 collateral = 60% LTV
+  loanRequestCid <- submit borrower do
+    exerciseCmd lendingServiceCid CreateLoanRequest with
+      collateralCid = borrowerCollateralCid
+      requestedAmount = 600.0
+      interestRate = 0.10
+      durationDays = 30
+
+  -- Lender approves the loan
+  activeLoanCid <- submit lender do
+    exerciseCmd loanRequestCid ApproveLoan with
+      stablecoinCid = lenderStablecoinCid
+      oracleCid
+
+  -- Price drops! CC Token now worth $6 (100 CC = $600)
+  -- New LTV = $600 / $600 = 100% (> 85% threshold)
+  newOracleCid <- submit oracleProvider do
+    exerciseCmd oracleCid UpdatePrice with
+      newPrice = 6.0
+
+  -- Check loan health after price drop
+  (ltv, healthStatus) <- submit lender do
+    exerciseCmd activeLoanCid CheckHealthByLender with
+      currentOracleCid = newOracleCid
+  
+  debug $ "After price drop - LTV: " <> show ltv <> " - Status: " <> healthStatus
+
+  -- Lender liquidates the loan
+  liquidatedCollateralCid <- submit lender do
+    exerciseCmd activeLoanCid Liquidate with
+      updatedOracleCid = newOracleCid
+
+  debug "Liquidation test completed successfully!"
+
+-- | Test: Cannot liquidate healthy loan
+testCannotLiquidateHealthyLoan : Script ()
+testCannotLiquidateHealthyLoan = do
+  parties@TestParties{..} <- setupParties
+  
+  -- Setup token issuer
+  issuerCid <- submit tokenIssuer do
+    createCmd TokenIssuer with issuer = tokenIssuer
+
+  -- Issue CC tokens to borrower
+  borrowerCollateralCid <- issueTokensHelper tokenIssuer issuerCid borrower (ccTokenId tokenIssuer) 100.0
+
+  -- Issue stablecoins to lender
+  lenderStablecoinCid <- issueTokensHelper tokenIssuer issuerCid lender (stablecoinId tokenIssuer) 500.0
+
+  -- Create price oracle
+  oracleFactoryCid <- submit oracleProvider do
+    createCmd PriceOracleFactory with provider = oracleProvider
+  
+  oracleCid <- submit oracleProvider do
+    exerciseCmd oracleFactoryCid CreateOracle with
+      assetId = ccTokenId tokenIssuer
+      initialPrice = 10.0
+      initialObservers = [borrower, lender]
+
+  -- Create lending service
+  lendingServiceCid <- submit oracleProvider do
+    createCmd LendingService with
+      operator = oracleProvider
+      borrower
+      lender
+      ltvParams = defaultLTVParams
+
+  -- Create and approve loan at 50% LTV
+  loanRequestCid <- submit borrower do
+    exerciseCmd lendingServiceCid CreateLoanRequest with
+      collateralCid = borrowerCollateralCid
+      requestedAmount = 500.0
+      interestRate = 0.10
+      durationDays = 30
+
+  activeLoanCid <- submit lender do
+    exerciseCmd loanRequestCid ApproveLoan with
+      stablecoinCid = lenderStablecoinCid
+      oracleCid
+
+  -- Try to liquidate - should FAIL because LTV is healthy
+  submitMustFail lender do
+    exerciseCmd activeLoanCid Liquidate with
+      updatedOracleCid = oracleCid
+
+  debug "Cannot liquidate healthy loan test passed!"
+
+-- | Test: Borrower cancels loan request
+testCancelLoanRequest : Script ()
+testCancelLoanRequest = do
+  parties@TestParties{..} <- setupParties
+  
+  -- Setup token issuer
+  issuerCid <- submit tokenIssuer do
+    createCmd TokenIssuer with issuer = tokenIssuer
+
+  -- Issue CC tokens to borrower
+  borrowerCollateralCid <- issueTokensHelper tokenIssuer issuerCid borrower (ccTokenId tokenIssuer) 100.0
+
+  -- Create lending service
+  lendingServiceCid <- submit oracleProvider do
+    createCmd LendingService with
+      operator = oracleProvider
+      borrower
+      lender
+      ltvParams = defaultLTVParams
+
+  -- Create loan request
+  loanRequestCid <- submit borrower do
+    exerciseCmd lendingServiceCid CreateLoanRequest with
+      collateralCid = borrowerCollateralCid
+      requestedAmount = 500.0
+      interestRate = 0.10
+      durationDays = 30
+
+  -- Borrower decides to cancel
+  returnedCollateralCid <- submit borrower do
+    exerciseCmd loanRequestCid CancelRequest
+
+  debug "Cancel loan request test passed!"
+
+-- | Run all tests
+runAllTests : Script ()
+runAllTests = do
+  debug "=== Running MicroLend Tests ==="
+  
+  debug "Test 1: Happy Path"
+  testHappyPath
+  
+  debug "Test 2: LTV Too High"
+  testLTVTooHigh
+  
+  debug "Test 3: Liquidation"
+  testLiquidation
+  
+  debug "Test 4: Cannot Liquidate Healthy Loan"
+  testCannotLiquidateHealthyLoan
+  
+  debug "Test 5: Cancel Loan Request"
+  testCancelLoanRequest
+  
+  debug "=== All Tests Passed ==="

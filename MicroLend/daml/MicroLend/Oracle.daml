@@ -1,0 +1,65 @@
+-- | Simple price oracle for collateral valuation
+module MicroLend.Oracle where
+
+import MicroLend.Types
+
+-- | Price oracle contract for CC Token price in USD
+template PriceOracle
+  with
+    provider : Party         -- ^ Oracle provider who can update prices
+    observers : [Party]      -- ^ Parties who can observe the oracle
+    assetId : AssetId        -- ^ Asset this oracle provides price for
+    price : Decimal          -- ^ Current price in USD
+    lastUpdated : Time       -- ^ Timestamp of last price update
+  where
+    signatory provider
+    observer observers
+
+    -- | Update the price (only oracle provider can do this)
+    choice UpdatePrice : ContractId PriceOracle
+      with
+        newPrice : Decimal
+      controller provider
+      do
+        now <- getTime
+        assertMsg "Price must be positive" (newPrice > 0.0)
+        create this with
+          price = newPrice
+          lastUpdated = now
+
+    -- | Add an observer to the oracle
+    choice AddObserver : ContractId PriceOracle
+      with
+        newObserver : Party
+      controller provider
+      do
+        create this with observers = newObserver :: observers
+
+    -- | Non-consuming choice to get the current price
+    nonconsuming choice GetPrice : Decimal
+      controller provider :: observers
+      do pure price
+
+-- | Factory for creating price oracles
+template PriceOracleFactory
+  with
+    provider : Party
+  where
+    signatory provider
+
+    -- | Create a new price oracle for an asset
+    choice CreateOracle : ContractId PriceOracle
+      with
+        assetId : AssetId
+        initialPrice : Decimal
+        initialObservers : [Party]
+      controller provider
+      do
+        now <- getTime
+        assertMsg "Initial price must be positive" (initialPrice > 0.0)
+        create PriceOracle with
+          provider
+          observers = initialObservers
+          assetId
+          price = initialPrice
+          lastUpdated = now

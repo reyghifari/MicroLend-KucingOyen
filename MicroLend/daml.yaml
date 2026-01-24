@@ -5,3 +5,4 @@ source: daml
 dependencies:
   - daml-stdlib
   - daml-script
+  - daml-prim

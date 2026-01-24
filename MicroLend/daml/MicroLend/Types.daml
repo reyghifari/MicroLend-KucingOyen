@@ -1,0 +1,64 @@
+-- | Core types for the MicroLend over-collateralized lending protocol
+module MicroLend.Types where
+
+-- | Protocol parameters for LTV calculations
+data LTVParams = LTVParams
+  with
+    maxInitialLTV : Decimal      -- ^ Maximum LTV ratio at loan initiation (e.g., 0.70 for 70%)
+    liquidationThreshold : Decimal -- ^ LTV threshold for liquidation (e.g., 0.85 for 85%)
+  deriving (Eq, Show)
+
+-- | Default protocol parameters
+defaultLTVParams : LTVParams
+defaultLTVParams = LTVParams
+  with
+    maxInitialLTV = 0.70
+    liquidationThreshold = 0.85
+
+-- | Status of a loan
+data LoanStatus
+  = Requested  -- ^ Loan has been requested but not yet approved
+  | Active     -- ^ Loan is active with locked collateral
+  | Repaid     -- ^ Loan has been fully repaid
+  | Liquidated -- ^ Loan was liquidated due to LTV breach
+  | Cancelled  -- ^ Loan request was cancelled
+  deriving (Eq, Show)
+
+-- | Terms of a loan agreement
+data LoanTerms = LoanTerms
+  with
+    principalAmount : Decimal    -- ^ Amount of stablecoin borrowed
+    collateralAmount : Decimal   -- ^ Amount of collateral locked
+    interestRate : Decimal       -- ^ Annual interest rate (e.g., 0.05 for 5%)
+    durationDays : Int           -- ^ Loan duration in days
+  deriving (Eq, Show)
+
+-- | Calculate the current LTV ratio
+-- LTV = (loanAmount / collateralValue) where collateralValue = collateralAmount * price
+calculateLTV : Decimal -> Decimal -> Decimal -> Decimal
+calculateLTV loanAmount collateralAmount collateralPrice =
+  let collateralValue = collateralAmount * collateralPrice
+  in if collateralValue == 0.0 then 1.0 else loanAmount / collateralValue
+
+-- | Check if the LTV is below the initial threshold
+isValidInitialLTV : LTVParams -> Decimal -> Bool
+isValidInitialLTV params ltv = ltv <= params.maxInitialLTV
+
+-- | Check if the loan can be liquidated
+isLiquidatable : LTVParams -> Decimal -> Bool
+isLiquidatable params ltv = ltv > params.liquidationThreshold
+
+-- | Asset identifiers for the protocol
+data AssetId = AssetId
+  with
+    issuer : Party
+    symbol : Text
+  deriving (Eq, Show, Ord)
+
+-- | Collateral token identifier
+ccTokenId : Party -> AssetId
+ccTokenId issuer = AssetId with issuer, symbol = "CC"
+
+-- | Stablecoin identifier
+stablecoinId : Party -> AssetId
+stablecoinId issuer = AssetId with issuer, symbol = "USDC"

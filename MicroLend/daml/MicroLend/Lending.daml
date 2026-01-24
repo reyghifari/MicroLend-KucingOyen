@@ -1,157 +1,303 @@
+-- | Main lending protocol for MicroLend
+-- Over-collateralized lending with CC Token collateral and stablecoin loans
 module MicroLend.Lending where
 
-data LoanStatus = Approved | Repaid | Overdue deriving (Eq, Show)
+import MicroLend.Types
+import MicroLend.Oracle
 
-template CollateralHold
+-- | Helper function to check loan health
+checkHealthInternal : ContractId PriceOracle -> Decimal -> Decimal -> LTVParams -> Update (Decimal, Text)
+checkHealthInternal oracleCid loanAmount collateralAmount ltvParams = do
+  oracle <- fetch oracleCid
+  let currentPrice = oracle.price
+  let currentLTV = calculateLTV loanAmount collateralAmount currentPrice
+  
+  let healthStatus = 
+        if currentLTV <= ltvParams.maxInitialLTV then "Healthy"
+        else if currentLTV <= ltvParams.liquidationThreshold then "Warning"
+        else "Liquidatable"
+  
+  pure (currentLTV, healthStatus)
+
+-- | Simplified holding representation for testing without full Daml.Finance
+-- In production, this would be replaced with Daml.Finance.Interface.Holding.Fungible
+-- Note: This simplified version has custodian as sole signatory for easier atomic transfers
+template TokenHolding
   with
-    owner : Party           -- borrower yang menyetor jaminan
-    holder : Party          -- lender yang memegang jaminan
-    amount : Decimal        -- jumlah token yang dijaminkan
-    loanRequestCid : ContractId LoanRequest  -- referensi ke loan request terkait
+    owner : Party
+    custodian : Party
+    assetId : AssetId
+    amount : Decimal
+    observers : [Party]
+    locker : Optional Party  -- Party that can control locked transfers (for escrow)
   where
-    signatory owner
-    observer holder
+    signatory custodian
+    observer owner :: observers
 
-    -- Choice untuk melepaskan jaminan (dikembalikan ke borrower)
-    choice ReleaseCollateral : ()
-      controller holder
+    -- | Transfer tokens to another party
+    choice Transfer : ContractId TokenHolding
+      with
+        newOwner : Party
+      controller owner
       do
-        pure ()
+        create this with owner = newOwner
 
-    -- Choice untuk menyita jaminan (jika overdue)
-    choice SeizeCollateral : ()
-      controller holder
+    -- | Lock the holding by granting transfer control to a locker party
+    choice Lock : ContractId TokenHolding
+      with
+        lockerParty : Party
+      controller owner
       do
-        pure ()
+        create this with 
+          locker = Some lockerParty
+          observers = lockerParty :: observers
 
+    -- | Transfer by locker (for escrow/loan purposes)
+    -- The locker can transfer the holding on behalf of the owner
+    choice LockedTransfer : ContractId TokenHolding
+      with
+        newOwner : Party
+      controller (optional owner identity locker)
+      do
+        create this with 
+          owner = newOwner
+          locker = None
+
+    -- | Split the holding into two parts
+    choice Split : (ContractId TokenHolding, ContractId TokenHolding)
+      with
+        splitAmount : Decimal
+      controller owner
+      do
+        assertMsg "Split amount must be positive" (splitAmount > 0.0)
+        assertMsg "Split amount must be less than total" (splitAmount < amount)
+        h1 <- create this with amount = splitAmount
+        h2 <- create this with amount = amount - splitAmount
+        pure (h1, h2)
+
+    -- | Merge two holdings (this holding is consumed, other is archived)
+    choice Merge : ContractId TokenHolding
+      with
+        otherHoldingCid : ContractId TokenHolding
+      controller owner
+      do
+        otherHolding <- fetch otherHoldingCid
+        assertMsg "Cannot merge holdings with different owners" (otherHolding.owner == owner)
+        assertMsg "Cannot merge holdings with different assets" (otherHolding.assetId == assetId)
+        archive otherHoldingCid
+        create this with amount = amount + otherHolding.amount
+
+-- | Loan request created by a borrower seeking a loan
 template LoanRequest
   with
-    borrower : Party
-    lender : Party
-    amount : Decimal
-    rate : Decimal
-    dueDate : Date
-    collateralDeposited : Bool  -- menandakan apakah jaminan sudah disetor
+    borrower : Party           -- ^ Party requesting the loan
+    lender : Party             -- ^ Potential lender
+    collateralCid : ContractId TokenHolding  -- ^ Collateral holding CID
+    collateralAmount : Decimal -- ^ Amount of collateral deposited
+    requestedAmount : Decimal  -- ^ Amount of stablecoin requested
+    interestRate : Decimal     -- ^ Proposed interest rate
+    durationDays : Int         -- ^ Loan duration in days
+    ltvParams : LTVParams      -- ^ Protocol LTV parameters
   where
     signatory borrower
     observer lender
 
-    -- Choice untuk borrower menyetorkan jaminan
-    choice DepositCollateral : (ContractId LoanRequest, ContractId CollateralHold)
+    -- | Lender approves the loan and transfers stablecoins
+    choice ApproveLoan : ContractId ActiveLoan
+      with
+        stablecoinCid : ContractId TokenHolding  -- ^ Stablecoin holding to transfer
+        oracleCid : ContractId PriceOracle       -- ^ Price oracle for collateral
+      controller lender
+      do
+        -- Fetch the oracle to get current price
+        oracle <- fetch oracleCid
+        let price = oracle.price
+        
+        -- Calculate LTV and validate
+        let ltv = calculateLTV requestedAmount collateralAmount price
+        assertMsg 
+          ("LTV " <> show ltv <> " exceeds maximum initial LTV " <> show ltvParams.maxInitialLTV)
+          (isValidInitialLTV ltvParams ltv)
+
+        -- Verify stablecoin holding
+        stablecoin <- fetch stablecoinCid
+        assertMsg "Stablecoin amount must match requested amount" 
+          (stablecoin.amount >= requestedAmount)
+
+        -- Transfer stablecoin to borrower
+        exercise stablecoinCid Transfer with newOwner = borrower
+
+        -- Collateral is already locked with lender from CreateLoanRequest
+
+        now <- getTime
+        
+        -- Create the active loan with collateral locked
+        create ActiveLoan with
+          borrower
+          lender
+          collateralCid
+          collateralAmount
+          loanAmount = requestedAmount
+          interestRate
+          durationDays
+          ltvParams
+          oracleCid
+          startTime = now
+          status = Active
+
+    -- | Borrower cancels the loan request and reclaims collateral
+    choice CancelRequest : ContractId TokenHolding
       controller borrower
       do
-        let collateralAmount = amount + (amount * rate)
-        -- Buat contract CollateralHold
-        collateralCid <- create CollateralHold with
-          owner = borrower
-          holder = lender
-          amount = collateralAmount
-          loanRequestCid = self
-        -- Update LoanRequest dengan status collateral deposited
-        newRequestCid <- create this with collateralDeposited = True
-        pure (newRequestCid, collateralCid)
+        -- Return collateral to borrower (it's already owned by borrower)
+        pure collateralCid
 
-    -- Approve hanya bisa dilakukan jika jaminan sudah disetor
-    choice Approve : ContractId LoanActive
-      with
-        collateralCid : ContractId CollateralHold
-      controller lender
-      do
-        assert collateralDeposited  -- pastikan jaminan sudah disetor
-        let collateralAmount = amount + (amount * rate)
-        create LoanActive with
-          borrower = borrower
-          lender = lender
-          principal = amount
-          rate = rate
-          dueDate = dueDate
-          outstanding = amount + (amount * rate)
-          status = Approved
-          collateralAmount = collateralAmount
-          collateralCid = collateralCid
-
-    choice Reject : ()
-      controller lender
-      do
-        pure ()
-
-template LoanActive
+-- | Active loan with locked collateral
+template ActiveLoan
   with
     borrower : Party
     lender : Party
-    principal : Decimal
-    rate : Decimal
-    dueDate : Date
-    outstanding : Decimal
+    collateralCid : ContractId TokenHolding  -- ^ Locked collateral
+    collateralAmount : Decimal
+    loanAmount : Decimal                     -- ^ Principal amount borrowed
+    interestRate : Decimal
+    durationDays : Int
+    ltvParams : LTVParams
+    oracleCid : ContractId PriceOracle       -- ^ Reference to price oracle
+    startTime : Time
     status : LoanStatus
-    collateralAmount : Decimal              -- jumlah jaminan yang disetor
-    collateralCid : ContractId CollateralHold  -- referensi ke contract jaminan
   where
     signatory borrower, lender
-
-    -- Repay: bayar pinjaman dan kembalikan jaminan
-    choice Repay : ContractId LoanRepaid
+    
+    -- | Borrower repays the loan and reclaims collateral
+    choice RepayLoan : ContractId TokenHolding
       with
+        repaymentCid : ContractId TokenHolding  -- ^ Stablecoin for repayment
+      controller borrower
+      do
+        -- Calculate total repayment (principal + interest)
+        -- Simplified: using flat interest for the period
+        let totalInterest = loanAmount * interestRate * (intToDecimal durationDays / 365.0)
+        let totalRepayment = loanAmount + totalInterest
+
+        -- Verify repayment amount
+        repayment <- fetch repaymentCid
+        assertMsg 
+          ("Repayment amount " <> show repayment.amount <> " is less than required " <> show totalRepayment)
+          (repayment.amount >= totalRepayment)
+
+        -- Transfer repayment to lender
+        exercise repaymentCid Transfer with newOwner = lender
+
+        -- Return collateral to borrower (lender unlocks via LockedTransfer)
+        exercise collateralCid LockedTransfer with newOwner = borrower
+
+    -- | Liquidate the loan if LTV exceeds threshold
+    -- Can be called by lender or any authorized liquidator
+    choice Liquidate : ContractId TokenHolding
+      with
+        updatedOracleCid : ContractId PriceOracle  -- ^ Latest oracle for price check
+      controller lender
+      do
+        -- Fetch current price
+        oracle <- fetch updatedOracleCid
+        let currentPrice = oracle.price
+        
+        -- Calculate current LTV
+        let currentLTV = calculateLTV loanAmount collateralAmount currentPrice
+        
+        -- Verify liquidation is allowed
+        assertMsg 
+          ("Cannot liquidate: LTV " <> show currentLTV <> " is below threshold " <> show ltvParams.liquidationThreshold)
+          (isLiquidatable ltvParams currentLTV)
+
+        -- Transfer collateral to lender via LockedTransfer
+        exercise collateralCid LockedTransfer with newOwner = lender
+
+    -- | Check the current health of the loan (non-consuming)
+    -- Borrower can check health
+    nonconsuming choice CheckHealthByBorrower : (Decimal, Text)
+      with
+        currentOracleCid : ContractId PriceOracle
+      controller borrower
+      do
+        checkHealthInternal currentOracleCid loanAmount collateralAmount ltvParams
+
+    -- | Lender can also check health
+    nonconsuming choice CheckHealthByLender : (Decimal, Text)
+      with
+        currentOracleCid : ContractId PriceOracle
+      controller lender
+      do
+        checkHealthInternal currentOracleCid loanAmount collateralAmount ltvParams
+
+-- | Service contract for creating loan requests
+-- This acts as a factory and can enforce protocol rules
+template LendingService
+  with
+    operator : Party
+    borrower : Party
+    lender : Party
+    ltvParams : LTVParams
+  where
+    signatory operator
+    observer borrower, lender
+
+    -- | Borrower creates a loan request (and locks their collateral)
+    nonconsuming choice CreateLoanRequest : ContractId LoanRequest
+      with
+        collateralCid : ContractId TokenHolding
+        requestedAmount : Decimal
+        interestRate : Decimal
+        durationDays : Int
+      controller borrower
+      do
+        -- Verify collateral ownership
+        collateral <- fetch collateralCid
+        assertMsg "Collateral must be owned by borrower" (collateral.owner == borrower)
+        
+        let collateralAmount = collateral.amount
+        
+        -- Basic validation
+        assertMsg "Requested amount must be positive" (requestedAmount > 0.0)
+        assertMsg "Interest rate must be non-negative" (interestRate >= 0.0)
+        assertMsg "Duration must be positive" (durationDays > 0)
+
+        -- Lock the collateral with lender as the locker (borrower has authority here)
+        lockedCollateralCid <- exercise collateralCid Lock with lockerParty = lender
+
+        create LoanRequest with
+          borrower
+          lender
+          collateralCid = lockedCollateralCid
+          collateralAmount
+          requestedAmount
+          interestRate
+          durationDays
+          ltvParams
+
+-- | Token issuance service for testing
+template TokenIssuer
+  with
+    issuer : Party
+  where
+    signatory issuer
+
+    -- | Issue tokens to a party
+    nonconsuming choice IssueTokens : ContractId TokenHolding
+      with
+        recipient : Party
+        assetId : AssetId
         amount : Decimal
-      controller borrower
+      controller issuer
       do
-        assert (amount == outstanding)
-        -- Lepaskan jaminan (kembalikan ke borrower)
-        exercise collateralCid ReleaseCollateral
-        create LoanRepaid with
-          borrower = borrower
-          lender = lender
-          principal = principal
-          rate = rate
-          paidAmount = amount
-          dueDate = dueDate
-          status = Repaid
-          collateralReturned = True
+        assertMsg "Amount must be positive" (amount > 0.0)
+        create TokenHolding with
+          owner = recipient
+          custodian = issuer
+          assetId
+          amount
+          observers = []
+          locker = None
 
-    -- MarkOverdue: tandai sebagai overdue dan sita jaminan
-    choice MarkOverdue : ContractId LoanActive
-      with
-        currentDate : Date
-      controller lender
-      do
-        assert (currentDate > dueDate)
-        create this with status = Overdue
 
-    -- Choice baru: Sita jaminan jika status Overdue
-    choice SeizeCollateralFromLoan : ContractId LoanDefaulted
-      controller lender
-      do
-        assert (status == Overdue)
-        exercise collateralCid SeizeCollateral
-        create LoanDefaulted with
-          borrower = borrower
-          lender = lender
-          principal = principal
-          rate = rate
-          dueDate = dueDate
-          collateralSeized = collateralAmount
-
-template LoanRepaid
-  with
-    borrower : Party
-    lender : Party
-    principal : Decimal
-    rate : Decimal
-    paidAmount : Decimal
-    dueDate : Date
-    status : LoanStatus
-    collateralReturned : Bool  -- menandakan jaminan sudah dikembalikan
-  where
-    signatory borrower, lender
-
--- Template baru untuk pinjaman yang gagal bayar (defaulted)
-template LoanDefaulted
-  with
-    borrower : Party
-    lender : Party
-    principal : Decimal
-    rate : Decimal
-    dueDate : Date
-    collateralSeized : Decimal  -- jumlah jaminan yang disita
-  where
-    signatory borrower, lender
