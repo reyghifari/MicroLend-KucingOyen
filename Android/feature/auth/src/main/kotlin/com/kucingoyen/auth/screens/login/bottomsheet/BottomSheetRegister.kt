@@ -64,9 +64,9 @@ fun BottomSheetRegister(
                 Spacer(modifier = Modifier.height(32.dp))
 
                 OutlinedButton(
-                    onClick = { authViewModel.loginWithGoogle(context){
+                    onClick = { authViewModel.loginWithGoogle(context, onSuccess = {
                         onSuccessRegister()
-                    } },
+                    })},
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),

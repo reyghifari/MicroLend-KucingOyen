@@ -1,5 +1,5 @@
 package com.kucingoyen.data.utils
 
 object Endpoint {
-    const val USERS = "users"
+    const val SIGN_IN = "login"
 }
