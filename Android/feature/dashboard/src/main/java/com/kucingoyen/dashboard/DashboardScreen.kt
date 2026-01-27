@@ -1,8 +1,10 @@
 package com.kucingoyen.dashboard
 
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -26,6 +28,7 @@ fun DashboardScreen(
     Scaffold(
         containerColor = BaseColor.White,
         topBar = { if (selectedBar == 0) WalletTopBar(dashboardViewModel) },
+        modifier = Modifier.statusBarsPadding(),
         bottomBar = { WalletBottomBar(dashboardViewModel) }
     ) { paddingValues ->
         when(selectedBar){

@@ -72,7 +72,7 @@ class AuthViewModel @Inject constructor(
                     userInfoCache.apply {
                         level = response.level
                         email = response.email
-                        partyId = response.partyId
+                        partyId = response.damlPartyId
                     }
                     onSuccess()
                 }

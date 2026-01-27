@@ -18,12 +18,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.kucingoyen.core.R
 import androidx.compose.ui.unit.sp
 import com.kucingoyen.core.theme.BaseColor
 import com.kucingoyen.dashboard.DashboardViewModel
@@ -425,37 +427,13 @@ private fun ReceiveContent(
     val walletAddress = dashboardViewModel.getEmailUser()
     val truncatedAddress = dashboardViewModel.getPartyId()
 
-    Box(
-        modifier = Modifier
-            .size(350.dp)
+    Image(
+        painter = painterResource(R.drawable.ic_qr),
+        contentDescription = "QR Code",
+        modifier = Modifier.size(350.dp)
             .background(BaseColor.White, RoundedCornerShape(16.dp))
             .border(2.dp, BaseColor.JetBlack.Minus80, RoundedCornerShape(16.dp)),
-        contentAlignment = Alignment.Center
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            QRCodePlaceholder()
-
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(Color.White)
-                    .border(4.dp, Color.White, RoundedCornerShape(16.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(BaseColor.JetBlack.Minus80)
-                )
-            }
-        }
-    }
+    )
 
     Spacer(modifier = Modifier.height(32.dp))
 

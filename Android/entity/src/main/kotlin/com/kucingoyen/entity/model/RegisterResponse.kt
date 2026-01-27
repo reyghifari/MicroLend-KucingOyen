@@ -2,9 +2,10 @@ package com.kucingoyen.entity.model
 
 data class RegisterResponse(
     val email: String = "",
-    val partyId: String = "",
-    val level: Int = 0,
-    val jwt: String = "",
+    val damlPartyId: String = "",
+    val fullName: String = "",
+    val level: Int = 1,
+    val token: String = "",
 )
 
 data class RegisterRequest(
