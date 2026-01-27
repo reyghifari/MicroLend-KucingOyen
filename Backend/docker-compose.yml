@@ -20,25 +20,26 @@ services:
       - microlend-net
 
   daml-sandbox:
-    image: digitalasset/daml-sdk:2.10.2
+    build:
+      context: .
+      dockerfile: Dockerfile.daml-sandbox
     container_name: daml-sandbox
-    command: >
-      daml sandbox --wall-clock-time --port 6865 -c /canton-sandbox.conf
-    volumes:
-      - ./canton-sandbox.conf:/canton-sandbox.conf:ro
     ports:
       - "6865:6865"
     networks:
       - microlend-net
 
   daml-json-api:
-    image: digitalasset/daml-sdk:2.10.2
+    build:
+      context: .
+      dockerfile: Dockerfile.daml-json-api
     container_name: daml-json-api
     depends_on:
       daml-sandbox:
         condition: service_started
-    command: >
-      daml json-api --ledger-host daml-sandbox --ledger-port 6865 --address 0.0.0.0 --http-port 7575 --allow-insecure-tokens
+    environment:
+      DAML_SANDBOX_HOST: daml-sandbox
+      DAML_SANDBOX_PORT: 6865
     ports:
       - "7575:7575"
     networks:

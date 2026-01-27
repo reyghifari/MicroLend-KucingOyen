@@ -1,0 +1,16 @@
+FROM digitalasset/daml-sdk:2.10.2
+
+# Expose JSON API port
+EXPOSE 7575
+
+# Environment variables for configuration
+ENV JAVA_OPTS="-Xms128m -Xmx256m"
+
+# Run DAML JSON API
+# Use environment variables to connect to sandbox
+CMD daml json-api \
+    --ledger-host ${DAML_SANDBOX_HOST} \
+    --ledger-port ${DAML_SANDBOX_PORT} \
+    --address 0.0.0.0 \
+    --http-port 7575 \
+    --allow-insecure-tokens

@@ -1,0 +1,15 @@
+FROM digitalasset/daml-sdk:2.10.2
+
+ENV JAVA_OPTS="-Xms128m -Xmx256m"
+
+WORKDIR /app
+
+# Only copy the files needed for DAML build
+COPY daml.yaml ./
+COPY daml/ ./daml/
+
+RUN daml build
+
+EXPOSE 6865
+
+CMD ["daml", "sandbox", "--wall-clock-time", "--port", "6865", "-C", "canton.participants.sandbox.ledger-api.port=6865,canton.participants.sandbox.ledger-api.address=0.0.0.0,canton.participants.sandbox.admin-api.port=6866,canton.participants.sandbox.admin-api.address=0.0.0.0"]

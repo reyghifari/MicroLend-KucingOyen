@@ -1,0 +1,19 @@
+-- Minimal DAML module for Microlend ledger
+-- This provides a basic party allocation capability
+module Main where
+
+-- Simple template for user registration on the ledger
+template User
+  with
+    party : Party
+    displayName : Text
+  where
+    signatory party
+    
+    -- User can update their display name
+    choice UpdateDisplayName : ContractId User
+      with
+        newDisplayName : Text
+      controller party
+      do
+        create this with displayName = newDisplayName
