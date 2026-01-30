@@ -1,0 +1,220 @@
+-- | Asset Factory for MicroLend Finance
+-- Handles token minting (deposit) operations
+module MicroLend.Finance.Asset where
+
+import MicroLend.Finance.Types
+import MicroLend.Finance.Holding
+
+-- | Asset Factory template for minting tokens
+-- Issuer/Bank uses this to create new tokens (minting/deposit)
+template AssetFactory
+  with
+    issuer : Party       -- ^ Party yang berwenang mencetak token
+    assetId : AssetId    -- ^ Identifier asset yang dikelola factory ini
+    totalSupply : Decimal -- ^ Total token yang sudah dicetak
+    maxSupply : Optional Decimal -- ^ Batas maksimum supply (None = unlimited)
+  where
+    signatory issuer
+
+    -- | Mint new tokens to a user
+    -- Mencetak token baru dan mengirim ke recipient
+    choice Mint : (ContractId AssetFactory, ContractId Holding)
+      with
+        recipient : Party
+        mintAmount : Decimal
+      controller issuer
+      do
+        assertMsg "Mint amount must be positive" (mintAmount > 0.0)
+        
+        -- Check max supply if set
+        case maxSupply of
+          Some maxAmt -> 
+            assertMsg "Would exceed max supply" 
+              (totalSupply + mintAmount <= maxAmt)
+          None -> pure ()
+
+        -- Create new holding for recipient
+        holdingCid <- create Holding with
+          custodian = issuer
+          owner = recipient
+          assetId
+          amount = mintAmount
+          observers = []
+
+        -- Update factory with new supply
+        factoryCid <- create this with 
+          totalSupply = totalSupply + mintAmount
+
+        pure (factoryCid, holdingCid)
+
+    -- | Credit tokens to a user (alias for Mint)
+    -- Untuk deposit/credit saldo ke user
+    choice Credit : (ContractId AssetFactory, ContractId Holding)
+      with
+        recipient : Party
+        creditAmount : Decimal
+      controller issuer
+      do
+        assertMsg "Credit amount must be positive" (creditAmount > 0.0)
+        
+        -- Check max supply if set
+        case maxSupply of
+          Some maxAmt -> 
+            assertMsg "Would exceed max supply" 
+              (totalSupply + creditAmount <= maxAmt)
+          None -> pure ()
+
+        -- Create new holding for recipient
+        holdingCid <- create Holding with
+          custodian = issuer
+          owner = recipient
+          assetId
+          amount = creditAmount
+          observers = []
+
+        -- Update factory with new supply
+        factoryCid <- create this with 
+          totalSupply = totalSupply + creditAmount
+
+        pure (factoryCid, holdingCid)
+
+    -- | Deposit tokens to a specific account
+    -- Mint langsung ke account user
+    choice DepositToAccount : (ContractId AssetFactory, ContractId Holding)
+      with
+        recipientOwner : Party
+        depositAmount : Decimal
+      controller issuer
+      do
+        assertMsg "Deposit amount must be positive" (depositAmount > 0.0)
+        
+        -- Check max supply if set
+        case maxSupply of
+          Some maxAmt -> 
+            assertMsg "Would exceed max supply" 
+              (totalSupply + depositAmount <= maxAmt)
+          None -> pure ()
+
+        -- Create new holding for recipient
+        holdingCid <- create Holding with
+          custodian = issuer
+          owner = recipientOwner
+          assetId
+          amount = depositAmount
+          observers = []
+
+        -- Update factory with new supply
+        factoryCid <- create this with 
+          totalSupply = totalSupply + depositAmount
+
+        pure (factoryCid, holdingCid)
+
+    -- | Burn tokens (reduce supply)
+    -- Menghapus token dari sirkulasi
+    choice BurnFromHolding : ContractId AssetFactory
+      with
+        holdingCid : ContractId Holding
+      controller issuer
+      do
+        holding <- fetch holdingCid
+        assertMsg "Holding must have same asset" (holding.assetId == assetId)
+        assertMsg "Must be custodian of holding" (holding.custodian == issuer)
+        
+        exercise holdingCid Burn
+        
+        create this with 
+          totalSupply = totalSupply - holding.amount
+
+    -- | Update max supply
+    choice UpdateMaxSupply : ContractId AssetFactory
+      with
+        newMaxSupply : Optional Decimal
+      controller issuer
+      do
+        case newMaxSupply of
+          Some maxAmt -> 
+            assertMsg "New max supply cannot be less than current total supply" 
+              (maxAmt >= totalSupply)
+          None -> pure ()
+        create this with maxSupply = newMaxSupply
+
+    -- | Get current supply info (non-consuming)
+    nonconsuming choice GetSupplyInfo : (Decimal, Optional Decimal)
+      controller issuer
+      do pure (totalSupply, maxSupply)
+
+-- | Asset Issuer Service - Factory for creating Asset Factories
+-- Master service untuk membuat berbagai jenis token
+template AssetIssuerService
+  with
+    issuer : Party
+    observers : [Party]
+  where
+    signatory issuer
+    observer observers
+
+    -- | Create a new asset factory for a token type
+    nonconsuming choice CreateAssetFactory : ContractId AssetFactory
+      with
+        symbol : Text
+        description : Text
+        initialMaxSupply : Optional Decimal
+      controller issuer
+      do
+        let newAssetId = AssetId with
+              issuer
+              symbol
+              description
+        
+        create AssetFactory with
+          issuer
+          assetId = newAssetId
+          totalSupply = 0.0
+          maxSupply = initialMaxSupply
+
+    -- | Create USDC token factory
+    nonconsuming choice CreateUSDCFactory : ContractId AssetFactory
+      with
+        maxSupply : Optional Decimal
+      controller issuer
+      do
+        let usdcId = usdcAssetId issuer
+        create AssetFactory with
+          issuer
+          assetId = usdcId
+          totalSupply = 0.0
+          maxSupply
+
+    -- | Create IDR token factory
+    nonconsuming choice CreateIDRFactory : ContractId AssetFactory
+      with
+        maxSupply : Optional Decimal
+      controller issuer
+      do
+        let idrId = idrAssetId issuer
+        create AssetFactory with
+          issuer
+          assetId = idrId
+          totalSupply = 0.0
+          maxSupply
+
+    -- | Create CC (Collateral) token factory
+    nonconsuming choice CreateCCFactory : ContractId AssetFactory
+      with
+        maxSupply : Optional Decimal
+      controller issuer
+      do
+        let ccId = ccAssetId issuer
+        create AssetFactory with
+          issuer
+          assetId = ccId
+          totalSupply = 0.0
+          maxSupply
+
+    -- | Add observer to the service
+    choice AddServiceObserver : ContractId AssetIssuerService
+      with
+        newObserver : Party
+      controller issuer
+      do
+        create this with observers = newObserver :: observers

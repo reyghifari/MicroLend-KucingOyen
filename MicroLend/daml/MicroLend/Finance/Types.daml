@@ -1,0 +1,46 @@
+-- | Core types for MicroLend Finance module
+-- Types for Asset, Account, and Holding management
+module MicroLend.Finance.Types where
+
+-- | Asset identifier for tokens in the system
+data AssetId = AssetId
+  with
+    issuer : Party      -- ^ Party yang menerbitkan asset
+    symbol : Text       -- ^ Symbol token (e.g., "USDC", "CC", "IDR")
+    description : Text  -- ^ Deskripsi asset
+  deriving (Eq, Show, Ord)
+
+-- | Account identifier
+data AccountKey = AccountKey
+  with
+    custodian : Party  -- ^ Bank/operator yang mengelola account
+    owner : Party      -- ^ Pemilik account
+  deriving (Eq, Show, Ord)
+
+-- | Transfer status
+data TransferStatus
+  = Pending    -- ^ Transfer menunggu approval
+  | Completed  -- ^ Transfer selesai
+  | Cancelled  -- ^ Transfer dibatalkan
+  deriving (Eq, Show)
+
+-- | Helper untuk membuat AssetId stablecoin (USDC)
+usdcAssetId : Party -> AssetId
+usdcAssetId issuer = AssetId with 
+  issuer
+  symbol = "USDC"
+  description = "USD Coin Stablecoin"
+
+-- | Helper untuk membuat AssetId IDR token
+idrAssetId : Party -> AssetId
+idrAssetId issuer = AssetId with 
+  issuer
+  symbol = "IDR"
+  description = "Indonesian Rupiah Token"
+
+-- | Helper untuk membuat AssetId CC Token (Collateral)
+ccAssetId : Party -> AssetId
+ccAssetId issuer = AssetId with 
+  issuer
+  symbol = "CC"
+  description = "Collateral Coin Token"

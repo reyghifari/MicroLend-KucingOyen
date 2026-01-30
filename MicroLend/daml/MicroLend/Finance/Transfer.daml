@@ -1,0 +1,178 @@
+-- | Transfer functionality for MicroLend Finance
+-- Handles token transfers between parties
+module MicroLend.Finance.Transfer where
+
+import MicroLend.Finance.Types
+import MicroLend.Finance.Holding
+
+-- | Transfer Request template
+-- Digunakan ketika sender ingin meminta persetujuan receiver sebelum transfer
+template TransferRequest
+  with
+    sender : Party           -- ^ Pengirim token
+    receiver : Party         -- ^ Penerima token
+    holdingCid : ContractId Holding  -- ^ Holding yang akan ditransfer
+    amount : Decimal         -- ^ Jumlah yang akan ditransfer
+    note : Text              -- ^ Catatan transfer
+    status : TransferStatus  -- ^ Status transfer
+  where
+    signatory sender
+    observer receiver
+
+    -- | Sender executes the transfer (after receiver approval is implied)
+    -- Sender must execute because they control the holding
+    choice ExecuteTransfer : ContractId Holding
+      controller sender
+      do
+        holding <- fetch holdingCid
+        assertMsg "Transfer status must be Pending" (status == Pending)
+        assertMsg "Holding amount must match transfer amount" 
+          (holding.amount == amount)
+        assertMsg "You don't own this holding" (holding.owner == sender)
+        exercise holdingCid Transfer with newOwner = receiver
+
+    -- | Receiver confirms they accept (non-consuming - just for record)
+    nonconsuming choice ConfirmReceipt : ()
+      controller receiver
+      do
+        pure ()
+
+    -- | Sender cancels the transfer request
+    choice CancelTransfer : ContractId Holding
+      controller sender
+      do
+        assertMsg "Transfer status must be Pending" (status == Pending)
+        pure holdingCid
+
+    -- | Receiver rejects the transfer
+    choice RejectTransfer : ContractId Holding
+      controller receiver
+      do
+        assertMsg "Transfer status must be Pending" (status == Pending)
+        pure holdingCid
+
+-- | Partial Transfer Request
+-- Untuk transfer sebagian dari holding
+template PartialTransferRequest
+  with
+    sender : Party
+    receiver : Party
+    holdingCid : ContractId Holding
+    transferAmount : Decimal
+    note : Text
+  where
+    signatory sender
+    observer receiver
+
+    -- | Sender executes partial transfer
+    choice ExecutePartialTransfer : (ContractId Holding, ContractId Holding)
+      controller sender
+      do
+        holding <- fetch holdingCid
+        assertMsg "Transfer amount must be less than holding amount" 
+          (transferAmount < holding.amount)
+        assertMsg "You don't own this holding" (holding.owner == sender)
+        
+        -- Split and transfer
+        (splitHolding, remainingHolding) <- exercise holdingCid Split with 
+          splitAmount = transferAmount
+        transferredHolding <- exercise splitHolding Transfer with 
+          newOwner = receiver
+        
+        pure (transferredHolding, remainingHolding)
+
+    -- | Receiver confirms they accept (non-consuming)
+    nonconsuming choice ConfirmPartialReceipt : ()
+      controller receiver
+      do pure ()
+
+    -- | Cancel partial transfer
+    choice CancelPartialTransfer : ContractId Holding
+      controller sender
+      do pure holdingCid
+
+-- | Transfer Service template
+-- Service untuk melakukan transfer langsung tanpa perlu request
+template TransferService
+  with
+    operator : Party
+    sender : Party
+    receiver : Party
+  where
+    signatory operator
+    observer sender, receiver
+
+    -- | Execute direct transfer via service (sender triggers)
+    nonconsuming choice ServiceTransfer : ContractId Holding
+      with
+        holdingCid : ContractId Holding
+      controller sender
+      do
+        holding <- fetch holdingCid
+        assertMsg "You don't own this holding" (holding.owner == sender)
+        exercise holdingCid Transfer with newOwner = receiver
+
+    -- | Execute partial transfer via service (sender triggers)
+    nonconsuming choice ServicePartialTransfer : (ContractId Holding, ContractId Holding)
+      with
+        holdingCid : ContractId Holding
+        transferAmount : Decimal
+      controller sender
+      do
+        holding <- fetch holdingCid
+        assertMsg "You don't own this holding" (holding.owner == sender)
+        assertMsg "Transfer amount must be less than holding amount" 
+          (transferAmount < holding.amount)
+        
+        (splitHolding, remainingHolding) <- exercise holdingCid Split with 
+          splitAmount = transferAmount
+        transferredHolding <- exercise splitHolding Transfer with 
+          newOwner = receiver
+        
+        pure (transferredHolding, remainingHolding)
+
+-- | Batch Transfer template
+-- Untuk transfer ke banyak penerima sekaligus
+template BatchTransfer
+  with
+    sender : Party
+    operator : Party
+    transfers : [(Party, Decimal)]  -- ^ List of (receiver, amount)
+    holdingCid : ContractId Holding
+    note : Text
+  where
+    signatory sender
+    observer operator
+
+    -- | Execute batch transfer
+    choice ExecuteBatchTransfer : [ContractId Holding]
+      controller sender
+      do
+        holding <- fetch holdingCid
+        assertMsg "You don't own this holding" (holding.owner == sender)
+        
+        -- Calculate total amount needed
+        let totalAmount = foldl (\acc (_, amt) -> acc + amt) 0.0 transfers
+        assertMsg "Insufficient balance for batch transfer" 
+          (holding.amount >= totalAmount)
+        
+        -- Execute transfers one by one
+        executeBatchHelper holdingCid transfers []
+
+-- Helper function for batch transfer
+executeBatchHelper : ContractId Holding -> [(Party, Decimal)] -> [ContractId Holding] -> Update [ContractId Holding]
+executeBatchHelper currentHoldingCid [] results = pure results
+executeBatchHelper currentHoldingCid ((receiver, amount) :: rest) results = do
+  holding <- fetch currentHoldingCid
+  
+  if holding.amount == amount
+    then do
+      -- Last transfer, use entire holding
+      transferredCid <- exercise currentHoldingCid Transfer with newOwner = receiver
+      pure (results ++ [transferredCid])
+    else do
+      -- Split and transfer
+      (splitCid, remainingCid) <- exercise currentHoldingCid Split with 
+        splitAmount = amount
+      transferredCid <- exercise splitCid Transfer with newOwner = receiver
+      executeBatchHelper remainingCid rest (results ++ [transferredCid])
