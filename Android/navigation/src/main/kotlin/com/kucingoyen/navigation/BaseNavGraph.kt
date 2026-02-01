@@ -40,7 +40,9 @@ fun BaseNavGraph(navController : NavHostController){
             route = NavModule.DashboardModule.name){
             composable(route = BaseNav.Dashboard.DashboardScreen.name) { navBackStackEntry ->
                 DashboardScreen(dashboardViewModel, onClickSend = {
-                    navController.navigate(BaseNav.Dashboard.RequestBalanceScreen.name)
+                    navController.navigate("${BaseNav.Dashboard.RequestBalanceScreen.name}?index=0")
+                }, onClickDeposit = {
+                    navController.navigate("${BaseNav.Dashboard.RequestBalanceScreen.name}?index=1")
                 }, requestLoan = {
                     navController.navigate(BaseNav.Dashboard.DetailRequestLoanScreen.name)
                 })
@@ -48,8 +50,9 @@ fun BaseNavGraph(navController : NavHostController){
             composable(route = BaseNav.Dashboard.DetailRequestLoanScreen.name) { navBackStackEntry ->
                 DetailRequestLoanScreen(dashboardViewModel)
             }
-            composable(route = BaseNav.Dashboard.RequestBalanceScreen.name) { navBackStackEntry ->
-                RequestBalanceScreen(dashboardViewModel){
+            composable(route = BaseNav.Dashboard.RequestBalanceScreen.name + "?index={index}") { navBackStackEntry ->
+                val indexTab = navBackStackEntry.arguments?.getString("index") ?: ""
+                RequestBalanceScreen(dashboardViewModel, indexTab){
                     navController.navigateUp()
                 }
             }

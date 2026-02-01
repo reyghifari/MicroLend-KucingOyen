@@ -1,6 +1,7 @@
 package com.kucingoyen.data.di
 
 import com.kucingoyen.data.service.AuthService
+import com.kucingoyen.data.service.DashboardService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -18,5 +19,11 @@ internal class ServiceModule {
     fun provideUserService(
         retrofit: Retrofit
     ): AuthService = retrofit.create(AuthService::class.java)
+
+    @Singleton
+    @Provides
+    fun provideDashboardService(
+        retrofit: Retrofit
+    ): DashboardService = retrofit.create(DashboardService::class.java)
 
 }

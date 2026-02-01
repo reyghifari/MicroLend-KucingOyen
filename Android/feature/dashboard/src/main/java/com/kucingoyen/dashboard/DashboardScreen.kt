@@ -21,7 +21,8 @@ val TextGray = Color(0xFFAAAAAA)
 fun DashboardScreen(
     dashboardViewModel: DashboardViewModel = hiltViewModel(),
     requestLoan: () -> Unit = {},
-    onClickSend : () -> Unit = {}
+    onClickSend : () -> Unit = {},
+    onClickDeposit : () -> Unit = {}
 ) {
     val selectedBar by dashboardViewModel.bottomBarSelected.collectAsStateWithLifecycle()
 
@@ -33,9 +34,10 @@ fun DashboardScreen(
     ) { paddingValues ->
         when(selectedBar){
             0 -> {
-                HomeScreen(dashboardViewModel, paddingValues){
-                    onClickSend()
-                }
+                HomeScreen(
+                    dashboardViewModel, paddingValues, onClickSend = onClickSend,
+                    onClickDeposit = onClickDeposit
+                )
             }
             1 -> {
                 LoanScreen(dashboardViewModel){

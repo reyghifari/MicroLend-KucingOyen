@@ -48,9 +48,10 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             val idToken = GoogleAuthClient(context).signInAndGetToken(webClientId)
             if (idToken != null) {
-                signInGoogle(idToken){
-                    onSuccess()
-                }
+                onSuccess()
+//                signInGoogle(idToken){
+//                    onSuccess()
+//                }
             } else {
                 ErrorGeneralAction.show(error = ErrorModelData(
                     title = "Failed Log in Google"

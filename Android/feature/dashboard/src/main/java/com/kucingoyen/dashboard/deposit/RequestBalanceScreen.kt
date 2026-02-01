@@ -1,5 +1,6 @@
 package com.kucingoyen.dashboard.deposit
 
+import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -18,12 +19,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.kucingoyen.core.R
 import androidx.compose.ui.unit.sp
@@ -34,9 +35,10 @@ import com.kucingoyen.dashboard.DashboardViewModel
 @Composable
 fun RequestBalanceScreen(
     dashboardViewModel: DashboardViewModel,
+    indexTab: String,
     onNavigateBack: () -> Unit = {},
 ) {
-    var selectedTab by remember { mutableStateOf(1) }
+    var selectedTab by remember { mutableIntStateOf(indexTab.toInt()) }
 
     Scaffold(
         containerColor = BaseColor.White,
@@ -422,139 +424,154 @@ private fun calculateTotal(amount: String): String {
 @Composable
 private fun ReceiveContent(
     dashboardViewModel: DashboardViewModel
-){
+) {
+    val context = LocalContext.current
+
     val clipboardManager = LocalClipboardManager.current
     val walletAddress = dashboardViewModel.getEmailUser()
     val truncatedAddress = dashboardViewModel.getPartyId()
 
-    Image(
-        painter = painterResource(R.drawable.ic_qr),
-        contentDescription = "QR Code",
-        modifier = Modifier.size(350.dp)
-            .background(BaseColor.White, RoundedCornerShape(16.dp))
-            .border(2.dp, BaseColor.JetBlack.Minus80, RoundedCornerShape(16.dp)),
-    )
-
-    Spacer(modifier = Modifier.height(32.dp))
-
-    Text(
-        text = walletAddress,
-        fontSize = 18.sp,
-        fontFamily = FontFamily.Monospace,
-        fontWeight = FontWeight.Bold,
-        color = BaseColor.JetBlack.Normal
-    )
-
-    Spacer(modifier = Modifier.height(4.dp))
-
-    Text(
-        text = truncatedAddress,
-        fontSize = 14.sp,
-        fontFamily = FontFamily.Monospace,
-        color = BaseColor.JetBlack.Minus40
-    )
-
-    Spacer(modifier = Modifier.height(24.dp))
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth()
     ) {
-        // Copy Button
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
+        Image(
+            painter = painterResource(R.drawable.ic_qr),
+            contentDescription = "QR Code",
             modifier = Modifier
-                .clickable {
-                    clipboardManager.setText(AnnotatedString(walletAddress))
+                .size(350.dp)
+                .background(BaseColor.White, RoundedCornerShape(16.dp))
+                .border(2.dp, BaseColor.JetBlack.Minus80, RoundedCornerShape(16.dp)),
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Text(
+            text = walletAddress,
+            fontSize = 18.sp,
+            fontFamily = FontFamily.Monospace,
+            fontWeight = FontWeight.Bold,
+            color = BaseColor.JetBlack.Normal
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Text(
+            text = truncatedAddress,
+            fontSize = 14.sp,
+            fontFamily = FontFamily.Monospace,
+            color = BaseColor.JetBlack.Minus40,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // --- Copy Button ---
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .clickable {
+                        clipboardManager.setText(AnnotatedString(walletAddress))
+                    }
+                    .padding(horizontal = 24.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(BaseColor.JetBlack.Minus90, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ContentCopy,
+                        contentDescription = "Copy",
+                        tint = BaseColor.JetBlack.Minus40,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
-                .padding(horizontal = 24.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .background(BaseColor.JetBlack.Minus90, CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ContentCopy,
-                    contentDescription = "Copy",
-                    tint = BaseColor.JetBlack.Minus40,
-                    modifier = Modifier.size(20.dp)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Copy",
+                    fontSize = 14.sp,
+                    color = BaseColor.JetBlack.Minus40
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Copy",
-                fontSize = 14.sp,
-                color = BaseColor.JetBlack.Minus40
-            )
-        }
 
-        Spacer(modifier = Modifier.width(48.dp))
+            Spacer(modifier = Modifier.width(48.dp))
 
-        // Share Button
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .clickable { /* Implement share functionality */ }
-                .padding(horizontal = 24.dp)
-        ) {
-            Box(
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
-                    .size(48.dp)
-                    .background(BaseColor.JetBlack.Minus90, CircleShape),
-                contentAlignment = Alignment.Center
+                    .clickable {
+                        val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                            putExtra(Intent.EXTRA_TEXT, truncatedAddress)
+                            type = "text/plain"
+                        }
+
+                        val shareIntent = Intent.createChooser(sendIntent, "Share address via")
+                        context.startActivity(shareIntent)
+                    }
+                    .padding(horizontal = 24.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Default.Share,
-                    contentDescription = "Share",
-                    tint = BaseColor.JetBlack.Minus40,
-                    modifier = Modifier.size(20.dp)
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(BaseColor.JetBlack.Minus90, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Share,
+                        contentDescription = "Share",
+                        tint = BaseColor.JetBlack.Minus40,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Share",
+                    fontSize = 14.sp,
+                    fontFamily = FontFamily.Monospace,
+                    color = BaseColor.JetBlack.Minus40
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Share",
-                fontSize = 14.sp,
-                fontFamily = FontFamily.Monospace,
-                color = BaseColor.JetBlack.Minus40
-            )
         }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            NetworkIcon(Color(0xFFF0B90B))
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "This address supports all assets on Canton Network",
+            fontSize = 13.sp,
+            color = BaseColor.JetBlack.Minus40,
+            textAlign = TextAlign.Center,
+            fontFamily = FontFamily.Monospace,
+            modifier = Modifier.padding(horizontal = 32.dp)
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
     }
-
-    Spacer(modifier = Modifier.height(32.dp))
-
-    // Network Icons Row
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        NetworkIcon(Color(0xFFF0B90B)) // BSC
-    }
-
-    Spacer(modifier = Modifier.height(16.dp))
-
-    Text(
-        text = "This address supports all assets on Canton Network",
-        fontSize = 13.sp,
-        color = BaseColor.JetBlack.Minus40,
-        textAlign = TextAlign.Center,
-        fontFamily = FontFamily.Monospace,
-        modifier = Modifier.padding(horizontal = 32.dp)
-    )
-
-    Spacer(modifier = Modifier.height(24.dp))
 }
 
 @Composable
 fun NetworkIcon(color: Color) {
-    Box(
+    Image(
         modifier = Modifier
-            .size(32.dp)
-            .clip(CircleShape)
-            .background(color)
+            .size(48.dp),
+        painter = painterResource(R.drawable.ic_canton_logo),
+        contentDescription = "Canton Logo"
     )
 }
 

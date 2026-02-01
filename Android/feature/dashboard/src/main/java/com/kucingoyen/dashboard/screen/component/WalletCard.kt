@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.Wallet
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -67,7 +68,7 @@ fun WalletCard(
                     contentAlignment = Alignment.CenterStart
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Pets,
+                        imageVector = Icons.Default.Wallet,
                         contentDescription = "Fox Mascot",
                         tint = Color.White.copy(alpha = 0.9f),
                         modifier = Modifier.size(80.dp)
@@ -79,23 +80,11 @@ fun WalletCard(
                     horizontalAlignment = Alignment.End
                 ) {
                     Text(
-                        text = "$0",
+                        text = "CC",
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
                         fontSize = 32.sp
                     )
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = "($0)", color = TextGray, fontSize = 14.sp)
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "0%",
-                            color = TextGray,
-                            fontSize = 14.sp,
-                            modifier = Modifier
-                                .background(Color.White.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
-                                .padding(horizontal = 4.dp, vertical = 2.dp)
-                        )
-                    }
 
                     Spacer(modifier = Modifier.weight(1f))
 
@@ -103,11 +92,11 @@ fun WalletCard(
                         horizontalArrangement = Arrangement.spacedBy(16.dp),
                         modifier = Modifier.padding(bottom = 8.dp)
                     ) {
-                        ActionButton(icon = Icons.Default.Add, label = "Deposit"){
-                            onClickDeposit()
-                        }
                         ActionButton(icon = Icons.Default.Send, label = "Send"){
                             onClickSend()
+                        }
+                        ActionButton(icon = Icons.Default.Add, label = "Deposit"){
+                            onClickDeposit()
                         }
                     }
                 }
