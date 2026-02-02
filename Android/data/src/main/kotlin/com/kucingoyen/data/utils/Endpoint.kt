@@ -3,9 +3,9 @@ package com.kucingoyen.data.utils
 object Endpoint {
     const val SIGN_IN = "auth/google/verify"
 
-    const val DEPOSIT = "deposit"
+    const val DEPOSIT = "api/wallet/deposit"
 
-    const val GET_BALANCE = "balance"
+    const val GET_BALANCE = "api/wallet/balance"
 
-    const val TRANSFER = "transfer"
+    const val TRANSFER = "api/wallet/transfer"
 }

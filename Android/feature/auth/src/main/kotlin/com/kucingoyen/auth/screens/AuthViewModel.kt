@@ -28,6 +28,7 @@ class AuthViewModel @Inject constructor(
     @Named(TagInjection.WEB_CLIENT_ID) private val webClientId: String,
     private val repository: AuthRepository,
     val userInfoCache: UserInfoCache,
+    val appSessionCache: AppSessionCache,
     ) : BaseViewModel(viewModelUtils) {
 
     private val _showSheetLogin = MutableStateFlow(false)
@@ -48,10 +49,9 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             val idToken = GoogleAuthClient(context).signInAndGetToken(webClientId)
             if (idToken != null) {
-                onSuccess()
-//                signInGoogle(idToken){
-//                    onSuccess()
-//                }
+                signInGoogle(idToken){
+                    onSuccess()
+                }
             } else {
                 ErrorGeneralAction.show(error = ErrorModelData(
                     title = "Failed Log in Google"
@@ -75,6 +75,7 @@ class AuthViewModel @Inject constructor(
                         email = response.email
                         partyId = response.damlPartyId
                     }
+                    appSessionCache.token = response.token
                     onSuccess()
                 }
         }

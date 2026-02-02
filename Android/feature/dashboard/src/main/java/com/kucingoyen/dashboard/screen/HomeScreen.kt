@@ -31,6 +31,7 @@ fun HomeScreen(dashboardViewModel: DashboardViewModel, paddingValues: PaddingVal
     ) {
         Spacer(modifier = Modifier.height(16.dp))
         WalletCard(
+            dashboardViewModel,
             onClickSend = onClickSend,
             onClickDeposit = onClickDeposit
         )

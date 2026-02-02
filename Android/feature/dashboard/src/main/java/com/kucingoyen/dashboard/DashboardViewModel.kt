@@ -1,18 +1,26 @@
 package com.kucingoyen.dashboard
 
+import androidx.lifecycle.viewModelScope
 import com.kucingoyen.core.base.BaseViewModel
 import com.kucingoyen.core.utils.ViewModelUtils
+import com.kucingoyen.core.utils.loading.LoadingAction
+import com.kucingoyen.dashboard.repository.DashboardRepository
 import com.kucingoyen.data.cache.UserInfoCache
+import com.kucingoyen.entity.model.TransferRequest
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
     viewModelUtils: ViewModelUtils,
     val userInfoSession: UserInfoCache,
+    val dashboardRepository: DashboardRepository,
 ) : BaseViewModel(viewModelUtils) {
 
     private val _bottomBarSelected = MutableStateFlow(0)
@@ -23,6 +31,20 @@ class DashboardViewModel @Inject constructor(
 
     private val _totalCollateral = MutableStateFlow("")
     val totalCollateral: StateFlow<String> = _totalCollateral.asStateFlow()
+
+    private val _showSuccessTransferSheet = MutableStateFlow(false)
+    val showSuccessTransferSheet: StateFlow<Boolean> = _showSuccessTransferSheet.asStateFlow()
+
+    private val _showSuccessRequestSheet = MutableStateFlow(false)
+    val showSuccessRequestSheet: StateFlow<Boolean> = _showSuccessRequestSheet.asStateFlow()
+
+    private val _balance = MutableStateFlow("")
+    val balance: StateFlow<String> = _balance.asStateFlow()
+
+
+    init {
+        getBalance()
+    }
 
     fun updateBottomBarSelected(value: Int) {
         _bottomBarSelected.value = value
@@ -66,4 +88,68 @@ class DashboardViewModel @Inject constructor(
         _totalCollateral.value = amount
     }
 
+    fun requestBalance(){
+        viewModelScope.launch(exceptionHandler) {
+            dashboardRepository.depositToken(
+                currency = "CC",
+                amount = 100
+            )
+                .onStart {
+                    LoadingAction.show(true)
+                }
+                .onCompletion {
+                    LoadingAction.show(false)
+                }
+                .collect { response ->
+                    updateShowSuccessRequestSheet(true)
+                    getBalance()
+                }
+        }
+    }
+
+    fun getBalance(){
+        viewModelScope.launch(exceptionHandler) {
+            dashboardRepository.getBalance()
+                .onStart {
+                    LoadingAction.show(true)
+                }
+                .onCompletion {
+                    LoadingAction.show(false)
+                }
+                .collect { response ->
+                    _balance.emit(response.balances.CC.toString())
+                }
+        }
+    }
+
+    fun updateShowSuccessTransferSheet(boolean: Boolean){
+        _showSuccessTransferSheet.tryEmit(boolean)
+    }
+
+    fun updateShowSuccessRequestSheet(boolean: Boolean){
+        _showSuccessRequestSheet.tryEmit(boolean)
+    }
+
+    fun transfer(amount: String, recipientAddress: String){
+        viewModelScope.launch(exceptionHandler) {
+            dashboardRepository.transferToken(
+                TransferRequest(
+                    recipientPartyId = recipientAddress,
+                    amount = amount.toDouble(),
+                    currency = "CC",
+                    note = ""
+                )
+            )
+                .onStart {
+                    LoadingAction.show(true)
+                }
+                .onCompletion {
+                    LoadingAction.show(false)
+                }
+                .collect { response ->
+                    updateShowSuccessTransferSheet(true)
+                    getBalance()
+                }
+        }
+    }
 }

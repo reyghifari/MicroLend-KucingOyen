@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.navigation.NavController
+import com.kucingoyen.core.R
 import com.kucingoyen.core.components.bottomsheet.BottomSheetRowButton
 import com.kucingoyen.entity.model.ErrorModelData
 
@@ -61,7 +62,7 @@ fun ErrorGeneralHost(navController: NavController) {
     if (show) {
         BottomSheetRowButton(
             useImage = true,
-            image = 0,
+            image = R.drawable.ic_error,
             title = title,
             description = description,
             buttonTitleOne = buttonTitleOne,

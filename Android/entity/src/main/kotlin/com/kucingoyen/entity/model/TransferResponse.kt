@@ -6,6 +6,9 @@ data class TransferResponse(
 )
 
 data class TransferRequest(
-    val damlPartyId: String = ""
+    val recipientPartyId: String = "",
+    val amount: Double = 0.0,
+    val currency: String = "",
+    val note: String = "",
 )
 

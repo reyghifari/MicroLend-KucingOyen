@@ -4,7 +4,6 @@ import com.kucingoyen.core.utils.DispatcherProvider
 import com.kucingoyen.data.service.DashboardService
 import com.kucingoyen.entity.model.DepositRequest
 import com.kucingoyen.entity.model.DepositResponse
-import com.kucingoyen.entity.model.GetBalanceRequest
 import com.kucingoyen.entity.model.GetBalanceResponse
 import com.kucingoyen.entity.model.TransferRequest
 import com.kucingoyen.entity.model.TransferResponse
@@ -19,29 +18,27 @@ internal class DashboardRepositoryImpl @Inject constructor(
 ) : DashboardRepository {
 
 
-    override fun depositToken(partyId: String): Flow<DepositResponse>  =
+    override fun depositToken(currency : String, amount : Int): Flow<DepositResponse>  =
         flow {
             emit(
                 dashboardService.depositToken(
-                    DepositRequest(partyId)
+                    DepositRequest(currency, amount)
                 )
             )
         }.flowOn(dispatcher.io)
 
-    override fun getBalance(partyId: String): Flow<GetBalanceResponse> =
+    override fun getBalance(): Flow<GetBalanceResponse> =
         flow {
             emit(
-                dashboardService.getBalance(
-                    GetBalanceRequest(partyId)
-                )
+                dashboardService.getBalance()
             )
         }.flowOn(dispatcher.io)
 
-    override fun transferToken(partyId: String): Flow<TransferResponse> =
+    override fun transferToken(transferRequest: TransferRequest): Flow<TransferResponse> =
         flow {
             emit(
                 dashboardService.transferToken(
-                    TransferRequest(partyId)
+                    transferRequest
                 )
             )
         }.flowOn(dispatcher.io)

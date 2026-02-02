@@ -1,11 +1,13 @@
 package com.kucingoyen.entity.model
 
 data class DepositResponse(
-    val isSuccess: Boolean = false,
-    val message: String = "",
+    val amount: Int = 0,
+    val currency: String = "",
+    val status: String = "",
 )
 
 data class DepositRequest(
-    val damlPartyId: String = ""
+    val currency: String = "",
+    val amount: Int = 0
 )
 

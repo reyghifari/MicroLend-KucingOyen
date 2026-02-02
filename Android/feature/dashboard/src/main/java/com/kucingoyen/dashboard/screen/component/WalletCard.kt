@@ -24,6 +24,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -31,14 +32,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kucingoyen.core.theme.BaseColor
+import com.kucingoyen.dashboard.DashboardViewModel
 import com.kucingoyen.dashboard.TextGray
 
 @Composable
 fun WalletCard(
+    dashboardViewModel: DashboardViewModel,
     onClickSend : () -> Unit = {},
     onClickDeposit : () -> Unit = {}
 ) {
+    val balance by dashboardViewModel.balance.collectAsStateWithLifecycle()
+
     Card(
         shape = RoundedCornerShape(24.dp),
         modifier = Modifier
@@ -80,7 +86,7 @@ fun WalletCard(
                     horizontalAlignment = Alignment.End
                 ) {
                     Text(
-                        text = "CC",
+                        text = "$balance CC",
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
                         fontSize = 32.sp

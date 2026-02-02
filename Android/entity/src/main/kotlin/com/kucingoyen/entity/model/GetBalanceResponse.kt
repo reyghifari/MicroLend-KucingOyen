@@ -1,11 +1,9 @@
 package com.kucingoyen.entity.model
 
 data class GetBalanceResponse(
-    val isSuccess: Boolean = false,
-    val message: String = "",
+    val balances: BalanceItem
 )
 
-data class GetBalanceRequest(
-    val damlPartyId: String = ""
+data class BalanceItem(
+    val CC: Double
 )
-
