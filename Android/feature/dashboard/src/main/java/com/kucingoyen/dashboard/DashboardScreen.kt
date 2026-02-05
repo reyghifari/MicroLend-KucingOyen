@@ -14,6 +14,7 @@ import com.kucingoyen.dashboard.screen.LoanScreen
 import com.kucingoyen.dashboard.screen.ProfileScreen
 import com.kucingoyen.dashboard.screen.component.WalletBottomBar
 import com.kucingoyen.dashboard.screen.component.WalletTopBar
+import com.kucingoyen.entity.model.Transaction
 
 val TextGray = Color(0xFFAAAAAA)
 
@@ -22,7 +23,8 @@ fun DashboardScreen(
     dashboardViewModel: DashboardViewModel = hiltViewModel(),
     requestLoan: () -> Unit = {},
     onClickSend : () -> Unit = {},
-    onClickDeposit : () -> Unit = {}
+    onClickDeposit : () -> Unit = {},
+    onClickTransaction: (Transaction) -> Unit = {}
 ) {
     val selectedBar by dashboardViewModel.bottomBarSelected.collectAsStateWithLifecycle()
 
@@ -36,7 +38,8 @@ fun DashboardScreen(
             0 -> {
                 HomeScreen(
                     dashboardViewModel, paddingValues, onClickSend = onClickSend,
-                    onClickDeposit = onClickDeposit
+                    onClickDeposit = onClickDeposit,
+                    onClickTransaction = onClickTransaction
                 )
             }
             1 -> {

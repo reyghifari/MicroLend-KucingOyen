@@ -15,6 +15,7 @@ data class TransactionEntity(
     @ColumnInfo(name = "tokenAmount") val tokenAmount: String,
     @ColumnInfo(name = "tokenSymbol") val tokenSymbol: String,
     @ColumnInfo(name = "address") val address: String,
+    @ColumnInfo(name = "timestamp") val timestamp: Long
 ) {
     companion object {
         fun parseEntity(it: Transaction) = TransactionEntity(
@@ -22,14 +23,16 @@ data class TransactionEntity(
             type = it.type.name,
             address = it.address,
             tokenAmount = it.tokenAmount,
-            tokenSymbol = it.tokenSymbol
+            tokenSymbol = it.tokenSymbol,
+            timestamp = it.timestamp
         )
 
         fun parseEntity(it: TransactionEntity) = Transaction(
             type = TransactionType.valueOf(it.type),
             address = it.address,
             tokenAmount = it.tokenAmount,
-            tokenSymbol = it.tokenSymbol
+            tokenSymbol = it.tokenSymbol,
+            timestamp = it.timestamp
         )
     }
 

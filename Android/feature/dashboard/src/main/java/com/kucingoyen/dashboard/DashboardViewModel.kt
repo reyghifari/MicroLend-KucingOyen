@@ -49,6 +49,9 @@ class DashboardViewModel @Inject constructor(
     private val _listTransactionActivity = MutableStateFlow<List<Transaction>>(emptyList())
     val listTransactionActivity: StateFlow<List<Transaction>> = _listTransactionActivity.asStateFlow()
 
+    private val _selectedTransaction = MutableStateFlow<Transaction?>(null)
+    val selectedTransaction: StateFlow<Transaction?> = _selectedTransaction.asStateFlow()
+
 
     init {
         getBalance()
@@ -145,6 +148,10 @@ class DashboardViewModel @Inject constructor(
 
     fun updateShowSuccessRequestSheet(boolean: Boolean) {
         _showSuccessRequestSheet.tryEmit(boolean)
+    }
+
+    fun selectTransaction(transaction: Transaction) {
+        _selectedTransaction.value = transaction
     }
 
     fun transfer(amount: String, recipientAddress: String) {

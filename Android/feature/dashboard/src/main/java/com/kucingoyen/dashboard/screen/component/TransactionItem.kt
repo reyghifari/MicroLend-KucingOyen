@@ -1,6 +1,7 @@
 package com.kucingoyen.dashboard.screen.component
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,11 +31,14 @@ import com.kucingoyen.entity.model.Transaction
 import com.kucingoyen.entity.model.TransactionType
 
 @Composable
-fun TransactionItem(transaction: Transaction) {
+fun TransactionItem(transaction: Transaction, onClick : (Transaction) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 12.dp),
+            .padding(vertical = 12.dp)
+            .clickable {
+                onClick(transaction)
+            },
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
@@ -94,27 +98,4 @@ fun maskString(input: String, front: Int = 4, back: Int = 4, replacement: String
     val end = input.takeLast(back)
 
     return "$start$replacement$end"
-}
-
-@Preview(showBackground = true)
-@Composable
-fun TransactionItemPreview() {
-    Column {
-        TransactionItem(
-            Transaction(
-                type = TransactionType.RECEIVED,
-                address = "0xcba5...f1b7",
-                tokenAmount = "0.00003",
-                tokenSymbol = "ETH"
-            )
-        )
-        TransactionItem(
-            Transaction(
-                type = TransactionType.SENT,
-                address = "0xcba5...f1b7",
-                tokenAmount = "0.0001",
-                tokenSymbol = "BTC"
-            )
-        )
-    }
 }

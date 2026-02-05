@@ -13,6 +13,9 @@ import com.kucingoyen.dashboard.DashboardScreen
 import com.kucingoyen.dashboard.DashboardViewModel
 import com.kucingoyen.dashboard.deposit.RequestBalanceScreen
 import com.kucingoyen.dashboard.screen.DetailRequestLoanScreen
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.getValue
+import com.kucingoyen.dashboard.screen.TransactionDetailScreen
 
 @Composable
 fun BaseNavGraph(navController : NavHostController){
@@ -71,6 +74,9 @@ fun DashboardNavigation(
                 dashboardNavController.navigate("${BaseNav.Dashboard.RequestBalanceScreen.name}?index=1")
             }, requestLoan = {
                 dashboardNavController.navigate(BaseNav.Dashboard.DetailRequestLoanScreen.name)
+            }, onClickTransaction = {
+                dashboardViewModel.selectTransaction(it)
+                dashboardNavController.navigate(BaseNav.Dashboard.TransactionDetailScreen.name)
             })
         }
         composable(route = BaseNav.Dashboard.DetailRequestLoanScreen.name) { navBackStackEntry ->
@@ -80,6 +86,14 @@ fun DashboardNavigation(
             val indexTab = navBackStackEntry.arguments?.getString("index") ?: ""
             RequestBalanceScreen(dashboardViewModel, indexTab){
                 dashboardNavController.navigateUp()
+            }
+        }
+        composable(route = BaseNav.Dashboard.TransactionDetailScreen.name) {
+            val selectedTransaction by dashboardViewModel.selectedTransaction.collectAsStateWithLifecycle()
+            selectedTransaction?.let { transaction ->
+                TransactionDetailScreen(transaction = transaction) {
+                    dashboardNavController.navigateUp()
+                }
             }
         }
     }

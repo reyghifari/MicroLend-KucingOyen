@@ -26,6 +26,7 @@ dependencies {
     implementation(project(":core"))
     implementation(project(":feature:auth"))
     implementation(project(":feature:dashboard"))
+    implementation(project(":entity"))
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.hilt.android)
     implementation(libs.androidx.hilt.navigation.compose)

@@ -22,9 +22,10 @@ import com.kucingoyen.dashboard.DashboardViewModel
 import com.kucingoyen.dashboard.screen.component.TabsSection
 import com.kucingoyen.dashboard.screen.component.TransactionItem
 import com.kucingoyen.dashboard.screen.component.WalletCard
+import com.kucingoyen.entity.model.Transaction
 
 @Composable
-fun HomeScreen(dashboardViewModel: DashboardViewModel, paddingValues: PaddingValues, onClickSend : () -> Unit = {},  onClickDeposit : () -> Unit = {}) {
+fun HomeScreen(dashboardViewModel: DashboardViewModel, paddingValues: PaddingValues, onClickSend : () -> Unit = {},  onClickDeposit : () -> Unit = {}, onClickTransaction: (Transaction) -> Unit = {}) {
     val listActivity by dashboardViewModel.listTransactionActivity.collectAsState()
     Column(
         modifier = Modifier
@@ -50,7 +51,9 @@ fun HomeScreen(dashboardViewModel: DashboardViewModel, paddingValues: PaddingVal
         ) {
             LazyColumn {
                 items(listActivity) { transaction ->
-                    TransactionItem(transaction = transaction)
+                    TransactionItem(transaction = transaction){
+                        onClickTransaction(it)
+                    }
                 }
             }
         }
