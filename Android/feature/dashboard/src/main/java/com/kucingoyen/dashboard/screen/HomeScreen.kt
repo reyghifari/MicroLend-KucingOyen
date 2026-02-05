@@ -9,19 +9,23 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.kucingoyen.core.theme.BaseColor
 import com.kucingoyen.dashboard.DashboardViewModel
 import com.kucingoyen.dashboard.screen.component.TabsSection
+import com.kucingoyen.dashboard.screen.component.TransactionItem
 import com.kucingoyen.dashboard.screen.component.WalletCard
 
 @Composable
 fun HomeScreen(dashboardViewModel: DashboardViewModel, paddingValues: PaddingValues, onClickSend : () -> Unit = {},  onClickDeposit : () -> Unit = {}) {
+    val listActivity by dashboardViewModel.listTransactionActivity.collectAsState()
     Column(
         modifier = Modifier
             .background(BaseColor.JetBlack.Minus80)
@@ -37,17 +41,18 @@ fun HomeScreen(dashboardViewModel: DashboardViewModel, paddingValues: PaddingVal
         )
         Spacer(modifier = Modifier.height(24.dp))
         TabsSection()
-        Spacer(modifier = Modifier.height(40.dp))
-
+        Spacer(modifier = Modifier.height(8.dp))
         Box(
-            modifier = Modifier.fillMaxWidth().weight(1f),
-            contentAlignment = Alignment.Center
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            contentAlignment = Alignment.TopCenter
         ) {
-            Text(
-                text = "No Activity found...",
-                color = BaseColor.JetBlack.Normal,
-                fontSize = 16.sp
-            )
+            LazyColumn {
+                items(listActivity) { transaction ->
+                    TransactionItem(transaction = transaction)
+                }
+            }
         }
     }
 }

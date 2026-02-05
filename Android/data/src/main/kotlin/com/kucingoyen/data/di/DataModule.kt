@@ -1,5 +1,8 @@
 package com.kucingoyen.data.di
 
+import android.content.Context
+import androidx.room.Room
+import com.kucingoyen.data.cache.database.AppDataBase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -55,5 +58,16 @@ class DataModule {
             .build()
 
     }
+
+    @Singleton
+    @Provides
+    fun provideAppDataBase(
+        @Named(TagInjection.APPLICATION_CONTEXT) context: Context
+    ): AppDataBase = Room.databaseBuilder(
+        context = context,
+        klass = AppDataBase::class.java,
+        name = AppDataBase.NAME
+    ).fallbackToDestructiveMigration()
+        .build()
 
 }

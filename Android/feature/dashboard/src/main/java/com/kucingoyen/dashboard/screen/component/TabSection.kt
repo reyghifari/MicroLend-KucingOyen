@@ -34,8 +34,5 @@ fun TabsSection() {
 
         Spacer(modifier = Modifier.width(16.dp))
 
-        Text(text = "History", color = TextGray, fontSize = 16.sp)
-
-        Spacer(modifier = Modifier.weight(1f))
     }
 }

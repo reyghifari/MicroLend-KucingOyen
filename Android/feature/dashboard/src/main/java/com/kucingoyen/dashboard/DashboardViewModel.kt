@@ -6,6 +6,10 @@ import com.kucingoyen.core.utils.ViewModelUtils
 import com.kucingoyen.core.utils.loading.LoadingAction
 import com.kucingoyen.dashboard.repository.DashboardRepository
 import com.kucingoyen.data.cache.UserInfoCache
+import com.kucingoyen.data.cache.database.room.TransactionDao
+import com.kucingoyen.data.cache.database.room.TransactionEntity
+import com.kucingoyen.entity.model.Transaction
+import com.kucingoyen.entity.model.TransactionType
 import com.kucingoyen.entity.model.TransferRequest
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,6 +25,7 @@ class DashboardViewModel @Inject constructor(
     viewModelUtils: ViewModelUtils,
     val userInfoSession: UserInfoCache,
     val dashboardRepository: DashboardRepository,
+    val transactionDao: TransactionDao
 ) : BaseViewModel(viewModelUtils) {
 
     private val _bottomBarSelected = MutableStateFlow(0)
@@ -41,6 +46,9 @@ class DashboardViewModel @Inject constructor(
     private val _balance = MutableStateFlow("")
     val balance: StateFlow<String> = _balance.asStateFlow()
 
+    private val _listTransactionActivity = MutableStateFlow<List<Transaction>>(emptyList())
+    val listTransactionActivity: StateFlow<List<Transaction>> = _listTransactionActivity.asStateFlow()
+
 
     init {
         getBalance()
@@ -50,22 +58,22 @@ class DashboardViewModel @Inject constructor(
         _bottomBarSelected.value = value
     }
 
-    fun getLevelUser() : Int{
+    fun getLevelUser(): Int {
         return userInfoSession.level
     }
 
-    fun getEmailUser() : String{
+    fun getEmailUser(): String {
         return userInfoSession.email
     }
 
-    fun getPartyId() : String{
+    fun getPartyId(): String {
         return userInfoSession.partyId
     }
 
-    fun updateLoanAmount(amount : String){
+    fun updateLoanAmount(amount: String) {
         _loanAmount.value = amount
 
-        if (amount.isNotEmpty()){
+        if (amount.isNotEmpty()) {
             val interestRate = when (getLevelUser()) {
                 1 -> 0.10
                 2 -> 0.09
@@ -79,16 +87,16 @@ class DashboardViewModel @Inject constructor(
 
             val total = principal + (principal * interestRate)
             updateTotalCollateral(total.toString())
-        }else{
+        } else {
             updateTotalCollateral("")
         }
     }
 
-    fun updateTotalCollateral(amount : String){
+    fun updateTotalCollateral(amount: String) {
         _totalCollateral.value = amount
     }
 
-    fun requestBalance(){
+    fun requestBalance() {
         viewModelScope.launch(exceptionHandler) {
             dashboardRepository.depositToken(
                 currency = "CC",
@@ -102,12 +110,20 @@ class DashboardViewModel @Inject constructor(
                 }
                 .collect { response ->
                     updateShowSuccessRequestSheet(true)
+                    setTransaction(
+                        Transaction(
+                            type = TransactionType.RECEIVED,
+                            tokenSymbol = "CC",
+                            tokenAmount = "100",
+                            address = ""
+                        )
+                    )
                     getBalance()
                 }
         }
     }
 
-    fun getBalance(){
+    fun getBalance() {
         viewModelScope.launch(exceptionHandler) {
             dashboardRepository.getBalance()
                 .onStart {
@@ -118,19 +134,20 @@ class DashboardViewModel @Inject constructor(
                 }
                 .collect { response ->
                     _balance.emit(response.balances.CC.toString())
+                    getTransactionActivity()
                 }
         }
     }
 
-    fun updateShowSuccessTransferSheet(boolean: Boolean){
+    fun updateShowSuccessTransferSheet(boolean: Boolean) {
         _showSuccessTransferSheet.tryEmit(boolean)
     }
 
-    fun updateShowSuccessRequestSheet(boolean: Boolean){
+    fun updateShowSuccessRequestSheet(boolean: Boolean) {
         _showSuccessRequestSheet.tryEmit(boolean)
     }
 
-    fun transfer(amount: String, recipientAddress: String){
+    fun transfer(amount: String, recipientAddress: String) {
         viewModelScope.launch(exceptionHandler) {
             dashboardRepository.transferToken(
                 TransferRequest(
@@ -148,8 +165,34 @@ class DashboardViewModel @Inject constructor(
                 }
                 .collect { response ->
                     updateShowSuccessTransferSheet(true)
+                    setTransaction(
+                        Transaction(
+                            type = TransactionType.SENT,
+                            tokenSymbol = "CC",
+                            tokenAmount = amount,
+                            address = recipientAddress
+                        )
+                    )
                     getBalance()
                 }
+        }
+    }
+
+    private fun setTransaction(transaction: Transaction) {
+        viewModelScope.launch(exceptionHandler) {
+            dashboardRepository.setTransactionActivity(transaction)
+                .onStart {}
+                .onCompletion {}
+                .collect {}
+        }
+    }
+
+    private fun getTransactionActivity(){
+        viewModelScope.launch {
+            val data = transactionDao.getAll().map {
+                TransactionEntity.parseEntity(it)
+            }
+            _listTransactionActivity.emit(data)
         }
     }
 }

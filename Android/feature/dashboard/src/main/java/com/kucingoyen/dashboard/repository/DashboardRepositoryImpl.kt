@@ -1,10 +1,13 @@
 package com.kucingoyen.dashboard.repository
 
 import com.kucingoyen.core.utils.DispatcherProvider
+import com.kucingoyen.data.cache.database.room.TransactionDao
+import com.kucingoyen.data.cache.database.room.TransactionEntity
 import com.kucingoyen.data.service.DashboardService
 import com.kucingoyen.entity.model.DepositRequest
 import com.kucingoyen.entity.model.DepositResponse
 import com.kucingoyen.entity.model.GetBalanceResponse
+import com.kucingoyen.entity.model.Transaction
 import com.kucingoyen.entity.model.TransferRequest
 import com.kucingoyen.entity.model.TransferResponse
 import kotlinx.coroutines.flow.Flow
@@ -15,6 +18,7 @@ import javax.inject.Inject
 internal class DashboardRepositoryImpl @Inject constructor(
     private val dispatcher: DispatcherProvider,
     private val dashboardService: DashboardService,
+    private val transactionCache: TransactionDao,
 ) : DashboardRepository {
 
 
@@ -42,5 +46,14 @@ internal class DashboardRepositoryImpl @Inject constructor(
                 )
             )
         }.flowOn(dispatcher.io)
+
+    override fun setTransactionActivity(transaction: Transaction): Flow<Unit> =
+        flow {
+            transactionCache.insert(
+                TransactionEntity.parseEntity(transaction)
+            )
+            emit(Unit)
+        }.flowOn(dispatcher.io)
+
 
 }
