@@ -25,7 +25,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kucingoyen.core.theme.BaseColor
-import com.kucingoyen.dashboard.screen.getInterest
 
 @Composable
 fun LevelInterest(
@@ -64,7 +63,7 @@ fun LevelInterest(
                     horizontalArrangement = Arrangement.Start,
                 ) {
                     Text(
-                        text = "${level.toInt().getInterest()} Interest Rate",
+                        text = "10% Interest Rate",
                         fontFamily = FontFamily.Monospace,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 12.sp,

@@ -43,12 +43,12 @@ fun DashboardScreen(
                 )
             }
             1 -> {
-                LoanScreen(dashboardViewModel){
+                LoanScreen(dashboardViewModel, paddingValues){
                     requestLoan()
                 }
             }
             2 -> {
-                ProfileScreen(dashboardViewModel)
+                ProfileScreen(dashboardViewModel, paddingValues)
             }
         }
     }

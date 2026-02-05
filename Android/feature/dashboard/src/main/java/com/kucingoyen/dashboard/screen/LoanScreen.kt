@@ -4,6 +4,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -48,13 +49,17 @@ enum class LoanTab(val title: String) {
 }
 
 @Composable
-fun LoanScreen(dashboardViewModel: DashboardViewModel, onRequestLoan: () -> Unit = {}) {
+fun LoanScreen(
+    dashboardViewModel: DashboardViewModel,
+    paddingValues: PaddingValues,
+    onRequestLoan: () -> Unit = {}
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(BaseColor.JetBlack.Minus80)
             .statusBarsPadding()
-            .padding(top = 16.dp),
+            .padding(paddingValues),
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
