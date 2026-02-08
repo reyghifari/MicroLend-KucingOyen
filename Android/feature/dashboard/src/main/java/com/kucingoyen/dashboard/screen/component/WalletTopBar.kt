@@ -11,7 +11,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,13 +30,6 @@ fun WalletTopBar(
         horizontalArrangement = Arrangement.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = dashboardViewModel.getEmailUser(),
-                color = BaseColor.JetBlack.Normal,
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                fontFamily = FontFamily.Monospace
-            )
             Text(
                 text = dashboardViewModel.getPartyId(),
                 color = BaseColor.JetBlack.Minus20,

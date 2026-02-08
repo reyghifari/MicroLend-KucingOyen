@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -89,40 +90,22 @@ fun LoginScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                shape = RoundedCornerShape(10),
+                shape = RoundedCornerShape(0),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = BaseColor.Black,
                     contentColor = BaseColor.White
                 )
             ) {
                 Text(
-                    text = "Create a new account",
+                    text = "Sign In With Google",
                     fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-
-            Button(
-                onClick = { viewModel.updateShowSheetLogin(true)},
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(10),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = BaseColor.MicroLend.ButtonSecondaryBg,
-                    contentColor = BaseColor.MicroLend.TextPurple
-                ),
-                elevation = ButtonDefaults.buttonElevation(0.dp)
-            ) {
-                Text(
-                    text = "I have an existing account",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.SemiBold,
+                    fontFamily = FontFamily.Monospace
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(48.dp))
         BottomSheetLogin(authViewModel = viewModel, onGoogleLogin = onLogin)
         BottomSheetRegister(authViewModel = viewModel, onSuccessRegister = onLogin)
     }

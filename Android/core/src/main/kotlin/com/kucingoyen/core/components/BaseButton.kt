@@ -44,13 +44,13 @@ fun BaseButton(
             modifier = modifier.skeletonLoading(
                 isLoading = true,
                 height = loadingHeight,
-                shape = RoundedCornerShape(BaseDp.dp24)
+                shape = RoundedCornerShape(0)
             )
         )
     } else {
         Button(
             onClick = onClickButton,
-            shape = RoundedCornerShape(BaseDp.dp24),
+            shape = RoundedCornerShape(0),
             colors = ButtonDefaults.buttonColors(
                 containerColor = containerButtonColor,
                 disabledContainerColor = BaseColor.ButtonGrayColorDisableApp,

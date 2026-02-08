@@ -1,112 +1,146 @@
 package com.kucingoyen.dashboard.screen.component
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Pets
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Wallet
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kucingoyen.core.R
 import com.kucingoyen.core.theme.BaseColor
 import com.kucingoyen.dashboard.DashboardViewModel
-import com.kucingoyen.dashboard.TextGray
 
 @Composable
 fun WalletCard(
     dashboardViewModel: DashboardViewModel,
-    onClickSend : () -> Unit = {},
-    onClickDeposit : () -> Unit = {}
+    onClickSend: () -> Unit = {},
+    onClickDeposit: () -> Unit = {},
+    onClickRequest: () -> Unit = {},
+    onClickGifting: () -> Unit = {}
 ) {
     val balance by dashboardViewModel.balance.collectAsStateWithLifecycle()
+    val totalBalance by dashboardViewModel.getTotalBalance.collectAsStateWithLifecycle()
+
+    val brandColor = Color(0xFFFF3E17)
 
     Card(
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(0),
         modifier = Modifier
             .fillMaxWidth()
-            .height(200.dp),
-        elevation = CardDefaults.cardElevation(8.dp)
+            .height(220.dp)
+            .border(1.dp, BaseColor.JetBlack.Normal),
+        colors = CardDefaults.cardColors(containerColor = brandColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(
-                    brush = Brush.linearGradient(
-                        colors = listOf(BaseColor.OceanBlue.Normal, BaseColor.JetBlack.Normal)
-                    )
-                )
+                .padding(20.dp)
         ) {
             Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(20.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
             ) {
-                Box(
-                    modifier = Modifier
-                        .weight(0.4f)
-                        .fillMaxHeight(),
-                    contentAlignment = Alignment.CenterStart
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Wallet,
-                        contentDescription = "Fox Mascot",
-                        tint = Color.White.copy(alpha = 0.9f),
-                        modifier = Modifier.size(80.dp)
-                    )
-                }
+                Icon(
+                    imageVector = Icons.Default.Wallet,
+                    contentDescription = "Wallet Icon",
+                    tint = Color.White.copy(alpha = 0.9f),
+                    modifier = Modifier.size(70.dp)
+                )
 
-                Column(
-                    modifier = Modifier.weight(0.6f),
-                    horizontalAlignment = Alignment.End
-                ) {
+                Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = "$balance CC",
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 32.sp
+                        text = "Total Balance",
+                        fontSize = 18.sp,
+                        color = BaseColor.White,
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
                     )
-
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    ) {
-                        ActionButton(icon = Icons.Default.Send, label = "Send"){
-                            onClickSend()
-                        }
-                        ActionButton(icon = Icons.Default.Add, label = "Deposit"){
-                            onClickDeposit()
-                        }
-                    }
+                    Text(
+                        text = "$ $totalBalance",
+                        fontSize = 18.sp,
+                        color = Color.White.copy(alpha = 0.85f),
+                        fontWeight = FontWeight.Medium,
+                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                    )
                 }
             }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                WalletActionButton("Request Loan", R.drawable.ic_request_money, onClickRequest)
+                WalletActionButton("Provide Funding", R.drawable.ic_give_money, onClickGifting)
+                WalletActionButton("Send", R.drawable.ic_send, onClickSend)
+                WalletActionButton("Deposit", R.drawable.ic_deposit, onClickDeposit)
+            }
         }
+    }
+}
+
+@Composable
+fun WalletActionButton(
+    label: String,
+    iconRes: Int,
+    onClick: () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.clickable { onClick() }
+    ) {
+        Surface(
+            shape = RoundedCornerShape(0),
+            color = Color.White,
+            modifier = Modifier.size(60.dp),
+            shadowElevation = 2.dp
+        ) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.border(1.dp, BaseColor.JetBlack.Normal).padding(12.dp)
+            ) {
+                Image(
+                    modifier = Modifier
+                        .size(48.dp),
+                    painter = painterResource(iconRes),
+                    contentDescription = "Canton Logo"
+                )
+            }
+        }
+
+        Text(
+            text = label,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White
+        )
     }
 }

@@ -10,10 +10,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kucingoyen.core.theme.BaseColor
 import com.kucingoyen.dashboard.screen.HomeScreen
-import com.kucingoyen.dashboard.screen.LoanScreen
 import com.kucingoyen.dashboard.screen.ProfileScreen
 import com.kucingoyen.dashboard.screen.component.WalletBottomBar
-import com.kucingoyen.dashboard.screen.component.WalletTopBar
+import com.kucingoyen.dashboard.screen.portofolio.PortfolioScreen
 import com.kucingoyen.entity.model.Transaction
 
 val TextGray = Color(0xFFAAAAAA)
@@ -30,7 +29,6 @@ fun DashboardScreen(
 
     Scaffold(
         containerColor = BaseColor.White,
-        topBar = { if (selectedBar == 0) WalletTopBar(dashboardViewModel) },
         modifier = Modifier.statusBarsPadding(),
         bottomBar = { WalletBottomBar(dashboardViewModel) }
     ) { paddingValues ->
@@ -43,9 +41,7 @@ fun DashboardScreen(
                 )
             }
             1 -> {
-                LoanScreen(dashboardViewModel, paddingValues){
-                    requestLoan()
-                }
+                PortfolioScreen()
             }
             2 -> {
                 ProfileScreen(dashboardViewModel, paddingValues)

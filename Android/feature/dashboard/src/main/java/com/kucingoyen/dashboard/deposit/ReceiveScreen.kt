@@ -1,7 +1,6 @@
 package com.kucingoyen.dashboard.deposit
 
 import android.content.Intent
-import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -64,8 +63,8 @@ fun ReceiveContent(
             contentDescription = "QR Code",
             modifier = Modifier
                 .size(350.dp)
-                .background(BaseColor.White, RoundedCornerShape(16.dp))
-                .border(2.dp, BaseColor.JetBlack.Minus80, RoundedCornerShape(16.dp)),
+                .background(BaseColor.White, RoundedCornerShape(0))
+                .border(2.dp, BaseColor.JetBlack.Minus80, RoundedCornerShape(0)),
         )
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -92,7 +91,7 @@ fun ReceiveContent(
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
+            horizontalArrangement = Arrangement.SpaceAround,
             verticalAlignment = Alignment.CenterVertically
         ) {
             // --- Copy Button ---
@@ -102,7 +101,6 @@ fun ReceiveContent(
                     .clickable {
                         clipboardManager.setText(AnnotatedString(walletAddress))
                     }
-                    .padding(horizontal = 24.dp)
             ) {
                 Box(
                     modifier = Modifier
@@ -129,9 +127,8 @@ fun ReceiveContent(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .clickable {
-                        dashboardViewModel.requestBalance()
+                        dashboardViewModel.requestBalance("CC", 100)
                     }
-                    .padding(horizontal = 24.dp)
             ) {
                 Box(
                     modifier = Modifier
@@ -154,6 +151,35 @@ fun ReceiveContent(
                 )
             }
 
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .clickable {
+                        dashboardViewModel.requestBalance("USD", 10)
+                    }
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(BaseColor.JetBlack.Minus90, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.AttachMoney,
+                        contentDescription = "Copy",
+                        tint = BaseColor.JetBlack.Minus40,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Request USDx",
+                    fontSize = 14.sp,
+                    color = BaseColor.JetBlack.Minus40
+                )
+            }
+
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
@@ -166,7 +192,6 @@ fun ReceiveContent(
                         val shareIntent = Intent.createChooser(sendIntent, "Share address via")
                         context.startActivity(shareIntent)
                     }
-                    .padding(horizontal = 24.dp)
             ) {
                 Box(
                     modifier = Modifier

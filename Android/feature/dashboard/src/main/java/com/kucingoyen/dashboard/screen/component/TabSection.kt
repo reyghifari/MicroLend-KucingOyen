@@ -14,22 +14,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.kucingoyen.core.theme.BaseColor
-import com.kucingoyen.dashboard.TextGray
 
 @Composable
-fun TabsSection() {
+fun TabsSection(text : String = "") {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
             modifier = Modifier
-                .background(BaseColor.JetBlack.Normal, RoundedCornerShape(8.dp))
+                .background(BaseColor.JetBlack.Normal, RoundedCornerShape(0))
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            Text(text = "Activity", color = BaseColor.White, fontWeight = FontWeight.SemiBold)
+            Text(text = text, color = BaseColor.White, fontWeight = FontWeight.SemiBold)
         }
 
         Spacer(modifier = Modifier.width(16.dp))

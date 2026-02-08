@@ -29,9 +29,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kucingoyen.auth.screens.AuthViewModel
 import com.kucingoyen.core.R
 import com.kucingoyen.core.components.bottomsheet.BaseBottomSheet
-import com.kucingoyen.core.components.error.ErrorGeneralAction
 import com.kucingoyen.core.theme.BaseColor
-import com.kucingoyen.entity.model.ErrorModelData
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,7 +70,7 @@ fun BottomSheetLogin(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
-                    shape = RoundedCornerShape(20.dp),
+                    shape = RoundedCornerShape(0),
                     border = BorderStroke(1.dp, Color(0xFFE0E0E0)),
                     colors = ButtonDefaults.outlinedButtonColors(
                         containerColor = Color.White,

@@ -12,8 +12,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CallReceived
 import androidx.compose.material.icons.filled.CallMade
+import androidx.compose.material.icons.filled.CallReceived
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,10 +23,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kucingoyen.core.theme.BaseColor
+import com.kucingoyen.dashboard.screen.formatDate
 import com.kucingoyen.entity.model.Transaction
 import com.kucingoyen.entity.model.TransactionType
 
@@ -69,7 +69,7 @@ fun TransactionItem(transaction: Transaction, onClick : (Transaction) -> Unit) {
                 fontFamily = FontFamily.Monospace
             )
             Text(
-                text = if (transaction.type == TransactionType.RECEIVED) "From ${maskString(transaction.address)}" else "To ${maskString(transaction.address)}",
+                text = formatDate(transaction.timestamp),
                 color = Color.Gray,
                 fontSize = 14.sp,
                 fontFamily = FontFamily.Monospace

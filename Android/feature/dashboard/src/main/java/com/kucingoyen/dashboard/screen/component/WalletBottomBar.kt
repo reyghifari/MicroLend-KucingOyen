@@ -45,7 +45,7 @@ fun WalletBottomBar(
             selected = selectedBar == 1,
             onClick = {dashboardViewModel.updateBottomBarSelected(1)},
             icon = { Icon(Icons.Default.GridView, contentDescription = "My Loan") },
-            label = { Text("My Loan") },
+            label = { Text("Portofolio") },
             colors = NavigationBarItemDefaults.colors(unselectedIconColor = TextGray, unselectedTextColor = TextGray,      selectedIconColor = Color.White,
                 selectedTextColor = Color.White,
                 indicatorColor = Color.Transparent,)

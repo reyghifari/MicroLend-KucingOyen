@@ -95,7 +95,7 @@ fun SuccessTransferSheet(title : String, desc : String, onDismiss: () -> Unit) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                shape = RoundedCornerShape(28.dp),
+                shape = RoundedCornerShape(0),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = BaseColor.JetBlack.Normal,
                 )

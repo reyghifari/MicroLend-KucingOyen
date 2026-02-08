@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.kucingoyen.core.components.BaseButton
@@ -63,6 +64,7 @@ fun BottomSheetRowButton(
                 color = BaseColor.JetBlack.Normal,
                 style = BaseFont.titleMediumBold,
                 textAlign = TextAlign.Center,
+                fontFamily = FontFamily.Monospace
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(

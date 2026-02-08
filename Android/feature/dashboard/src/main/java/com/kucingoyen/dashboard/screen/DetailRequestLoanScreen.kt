@@ -80,7 +80,7 @@ fun ContentRequestLoan(modifier: Modifier = Modifier,
         )
         Box(
             modifier = Modifier
-                .clip(RoundedCornerShape(24.dp))
+                .clip(RoundedCornerShape(0))
                 .background(BaseColor.JetBlack.Normal)
                 .padding(16.dp)
         ) {

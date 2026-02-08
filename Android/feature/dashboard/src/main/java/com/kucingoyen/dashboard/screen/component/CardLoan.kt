@@ -68,7 +68,7 @@ fun LoanDetailsCard(
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(0),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
     ) {
@@ -181,7 +181,7 @@ fun LoanDetailsCard(
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color(0xFFEF4444),
                         ),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(0)
                     ) {
                         Text(
                             text = "CANCEL REQUEST",
@@ -201,7 +201,7 @@ fun LoanDetailsCard(
                         colors = ButtonDefaults.buttonColors(
                             containerColor = BaseColor.JetBlack.Normal,
                         ),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(0)
                     ) {
                         Text(
                             text = "PAY NOW",
@@ -219,7 +219,7 @@ fun LoanDetailsCard(
 fun StatusBadge(text: String, backgroundColor: Color) {
     Surface(
         color = backgroundColor,
-        shape = RoundedCornerShape(8.dp)
+        shape = RoundedCornerShape(0)
     ) {
         Text(
             text = text,

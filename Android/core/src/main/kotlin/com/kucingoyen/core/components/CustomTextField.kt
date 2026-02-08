@@ -40,7 +40,7 @@ fun CustomTextField(
         modifier = Modifier
             .fillMaxWidth()
             .height(80.dp),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(0),
         colors = TextFieldDefaults.colors(
             focusedContainerColor = containerColor,
             unfocusedContainerColor = containerColor,

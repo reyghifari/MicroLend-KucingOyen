@@ -39,7 +39,7 @@ fun InputCard(
 ) {
     Box(
         modifier = Modifier
-            .background(BaseColor.White, shape = RoundedCornerShape(12.dp))
+            .background(BaseColor.White, shape = RoundedCornerShape(0))
             .fillMaxWidth()
     ) {
         Column(

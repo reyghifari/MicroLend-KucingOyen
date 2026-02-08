@@ -1,7 +1,9 @@
 package com.kucingoyen.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -13,8 +15,6 @@ import com.kucingoyen.dashboard.DashboardScreen
 import com.kucingoyen.dashboard.DashboardViewModel
 import com.kucingoyen.dashboard.deposit.RequestBalanceScreen
 import com.kucingoyen.dashboard.screen.DetailRequestLoanScreen
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.runtime.getValue
 import com.kucingoyen.dashboard.screen.TransactionDetailScreen
 
 @Composable

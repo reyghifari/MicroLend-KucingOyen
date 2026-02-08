@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,6 +43,7 @@ fun BottomSheetRegister(
 
     if (showRegisterSheet){
         BaseBottomSheet(
+            titleHeader = "Sign In",
             bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
             onDismiss = {
                 authViewModel.updateShowSheetRegister(false)
@@ -53,14 +55,6 @@ fun BottomSheetRegister(
                     .padding(horizontal = 24.dp, vertical = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = "Create a new account",
-                    fontSize = 18.sp,
-                    color = BaseColor.MicroLend.TextPurple,
-                    fontWeight = FontWeight.SemiBold,
-                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                )
-
                 Spacer(modifier = Modifier.height(32.dp))
 
                 OutlinedButton(
@@ -70,8 +64,8 @@ fun BottomSheetRegister(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
-                    shape = RoundedCornerShape(20.dp),
-                    border = BorderStroke(1.dp, Color(0xFFE0E0E0)),
+                    shape = RoundedCornerShape(0),
+                    border = BorderStroke(1.dp, BaseColor.JetBlack.Normal),
                     colors = ButtonDefaults.outlinedButtonColors(
                         containerColor = Color.White,
                         contentColor = Color.Black
@@ -89,6 +83,7 @@ fun BottomSheetRegister(
                         text = "Sign up with Google",
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
+                        fontFamily = FontFamily.Monospace,
                         color = Color.Black.copy(alpha = 0.8f)
                     )
                 }

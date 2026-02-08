@@ -46,7 +46,7 @@ fun RequestLoanScreen(dashboardViewModel: DashboardViewModel, onRequestLoan: () 
             colors = ButtonDefaults.buttonColors(
                 containerColor = BaseColor.JetBlack.Normal,
             ),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(0)
         ) {
             Text(
                 text = "Request New Loan",

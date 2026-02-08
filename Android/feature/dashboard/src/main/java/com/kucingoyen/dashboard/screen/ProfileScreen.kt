@@ -159,7 +159,7 @@ fun LevelCard(level: Int) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(8.dp)
-                .clip(RoundedCornerShape(4.dp)),
+                .clip(RoundedCornerShape(0)),
             color = Orange,
             trackColor = Color(0xFFF3F4F6),
         )
@@ -228,7 +228,7 @@ fun LockedRewardsList() {
             )
             Spacer(modifier = Modifier.width(8.dp))
             Surface(
-                shape = RoundedCornerShape(4.dp),
+                shape = RoundedCornerShape(0),
                 color = Color(0xFFE0E7FF)
             ) {
                 Text(
@@ -245,7 +245,7 @@ fun LockedRewardsList() {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
+                .clip(RoundedCornerShape(0))
                 .background(Color(0xFFF3F4F6)) // Light gray container background
         ) {
              levels.forEachIndexed { index, levelData ->
@@ -273,7 +273,7 @@ fun LockedLevelItem(data: LevelData) {
         ) {
              Surface(
                 modifier = Modifier.size(40.dp),
-                shape = RoundedCornerShape(8.dp),
+                shape = RoundedCornerShape(0),
                 color = Color(0xFFE8EAF6)
             ) {
                  Icon(
@@ -365,7 +365,7 @@ fun AccountDetailItem(
     onClickCopy : (String) -> Unit = {}
 ) {
     Card(
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(0),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFF9FAFB)),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         modifier = Modifier.fillMaxWidth()

@@ -46,7 +46,7 @@ fun BaseOutlineButton(
             modifier = modifier.skeletonLoading(
                 isLoading = true,
                 height = loadingHeight,
-                shape = RoundedCornerShape(BaseDp.dp24)
+                shape = RoundedCornerShape(0)
             )
         )
     } else {

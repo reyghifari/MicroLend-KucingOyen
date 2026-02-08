@@ -8,6 +8,7 @@ import com.kucingoyen.dashboard.repository.DashboardRepository
 import com.kucingoyen.data.cache.UserInfoCache
 import com.kucingoyen.data.cache.database.room.TransactionDao
 import com.kucingoyen.data.cache.database.room.TransactionEntity
+import com.kucingoyen.entity.model.BalanceItem
 import com.kucingoyen.entity.model.Transaction
 import com.kucingoyen.entity.model.TransactionType
 import com.kucingoyen.entity.model.TransferRequest
@@ -43,8 +44,11 @@ class DashboardViewModel @Inject constructor(
     private val _showSuccessRequestSheet = MutableStateFlow(false)
     val showSuccessRequestSheet: StateFlow<Boolean> = _showSuccessRequestSheet.asStateFlow()
 
-    private val _balance = MutableStateFlow("")
-    val balance: StateFlow<String> = _balance.asStateFlow()
+    private val _balance = MutableStateFlow<BalanceItem>(BalanceItem())
+    val balance: StateFlow<BalanceItem> = _balance.asStateFlow()
+
+    private val _getTotalBalance = MutableStateFlow<Double>(0.0)
+    val getTotalBalance: StateFlow<Double> = _getTotalBalance.asStateFlow()
 
     private val _listTransactionActivity = MutableStateFlow<List<Transaction>>(emptyList())
     val listTransactionActivity: StateFlow<List<Transaction>> = _listTransactionActivity.asStateFlow()
@@ -99,11 +103,11 @@ class DashboardViewModel @Inject constructor(
         _totalCollateral.value = amount
     }
 
-    fun requestBalance() {
+    fun requestBalance(asset : String, amount : Int) {
         viewModelScope.launch(exceptionHandler) {
             dashboardRepository.depositToken(
-                currency = "CC",
-                amount = 100
+                currency = asset,
+                amount = amount
             )
                 .onStart {
                     LoadingAction.show(true)
@@ -116,8 +120,8 @@ class DashboardViewModel @Inject constructor(
                     setTransaction(
                         Transaction(
                             type = TransactionType.RECEIVED,
-                            tokenSymbol = "CC",
-                            tokenAmount = "100",
+                            tokenSymbol = asset,
+                            tokenAmount = amount.toString(),
                             address = ""
                         )
                     )
@@ -136,7 +140,9 @@ class DashboardViewModel @Inject constructor(
                     LoadingAction.show(false)
                 }
                 .collect { response ->
-                    _balance.emit(response.balances.CC.toString())
+                    _balance.emit(response.balances)
+
+                    _getTotalBalance.emit((response.balances.CC * 0.17) + 100.0)
                     getTransactionActivity()
                 }
         }
@@ -202,4 +208,6 @@ class DashboardViewModel @Inject constructor(
             _listTransactionActivity.emit(data)
         }
     }
+
+
 }

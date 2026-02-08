@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun Modifier.skeletonLoading(
     isLoading: Boolean,
-    shape: Shape = RoundedCornerShape(12.dp),
+    shape: Shape = RoundedCornerShape(0),
     height: Dp = 10.dp,
     width: Dp = 10.dp,
     widthStatus: Boolean = false,

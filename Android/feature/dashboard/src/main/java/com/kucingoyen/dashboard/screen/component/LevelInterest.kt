@@ -34,7 +34,7 @@ fun LevelInterest(
         modifier = Modifier
             .fillMaxWidth()
             .background(
-                color = BaseColor.JetBlack.Normal, shape = RoundedCornerShape(12.dp)
+                color = BaseColor.JetBlack.Normal, shape = RoundedCornerShape(0)
             )
     ) {
         Row(
