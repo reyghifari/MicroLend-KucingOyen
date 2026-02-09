@@ -211,6 +211,19 @@ template AssetIssuerService
           totalSupply = 0.0
           maxSupply
 
+    -- | Create USDx (USD Stablecoin) token factory
+    nonconsuming choice CreateUSDxFactory : ContractId AssetFactory
+      with
+        maxSupply : Optional Decimal
+      controller issuer
+      do
+        let usdxId = usdxAssetId issuer
+        create AssetFactory with
+          issuer
+          assetId = usdxId
+          totalSupply = 0.0
+          maxSupply
+
     -- | Add observer to the service
     choice AddServiceObserver : ContractId AssetIssuerService
       with

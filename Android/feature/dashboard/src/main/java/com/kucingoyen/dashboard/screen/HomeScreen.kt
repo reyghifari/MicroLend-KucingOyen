@@ -87,7 +87,7 @@ fun HomeScreen(
             AssetSection(
                 assetName = "Stablecoin",
                 assetSymbol = "USDx",
-                balance = "100.0",
+                balance = balance.USDx.toString(),
             )
             Spacer(modifier = Modifier.height(16.dp))
         }

@@ -156,7 +156,7 @@ fun ReceiveContent(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .clickable {
-                        dashboardViewModel.requestBalance("USD", 10)
+                        dashboardViewModel.requestBalance("USDx", 10)
                     }
             ) {
                 Box(

@@ -142,7 +142,7 @@ class DashboardViewModel @Inject constructor(
                 .collect { response ->
                     _balance.emit(response.balances)
 
-                    _getTotalBalance.emit((response.balances.CC * 0.17) + 100.0)
+                    _getTotalBalance.emit((response.balances.CC * 0.17) + response.balances.USDx)
                     getTransactionActivity()
                 }
         }

@@ -44,3 +44,10 @@ ccAssetId issuer = AssetId with
   issuer
   symbol = "CC"
   description = "Collateral Coin Token"
+
+-- | Helper untuk membuat AssetId USDx Token (USD Stablecoin)
+usdxAssetId : Party -> AssetId
+usdxAssetId issuer = AssetId with 
+  issuer
+  symbol = "USDx"
+  description = "USD Stablecoin Token"

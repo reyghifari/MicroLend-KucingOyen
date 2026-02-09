@@ -100,6 +100,16 @@ public class AdminSetupService {
 
             log.info("Created CC AssetFactory via exerciseByKey");
 
+            // Create USDx Token Factory for USD Stablecoin deposits
+            damlService.exerciseChoiceByKey(
+                    "MicroLend.Finance.Asset:AssetIssuerService",
+                    adminPartyId,
+                    "CreateUSDxFactory",
+                    java.util.Collections.singletonMap("maxSupply", null), // unlimited supply
+                    adminPartyId);
+
+            log.info("Created USDx AssetFactory via exerciseByKey");
+
         } catch (Exception e) {
             log.error("Failed to setup initial contracts: {}", e.getMessage(), e);
         }

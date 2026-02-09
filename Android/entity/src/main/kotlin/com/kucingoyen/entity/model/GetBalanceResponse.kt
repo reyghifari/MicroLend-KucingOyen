@@ -5,5 +5,6 @@ data class GetBalanceResponse(
 )
 
 data class BalanceItem(
-    val CC: Double = 0.0
+    val CC: Double = 0.0,
+    val USDx: Double = 0.0,
 )
