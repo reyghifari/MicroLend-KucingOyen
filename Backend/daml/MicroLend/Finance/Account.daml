@@ -1,0 +1,108 @@
+-- | Account Management for MicroLend Finance
+-- Handles user account creation and management
+module MicroLend.Finance.Account where
+
+import MicroLend.Finance.Holding
+
+-- | Factory for creating user accounts
+-- Custodian (Bank) uses this to create accounts for users
+template AccountFactory
+  with
+    custodian : Party  -- ^ Bank/operator yang mengelola factory
+  where
+    signatory custodian
+
+    -- | Create a new account for a user
+    nonconsuming choice CreateAccount : ContractId Account
+      with
+        owner : Party         -- ^ User yang akan memiliki account
+        accountName : Text    -- ^ Nama/deskripsi account
+      controller custodian
+      do
+        create Account with
+          custodian
+          owner
+          accountName
+          isActive = True
+
+-- | User account template
+-- Represents a user's account in the system
+template Account
+  with
+    custodian : Party    -- ^ Bank/operator yang mengelola account
+    owner : Party        -- ^ Pemilik account
+    accountName : Text   -- ^ Nama/deskripsi account
+    isActive : Bool      -- ^ Status aktif account
+  where
+    signatory custodian
+    observer owner
+
+    -- | Deposit/receive a holding into this account
+    -- Used when receiving tokens from minting or transfer
+    nonconsuming choice ReceiveHolding : ContractId Holding
+      with
+        holdingCid : ContractId Holding
+      controller custodian
+      do
+        -- Verify the holding is for this account owner
+        holding <- fetch holdingCid
+        assertMsg "Account is not active" isActive
+        assertMsg "Holding owner must match account owner" 
+          (holding.owner == owner)
+        pure holdingCid
+
+    -- | Withdraw/send holding from this account
+    -- Owner initiates transfer to another party
+    nonconsuming choice SendHolding : ContractId Holding
+      with
+        holdingCid : ContractId Holding
+        recipient : Party
+      controller owner
+      do
+        assertMsg "Account is not active" isActive
+        -- Verify ownership and transfer
+        holding <- fetch holdingCid
+        assertMsg "You don't own this holding" (holding.owner == owner)
+        exercise holdingCid Transfer with newOwner = recipient
+
+    -- | Partially send tokens (split then transfer)
+    nonconsuming choice SendPartial : (ContractId Holding, ContractId Holding)
+      with
+        holdingCid : ContractId Holding
+        recipient : Party
+        amountToSend : Decimal
+      controller owner
+      do
+        assertMsg "Account is not active" isActive
+        -- Split and transfer
+        (splitHolding, remainingHolding) <- exercise holdingCid Split with 
+          splitAmount = amountToSend
+        transferredHolding <- exercise splitHolding Transfer with 
+          newOwner = recipient
+        pure (transferredHolding, remainingHolding)
+
+    -- | Deactivate the account
+    choice DeactivateAccount : ContractId Account
+      controller custodian
+      do
+        create this with isActive = False
+
+    -- | Reactivate the account
+    choice ReactivateAccount : ContractId Account
+      controller custodian
+      do
+        assertMsg "Account is already active" (not isActive)
+        create this with isActive = True
+
+    -- | Update account name
+    choice UpdateAccountName : ContractId Account
+      with
+        newName : Text
+      controller owner
+      do
+        create this with accountName = newName
+
+    -- | Get account info (non-consuming)
+    nonconsuming choice GetAccountInfo : (Party, Text, Bool)
+      controller owner
+      do pure (owner, accountName, isActive)

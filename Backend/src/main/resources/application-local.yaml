@@ -43,6 +43,8 @@ daml:
     url: http://localhost:7575
   admin:
     token: ${DAML_ADMIN_TOKEN:}
+  finance:
+    package-id: ${DAML_FINANCE_PACKAGE_ID:1fcbb967b4df70b2afbfc3f370fbfe3c723649c176aa6572eebeb38870d0c9c4}
 
 logging:
   level:

@@ -1,0 +1,91 @@
+-- | Holding template for MicroLend Finance
+-- Represents fungible token balances owned by parties
+module MicroLend.Finance.Holding where
+
+import MicroLend.Finance.Types
+
+-- | Holding represents a fungible asset balance
+-- This is the core building block for token management
+template Holding
+  with
+    custodian : Party   -- ^ Bank/operator yang menjadi custodian
+    owner : Party       -- ^ Pemilik holding saat ini
+    assetId : AssetId   -- ^ Identifier asset yang dipegang
+    amount : Decimal    -- ^ Jumlah token
+    observers : [Party] -- ^ Pihak yang bisa melihat holding ini
+  where
+    signatory custodian
+    observer owner :: observers
+
+    -- Ensure amount is always positive
+    ensure amount > 0.0
+
+    -- | Transfer holding to another party
+    -- Owner dapat mentransfer ke party lain
+    choice Transfer : ContractId Holding
+      with
+        newOwner : Party
+      controller owner
+      do
+        assertMsg "Cannot transfer to self" (newOwner /= owner)
+        create this with 
+          owner = newOwner
+          observers = []
+
+    -- | Split holding into two parts
+    -- Berguna untuk transfer sebagian saldo
+    choice Split : (ContractId Holding, ContractId Holding)
+      with
+        splitAmount : Decimal
+      controller owner
+      do
+        assertMsg "Split amount must be positive" (splitAmount > 0.0)
+        assertMsg "Split amount must be less than total" (splitAmount < amount)
+        let remainingAmount = amount - splitAmount
+        splitHolding <- create this with amount = splitAmount
+        remainingHolding <- create this with amount = remainingAmount
+        pure (splitHolding, remainingHolding)
+
+    -- | Merge with another holding
+    -- Menggabungkan dua holding menjadi satu
+    choice Merge : ContractId Holding
+      with
+        otherHoldingCid : ContractId Holding
+      controller owner
+      do
+        otherHolding <- fetch otherHoldingCid
+        assertMsg "Cannot merge holdings with different owners" 
+          (otherHolding.owner == owner)
+        assertMsg "Cannot merge holdings with different custodians" 
+          (otherHolding.custodian == custodian)
+        assertMsg "Cannot merge holdings with different assets" 
+          (otherHolding.assetId == assetId)
+        archive otherHoldingCid
+        create this with amount = amount + otherHolding.amount
+
+    -- | Add observer to the holding
+    choice AddObserver : ContractId Holding
+      with
+        newObserver : Party
+      controller owner
+      do
+        create this with observers = newObserver :: observers
+
+    -- | Remove observer from the holding
+    choice RemoveObserver : ContractId Holding
+      with
+        observerToRemove : Party
+      controller owner
+      do
+        let newObservers = filter (/= observerToRemove) observers
+        create this with observers = newObservers
+
+    -- | Get the current amount (non-consuming)
+    nonconsuming choice GetAmount : Decimal
+      controller owner
+      do pure amount
+
+    -- | Custodian can archive/burn the holding
+    choice Burn : ()
+      controller custodian
+      do pure ()

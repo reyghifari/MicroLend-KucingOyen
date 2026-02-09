@@ -12,4 +12,4 @@ RUN daml build
 
 EXPOSE 6865
 
-CMD ["daml", "sandbox", "--wall-clock-time", "--port", "6865", "-C", "canton.participants.sandbox.ledger-api.port=6865,canton.participants.sandbox.ledger-api.address=0.0.0.0,canton.participants.sandbox.admin-api.port=6866,canton.participants.sandbox.admin-api.address=0.0.0.0"]
+CMD ["daml", "sandbox", "--wall-clock-time", "--port", "6865", "--dar", ".daml/dist/microlend-ledger-0.0.1.dar", "-C", "canton.participants.sandbox.ledger-api.port=6865,canton.participants.sandbox.ledger-api.address=0.0.0.0,canton.participants.sandbox.admin-api.port=6866,canton.participants.sandbox.admin-api.address=0.0.0.0"]

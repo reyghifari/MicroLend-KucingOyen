@@ -23,6 +23,7 @@ public class CustomUserDetailService implements UserDetailsService {
 
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getEmail())
+                .password("") // Password is required by Spring Security, even if not used for JWT
                 .authorities("USER")
                 .build();
     }

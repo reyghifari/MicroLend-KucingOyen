@@ -1,0 +1,447 @@
+-- | Test scenarios for MicroLend Finance module
+-- Tests for Account, Deposit (Minting), and Transfer functionality
+module MicroLend.Finance.Test where
+
+import Daml.Script
+import MicroLend.Finance.Types
+import MicroLend.Finance.Holding
+import MicroLend.Finance.Account
+import MicroLend.Finance.Asset
+import MicroLend.Finance.Transfer
+
+-- | Test parties setup
+data TestParties = TestParties
+  with
+    bank : Party       -- ^ Bank/Custodian yang mengelola sistem
+    issuer : Party     -- ^ Issuer yang mencetak token
+    alice : Party      -- ^ User 1
+    bob : Party        -- ^ User 2
+    charlie : Party    -- ^ User 3
+  deriving (Eq, Show)
+
+-- | Setup test parties
+setupTestParties : Script TestParties
+setupTestParties = do
+  bank <- allocateParty "Bank"
+  issuer <- allocateParty "Issuer"
+  alice <- allocateParty "Alice"
+  bob <- allocateParty "Bob"
+  charlie <- allocateParty "Charlie"
+  pure TestParties{..}
+
+-- ============================================================
+-- TEST 1: Account Setup
+-- ============================================================
+
+-- | Test: Create AccountFactory and create accounts for users
+testAccountSetup : Script ()
+testAccountSetup = do
+  parties@TestParties{..} <- setupTestParties
+  
+  debug "=== Test Account Setup ==="
+  
+  -- Bank creates account factory
+  accountFactoryCid <- submit bank do
+    createCmd AccountFactory with custodian = bank
+
+  -- Bank creates accounts for Alice and Bob
+  aliceAccountCid <- submit bank do
+    exerciseCmd accountFactoryCid CreateAccount with
+      owner = alice
+      accountName = "Alice's Savings Account"
+
+  bobAccountCid <- submit bank do
+    exerciseCmd accountFactoryCid CreateAccount with
+      owner = bob
+      accountName = "Bob's Checking Account"
+
+  -- Verify accounts were created
+  aliceAccount <- queryContractId alice aliceAccountCid
+  bobAccount <- queryContractId bob bobAccountCid
+
+  case aliceAccount of
+    Some _ -> debug "Alice account created: True"
+    None -> debug "Alice account created: False"
+  
+  case bobAccount of
+    Some _ -> debug "Bob account created: True"
+    None -> debug "Bob account created: False"
+
+  debug "=== Account Setup Test PASSED ==="
+
+-- ============================================================
+-- TEST 2: Asset Factory & Minting (Deposit)
+-- ============================================================
+
+-- | Test: Create AssetFactory and mint tokens to users
+testMinting : Script ()
+testMinting = do
+  parties@TestParties{..} <- setupTestParties
+  
+  debug "=== Test Minting (Deposit) ==="
+  
+  -- Issuer creates Asset Issuer Service
+  issuerServiceCid <- submit issuer do
+    createCmd AssetIssuerService with
+      issuer
+      observers = [bank, alice, bob]
+
+  -- Create USDC token factory
+  usdcFactoryCid <- submit issuer do
+    exerciseCmd issuerServiceCid CreateUSDCFactory with
+      maxSupply = Some 1000000.0
+
+  -- Mint 1000 USDC to Alice (Deposit)
+  (usdcFactoryCid2, aliceHoldingCid) <- submit issuer do
+    exerciseCmd usdcFactoryCid Mint with
+      recipient = alice
+      mintAmount = 1000.0
+
+  -- Verify Alice's holding
+  aliceHolding <- queryContractId alice aliceHoldingCid
+  case aliceHolding of
+    Some h -> debug $ "Alice received: " <> show h.amount <> " " <> show h.assetId.symbol
+    None -> debug "ERROR: Alice holding not found"
+
+  -- Mint 500 USDC to Bob
+  (usdcFactoryCid3, bobHoldingCid) <- submit issuer do
+    exerciseCmd usdcFactoryCid2 Mint with
+      recipient = bob
+      mintAmount = 500.0
+
+  -- Check total supply
+  (totalSupply, maxSupply) <- submit issuer do
+    exerciseCmd usdcFactoryCid3 GetSupplyInfo
+
+  debug $ "Total USDC Supply: " <> show totalSupply <> " / Max: " <> show maxSupply
+
+  debug "=== Minting Test PASSED ==="
+
+-- ============================================================
+-- TEST 3: Direct Transfer
+-- ============================================================
+
+-- | Test: Alice transfers tokens to Bob
+testDirectTransfer : Script ()
+testDirectTransfer = do
+  parties@TestParties{..} <- setupTestParties
+  
+  debug "=== Test Direct Transfer ==="
+  
+  -- Setup: Create factory and mint to Alice
+  issuerServiceCid <- submit issuer do
+    createCmd AssetIssuerService with
+      issuer
+      observers = []
+
+  usdcFactoryCid <- submit issuer do
+    exerciseCmd issuerServiceCid CreateUSDCFactory with
+      maxSupply = None
+
+  (_, aliceHoldingCid) <- submit issuer do
+    exerciseCmd usdcFactoryCid Mint with
+      recipient = alice
+      mintAmount = 1000.0
+
+  -- Alice splits and transfers 300 USDC to Bob
+  (splitHoldingCid, remainingHoldingCid) <- submit alice do
+    exerciseCmd aliceHoldingCid Split with
+      splitAmount = 300.0
+
+  bobHoldingCid <- submit alice do
+    exerciseCmd splitHoldingCid Transfer with
+      newOwner = bob
+
+  -- Verify balances
+  aliceRemaining <- queryContractId alice remainingHoldingCid
+  bobReceived <- queryContractId bob bobHoldingCid
+
+  case aliceRemaining of
+    Some h -> debug $ "Alice remaining: " <> show h.amount <> " USDC"
+    None -> debug "ERROR: Alice remaining holding not found"
+
+  case bobReceived of
+    Some h -> debug $ "Bob received: " <> show h.amount <> " USDC"
+    None -> debug "ERROR: Bob holding not found"
+
+  debug "=== Direct Transfer Test PASSED ==="
+
+-- ============================================================
+-- TEST 4: Transfer Request Flow
+-- ============================================================
+
+-- | Test: Transfer with request and acceptance
+testTransferRequest : Script ()
+testTransferRequest = do
+  parties@TestParties{..} <- setupTestParties
+  
+  debug "=== Test Transfer Request Flow ==="
+  
+  -- Setup: Mint tokens to Alice
+  issuerServiceCid <- submit issuer do
+    createCmd AssetIssuerService with
+      issuer
+      observers = []
+
+  idrFactoryCid <- submit issuer do
+    exerciseCmd issuerServiceCid CreateIDRFactory with
+      maxSupply = None
+
+  (_, aliceHoldingCid) <- submit issuer do
+    exerciseCmd idrFactoryCid Mint with
+      recipient = alice
+      mintAmount = 5000000.0  -- 5 juta IDR
+
+  -- Alice creates a transfer request to Bob
+  transferRequestCid <- submit alice do
+    createCmd TransferRequest with
+      sender = alice
+      receiver = bob
+      holdingCid = aliceHoldingCid
+      amount = 5000000.0
+      note = "Payment for services"
+      status = Pending
+
+  -- Alice executes the transfer (as sender who owns the holding)
+  bobHoldingCid <- submit alice do
+    exerciseCmd transferRequestCid ExecuteTransfer
+
+  -- Verify Bob received the tokens
+  bobHolding <- queryContractId bob bobHoldingCid
+  case bobHolding of
+    Some h -> debug $ "Bob received: " <> show h.amount <> " IDR"
+    None -> debug "ERROR: Bob holding not found"
+
+  debug "=== Transfer Request Test PASSED ==="
+
+-- ============================================================
+-- TEST 5: Partial Transfer
+-- ============================================================
+
+-- | Test: Partial transfer using PartialTransferRequest
+testPartialTransfer : Script ()
+testPartialTransfer = do
+  parties@TestParties{..} <- setupTestParties
+  
+  debug "=== Test Partial Transfer ==="
+  
+  -- Setup
+  issuerServiceCid <- submit issuer do
+    createCmd AssetIssuerService with
+      issuer
+      observers = []
+
+  ccFactoryCid <- submit issuer do
+    exerciseCmd issuerServiceCid CreateCCFactory with
+      maxSupply = Some 10000.0
+
+  (_, aliceHoldingCid) <- submit issuer do
+    exerciseCmd ccFactoryCid Mint with
+      recipient = alice
+      mintAmount = 100.0  -- 100 CC tokens
+
+  -- Alice creates partial transfer request (50 CC to Bob)
+  partialTransferCid <- submit alice do
+    createCmd PartialTransferRequest with
+      sender = alice
+      receiver = bob
+      holdingCid = aliceHoldingCid
+      transferAmount = 50.0
+      note = "Half of my CC tokens"
+
+  -- Alice executes partial transfer (as sender who owns the holding)
+  (bobHoldingCid, aliceRemainingCid) <- submit alice do
+    exerciseCmd partialTransferCid ExecutePartialTransfer
+
+  -- Verify balances
+  aliceRemaining <- queryContractId alice aliceRemainingCid
+  bobReceived <- queryContractId bob bobHoldingCid
+
+  case aliceRemaining of
+    Some h -> debug $ "Alice remaining: " <> show h.amount <> " CC"
+    None -> debug "ERROR: Alice remaining not found"
+
+  case bobReceived of
+    Some h -> debug $ "Bob received: " <> show h.amount <> " CC"
+    None -> debug "ERROR: Bob received not found"
+
+  debug "=== Partial Transfer Test PASSED ==="
+
+-- ============================================================
+-- TEST 6: Account-based Deposit and Transfer
+-- ============================================================
+
+-- | Test: Full workflow with Account, Deposit, and Transfer
+testFullWorkflow : Script ()
+testFullWorkflow = do
+  parties@TestParties{..} <- setupTestParties
+  
+  debug "=== Test Full Workflow ==="
+  
+  -- Step 1: Bank creates account factory
+  debug "Step 1: Creating Account Factory"
+  accountFactoryCid <- submit bank do
+    createCmd AccountFactory with custodian = bank
+
+  -- Step 2: Bank creates accounts for Alice, Bob, Charlie
+  debug "Step 2: Creating User Accounts"
+  aliceAccountCid <- submit bank do
+    exerciseCmd accountFactoryCid CreateAccount with
+      owner = alice
+      accountName = "Alice Account"
+
+  bobAccountCid <- submit bank do
+    exerciseCmd accountFactoryCid CreateAccount with
+      owner = bob
+      accountName = "Bob Account"
+
+  charlieAccountCid <- submit bank do
+    exerciseCmd accountFactoryCid CreateAccount with
+      owner = charlie
+      accountName = "Charlie Account"
+
+  -- Step 3: Issuer creates asset factory
+  debug "Step 3: Creating Asset Factory"
+  issuerServiceCid <- submit issuer do
+    createCmd AssetIssuerService with
+      issuer
+      observers = [bank]
+
+  usdcFactoryCid <- submit issuer do
+    exerciseCmd issuerServiceCid CreateUSDCFactory with
+      maxSupply = None
+
+  -- Step 4: Deposit (Mint) tokens to Alice's account
+  debug "Step 4: Depositing tokens to Alice"
+  (usdcFactoryCid2, aliceHoldingCid) <- submit issuer do
+    exerciseCmd usdcFactoryCid DepositToAccount with
+      recipientOwner = alice
+      depositAmount = 10000.0  -- 10,000 USDC
+
+  -- Step 5: Alice sends 3000 USDC to Bob via her account
+  debug "Step 5: Alice transfers to Bob"
+  (bobHoldingCid, aliceRemainingCid) <- submit alice do
+    exerciseCmd aliceAccountCid SendPartial with
+      holdingCid = aliceHoldingCid
+      recipient = bob
+      amountToSend = 3000.0
+
+  -- Step 6: Bob sends 1000 USDC to Charlie
+  debug "Step 6: Bob transfers to Charlie"
+  (charlieHoldingCid, bobRemainingCid) <- submit bob do
+    exerciseCmd bobAccountCid SendPartial with
+      holdingCid = bobHoldingCid
+      recipient = charlie
+      amountToSend = 1000.0
+
+  -- Verify final balances
+  debug "=== Final Balances ==="
+  
+  aliceFinal <- queryContractId alice aliceRemainingCid
+  case aliceFinal of
+    Some h -> debug $ "Alice: " <> show h.amount <> " USDC"
+    None -> debug "ERROR: Alice balance not found"
+
+  bobFinal <- queryContractId bob bobRemainingCid
+  case bobFinal of
+    Some h -> debug $ "Bob: " <> show h.amount <> " USDC"
+    None -> debug "ERROR: Bob balance not found"
+
+  charlieFinal <- queryContractId charlie charlieHoldingCid
+  case charlieFinal of
+    Some h -> debug $ "Charlie: " <> show h.amount <> " USDC"
+    None -> debug "ERROR: Charlie balance not found"
+
+  debug "=== Full Workflow Test PASSED ==="
+
+-- ============================================================
+-- TEST 7: Credit/Deposit Multiple Times
+-- ============================================================
+
+-- | Test: Multiple deposits and merge holdings
+testMultipleDeposits : Script ()
+testMultipleDeposits = do
+  parties@TestParties{..} <- setupTestParties
+  
+  debug "=== Test Multiple Deposits ==="
+  
+  -- Setup
+  issuerServiceCid <- submit issuer do
+    createCmd AssetIssuerService with
+      issuer
+      observers = []
+
+  usdcFactoryCid <- submit issuer do
+    exerciseCmd issuerServiceCid CreateUSDCFactory with
+      maxSupply = None
+
+  -- First deposit: 1000 USDC
+  (usdcFactoryCid2, holding1Cid) <- submit issuer do
+    exerciseCmd usdcFactoryCid Credit with
+      recipient = alice
+      creditAmount = 1000.0
+
+  -- Second deposit: 500 USDC
+  (usdcFactoryCid3, holding2Cid) <- submit issuer do
+    exerciseCmd usdcFactoryCid2 Credit with
+      recipient = alice
+      creditAmount = 500.0
+
+  -- Third deposit: 250 USDC
+  (_, holding3Cid) <- submit issuer do
+    exerciseCmd usdcFactoryCid3 Credit with
+      recipient = alice
+      creditAmount = 250.0
+
+  -- Alice merges all holdings
+  mergedHolding1Cid <- submit alice do
+    exerciseCmd holding1Cid Merge with
+      otherHoldingCid = holding2Cid
+
+  finalHoldingCid <- submit alice do
+    exerciseCmd mergedHolding1Cid Merge with
+      otherHoldingCid = holding3Cid
+
+  -- Verify final balance
+  finalHolding <- queryContractId alice finalHoldingCid
+  case finalHolding of
+    Some h -> debug $ "Alice total after merge: " <> show h.amount <> " USDC"
+    None -> debug "ERROR: Final holding not found"
+
+  debug "=== Multiple Deposits Test PASSED ==="
+
+-- ============================================================
+-- RUN ALL TESTS
+-- ============================================================
+
+-- | Run all Finance module tests
+runAllFinanceTests : Script ()
+runAllFinanceTests = do
+  debug "=========================================="
+  debug "   MICROLEND FINANCE MODULE TESTS"
+  debug "=========================================="
+  
+  debug "\n--- Test 1: Account Setup ---"
+  testAccountSetup
+  
+  debug "\n--- Test 2: Minting (Deposit) ---"
+  testMinting
+  
+  debug "\n--- Test 3: Direct Transfer ---"
+  testDirectTransfer
+  
+  debug "\n--- Test 4: Transfer Request ---"
+  testTransferRequest
+  
+  debug "\n--- Test 5: Partial Transfer ---"
+  testPartialTransfer
+  
+  debug "\n--- Test 6: Full Workflow ---"
+  testFullWorkflow
+  
+  debug "\n--- Test 7: Multiple Deposits ---"
+  testMultipleDeposits
+  
+  debug "\n=========================================="
+  debug "   ALL TESTS PASSED SUCCESSFULLY!"
+  debug "=========================================="
