@@ -1,0 +1,172 @@
+-- | Lending Service for MicroLend
+-- Orchestration service to coordinate loan creation with collateral locking
+-- Entry point for Backend to create loan requests
+module MicroLend.Finance.Lending.LendingService where
+
+import MicroLend.Finance.Types (AssetId)
+import MicroLend.Finance.Holding
+import MicroLend.Finance.Lending.Types
+import MicroLend.Finance.Lending.LoanRequest (LoanRequest(..))
+import MicroLend.Finance.Lending.UserProfile (UserProfile(..))
+
+-- | Helper: add multiple observers to a Holding one by one
+addObserversToHolding : ContractId Holding -> [Party] -> Update (ContractId Holding)
+addObserversToHolding holdingCid [] = pure holdingCid
+addObserversToHolding holdingCid (p :: rest) = do
+  updatedCid <- exercise holdingCid AddObserver with newObserver = p
+  addObserversToHolding updatedCid rest
+
+-- | Lending Service template
+-- Singleton per operator, configurable loan parameters
+-- Provides the main entry point for creating loan requests
+template LendingService
+  with
+    operator : Party              -- ^ System operator
+    baseCollateralRate : Decimal   -- ^ Base collateral rate (e.g., 1.10 = 110%)
+    interestRate : Decimal         -- ^ Interest rate for loans (e.g., 0.05 = 5%)
+    loanDurationDays : Int         -- ^ Default loan duration in days
+    observers : [Party]            -- ^ Parties who can see this service
+  where
+    signatory operator
+    observer observers
+
+    -- | Borrower requests a loan
+    -- Validates collateral, locks USDx, creates LoanRequest
+    -- The borrower must provide a USDx holding with sufficient collateral
+    nonconsuming choice RequestLoan : ContractId LoanRequest
+      with
+        borrower : Party
+        loanAmount : Decimal               -- ^ Amount of CC to borrow
+        loanAssetId : AssetId              -- ^ AssetId of CC token
+        collateralAssetId : AssetId        -- ^ AssetId of USDx token
+        collateralHoldingCid : ContractId Holding  -- ^ USDx holding for collateral
+        borrowerLevel : UserLevel          -- ^ Borrower's current level
+        requestTime : Time                 -- ^ Current time (from TimeOracle)
+      controller operator, borrower
+      do
+        assertMsg "Loan amount must be positive" (loanAmount > 0.0)
+
+        -- Calculate required collateral
+        let requiredCollateral = calculateCollateral loanAmount baseCollateralRate borrowerLevel
+
+        -- Verify the collateral holding
+        collateralHolding <- fetch collateralHoldingCid
+        assertMsg "Collateral must be USDx token"
+          (collateralHolding.assetId == collateralAssetId)
+        assertMsg ("Insufficient collateral. Required: " <> show requiredCollateral
+                   <> " USDx, provided: " <> show collateralHolding.amount <> " USDx")
+          (collateralHolding.amount >= requiredCollateral)
+        assertMsg "Borrower must own the collateral"
+          (collateralHolding.owner == borrower)
+
+        -- Add marketplace observers to collateral holding
+        -- This ensures lenders can see the collateral for FillLoan and Liquidate
+        updatedCollateralCid <- addObserversToHolding collateralHoldingCid observers
+
+        -- Create the loan request with locked collateral
+        create LoanRequest with
+          operator
+          borrower
+          loanAssetId
+          collateralAssetId
+          loanAmount
+          collateralAmount = requiredCollateral
+          collateralHoldingCid = updatedCollateralCid
+          borrowerLevel
+          interestRate
+          durationDays = loanDurationDays
+          requestedAt = requestTime
+          observers
+
+    -- | Borrower requests a loan with exact collateral amount
+    -- If borrower's holding is larger, it will be split first
+    nonconsuming choice RequestLoanWithSplit : (ContractId LoanRequest, ContractId Holding)
+      with
+        borrower : Party
+        loanAmount : Decimal
+        loanAssetId : AssetId
+        collateralAssetId : AssetId
+        collateralHoldingCid : ContractId Holding  -- ^ USDx holding (may be larger)
+        borrowerLevel : UserLevel
+        requestTime : Time
+      controller operator, borrower
+      do
+        assertMsg "Loan amount must be positive" (loanAmount > 0.0)
+
+        -- Calculate required collateral
+        let requiredCollateral = calculateCollateral loanAmount baseCollateralRate borrowerLevel
+
+        -- Fetch and verify collateral
+        collateralHolding <- fetch collateralHoldingCid
+        assertMsg "Collateral must be USDx token"
+          (collateralHolding.assetId == collateralAssetId)
+        assertMsg ("Insufficient collateral. Required: " <> show requiredCollateral <> " USDx")
+          (collateralHolding.amount >= requiredCollateral)
+        assertMsg "Borrower must own the collateral"
+          (collateralHolding.owner == borrower)
+
+        -- Split if collateral is larger than needed
+        (lockedCid, remainderCid) <- 
+          if collateralHolding.amount == requiredCollateral
+            then do
+              pure (collateralHoldingCid, collateralHoldingCid)
+            else do
+              exercise collateralHoldingCid Split with
+                splitAmount = requiredCollateral
+
+        -- Add marketplace observers to locked collateral holding
+        updatedLockedCid <- addObserversToHolding lockedCid observers
+
+        -- Create loan request with the locked portion
+        requestCid <- create LoanRequest with
+          operator
+          borrower
+          loanAssetId
+          collateralAssetId
+          loanAmount
+          collateralAmount = requiredCollateral
+          collateralHoldingCid = updatedLockedCid
+          borrowerLevel
+          interestRate
+          durationDays = loanDurationDays
+          requestedAt = requestTime
+          observers
+
+        pure (requestCid, remainderCid)
+
+    -- | Update service configuration (operator only)
+    choice UpdateServiceConfig : ContractId LendingService
+      with
+        newBaseRate : Decimal
+        newInterestRate : Decimal
+        newDurationDays : Int
+      controller operator
+      do
+        assertMsg "Base rate must be > 1.0" (newBaseRate > 1.0)
+        assertMsg "Interest rate must be >= 0" (newInterestRate >= 0.0)
+        assertMsg "Duration must be > 0" (newDurationDays > 0)
+        create this with
+          baseCollateralRate = newBaseRate
+          interestRate = newInterestRate
+          loanDurationDays = newDurationDays
+
+    -- | Add observer to the service (makes marketplace visible)
+    choice AddServiceObserver : ContractId LendingService
+      with
+        newObserver : Party
+      controller operator
+      do
+        create this with observers = newObserver :: observers
+
+    -- | Remove observer from the service
+    choice RemoveServiceObserver : ContractId LendingService
+      with
+        observerToRemove : Party
+      controller operator
+      do
+        create this with observers = filter (/= observerToRemove) observers
+
+    -- | Get service configuration (non-consuming)
+    nonconsuming choice GetServiceConfig : (Decimal, Decimal, Int)
+      controller operator
+      do pure (baseCollateralRate, interestRate, loanDurationDays)

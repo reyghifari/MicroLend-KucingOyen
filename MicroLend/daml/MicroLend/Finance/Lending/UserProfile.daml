@@ -1,0 +1,107 @@
+-- | User Profile template for MicroLend Lending
+-- Tracks user level and loan history for dynamic collateral calculation
+module MicroLend.Finance.Lending.UserProfile where
+
+import MicroLend.Finance.Lending.Types
+
+-- | User Profile template
+-- Stores user's lending/borrowing history and level
+-- Used for dynamic collateral rate calculation
+template UserProfile
+  with
+    operator : Party        -- ^ System operator (admin/bank)
+    user : Party            -- ^ The user this profile belongs to
+    level : UserLevel       -- ^ Current user level
+    loansCompleted : Int    -- ^ Number of successfully repaid loans
+    loansDefaulted : Int    -- ^ Number of defaulted loans
+    totalBorrowed : Decimal -- ^ Total amount borrowed historically
+    totalLent : Decimal     -- ^ Total amount lent historically
+  where
+    signatory operator
+    observer user
+
+    -- | Upgrade user level (operator controlled)
+    -- Called after certain milestones (e.g., 5 completed loans)
+    choice UpgradeLevel : ContractId UserProfile
+      with
+        newLevel : UserLevel
+      controller operator
+      do
+        assertMsg "New level must be higher than current"
+          (newLevel > level)
+        create this with level = newLevel
+
+    -- | Downgrade user level (operator controlled)
+    -- Called after defaults or violations
+    choice DowngradeLevel : ContractId UserProfile
+      with
+        newLevel : UserLevel
+      controller operator
+      do
+        assertMsg "New level must be lower than current"
+          (newLevel < level)
+        create this with level = newLevel
+
+    -- | Set user level directly (operator controlled)
+    choice SetLevel : ContractId UserProfile
+      with
+        newLevel : UserLevel
+      controller operator
+      do
+        create this with level = newLevel
+
+    -- | Record a successfully completed loan (repaid)
+    choice RecordLoanCompletion : ContractId UserProfile
+      with
+        loanAmount : Decimal
+      controller operator
+      do
+        create this with
+          loansCompleted = loansCompleted + 1
+          totalBorrowed = totalBorrowed + loanAmount
+
+    -- | Record a loan default
+    choice RecordDefault : ContractId UserProfile
+      with
+        loanAmount : Decimal
+      controller operator
+      do
+        create this with
+          loansDefaulted = loansDefaulted + 1
+
+    -- | Record lending activity
+    choice RecordLending : ContractId UserProfile
+      with
+        lentAmount : Decimal
+      controller operator
+      do
+        create this with
+          totalLent = totalLent + lentAmount
+
+    -- | Get user profile info (non-consuming)
+    nonconsuming choice GetProfileInfo : (UserLevel, Int, Int, Decimal, Decimal)
+      controller user
+      do pure (level, loansCompleted, loansDefaulted, totalBorrowed, totalLent)
+
+-- | Factory for creating user profiles
+-- Operator uses this to create profiles for new users
+template UserProfileFactory
+  with
+    operator : Party
+  where
+    signatory operator
+
+    -- | Create a new user profile (all start at Level1)
+    nonconsuming choice CreateUserProfile : ContractId UserProfile
+      with
+        user : Party
+      controller operator
+      do
+        create UserProfile with
+          operator
+          user
+          level = Level1
+          loansCompleted = 0
+          loansDefaulted = 0
+          totalBorrowed = 0.0
+          totalLent = 0.0
