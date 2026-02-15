@@ -56,11 +56,17 @@ class DashboardViewModel @Inject constructor(
     private val _selectedTransaction = MutableStateFlow<Transaction?>(null)
     val selectedTransaction: StateFlow<Transaction?> = _selectedTransaction.asStateFlow()
 
+    private val _bottomSheetLevelInfo = MutableStateFlow(false)
+    val bottomSheetLevelInfo: StateFlow<Boolean> = _bottomSheetLevelInfo.asStateFlow()
+
 
     init {
         getBalance()
     }
 
+    fun updateBottomBarLevelInfo(value: Boolean) {
+        _bottomSheetLevelInfo.value = value
+    }
     fun updateBottomBarSelected(value: Int) {
         _bottomBarSelected.value = value
     }
@@ -82,15 +88,17 @@ class DashboardViewModel @Inject constructor(
 
         if (amount.isNotEmpty()) {
             val interestRate = when (getLevelUser()) {
-                1 -> 0.10
-                2 -> 0.09
-                3 -> 0.08
-                4 -> 0.07
-                5 -> 0.05
-                else -> 0.10
+                1 -> 0.15
+                2 -> 0.14
+                3 -> 0.13
+                4 -> 0.12
+                5 -> 0.11
+                else -> 0.15
             }
 
-            val principal = amount.toDoubleOrNull() ?: 0.0
+            val principal = amount
+                .replace(",", ".")
+                .toDoubleOrNull() ?: 0.0
 
             val total = principal + (principal * interestRate)
             updateTotalCollateral(total.toString())

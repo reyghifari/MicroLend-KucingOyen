@@ -41,7 +41,7 @@ fun WalletCard(
     onClickSend: () -> Unit = {},
     onClickDeposit: () -> Unit = {},
     onClickRequest: () -> Unit = {},
-    onClickGifting: () -> Unit = {}
+    onClickProvideFund: () -> Unit = {}
 ) {
     val balance by dashboardViewModel.balance.collectAsStateWithLifecycle()
     val totalBalance by dashboardViewModel.getTotalBalance.collectAsStateWithLifecycle()
@@ -98,7 +98,7 @@ fun WalletCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 WalletActionButton("Request Loan", R.drawable.ic_request_money, onClickRequest)
-                WalletActionButton("Provide Funding", R.drawable.ic_give_money, onClickGifting)
+                WalletActionButton("Provide Funding", R.drawable.ic_give_money, onClickProvideFund)
                 WalletActionButton("Send", R.drawable.ic_send, onClickSend)
                 WalletActionButton("Deposit", R.drawable.ic_deposit, onClickDeposit)
             }

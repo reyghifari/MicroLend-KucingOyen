@@ -2,6 +2,7 @@ package com.kucingoyen.dashboard.screen
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -47,10 +48,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kucingoyen.core.R
 import com.kucingoyen.core.extensions.copyToClipboard
 import com.kucingoyen.core.theme.BaseColor
 import com.kucingoyen.dashboard.DashboardViewModel
@@ -128,9 +131,9 @@ fun LevelCard(level: Int) {
                 color = Color(0xFFE8EAF6)
             ) {
                  Icon(
-                    imageVector = Icons.Default.WaterDrop, // Placeholder for level icon
+                    painter = painterResource(R.drawable.ic_profile), // Placeholder for level icon
                     contentDescription = null,
-                    tint = Color(0xFF3F51B5),
+                    tint = Color.Unspecified,
                     modifier = Modifier.padding(10.dp)
                 )
             }
@@ -208,10 +211,10 @@ data class LevelData(
 @Composable
 fun LockedRewardsList() {
     val levels = listOf(
-        LevelData(2, "Reliable", 1500, "Collateral ratio: 180%", "Loan limits: 200$"),
-        LevelData(3, "Consistent", 3500, "Collateral ratio: 160%", "Loan limits: 500$"),
-        LevelData(4, "Trusted", 7500, "Collateral ratio: 140%", "Loan limits: 1000$"),
-        LevelData(5, "Prime", 10000, "Collateral ratio: 130%", "Loan limits: 5000$")
+        LevelData(2, "Reliable", 1500, "Base Rate: 110%", "Level interest: 4%"),
+        LevelData(3, "Consistent", 3500, "Base Rate: 110%", "Level interest: 3%"),
+        LevelData(4, "Trusted", 7500, "Base Rate: 110%", "Level interest: 2%"),
+        LevelData(5, "Prime", 10000, "Base Rate: 110%", "Level interest: 1%")
     )
 
     Column(
@@ -246,7 +249,7 @@ fun LockedRewardsList() {
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(0))
-                .background(Color(0xFFF3F4F6)) // Light gray container background
+                .background(Color(0xFFF3F4F6))
         ) {
              levels.forEachIndexed { index, levelData ->
                 LockedLevelItem(levelData)
@@ -265,6 +268,7 @@ fun LockedLevelItem(data: LevelData) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .border(1.dp, BaseColor.JetBlack.Normal, RoundedCornerShape(0))
             .clickable { expanded = !expanded }
             .padding(16.dp)
     ) {
@@ -297,7 +301,7 @@ fun LockedLevelItem(data: LevelData) {
                     Icon(
                         imageVector = Icons.Default.Lock,
                         contentDescription = null,
-                        tint = TextGray,
+                        tint = BaseColor.JetBlack.Normal,
                         modifier = Modifier.size(12.dp)
                     )
                     Spacer(modifier = Modifier.width(4.dp))
@@ -305,7 +309,7 @@ fun LockedLevelItem(data: LevelData) {
                         text = "${data.requiredPoints} points",
                         fontSize = 12.sp,
                         fontFamily = FontFamily.Monospace,
-                        color = TextGray
+                        color =  BaseColor.JetBlack.Normal,
                     )
                 }
             }

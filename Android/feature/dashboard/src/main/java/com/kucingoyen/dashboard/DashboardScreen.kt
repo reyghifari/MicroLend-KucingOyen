@@ -21,6 +21,7 @@ val TextGray = Color(0xFFAAAAAA)
 fun DashboardScreen(
     dashboardViewModel: DashboardViewModel = hiltViewModel(),
     requestLoan: () -> Unit = {},
+    provideLoan : () -> Unit = {},
     onClickSend : () -> Unit = {},
     onClickDeposit : () -> Unit = {},
     onClickTransaction: (Transaction) -> Unit = {}
@@ -37,7 +38,9 @@ fun DashboardScreen(
                 HomeScreen(
                     dashboardViewModel, paddingValues, onClickSend = onClickSend,
                     onClickDeposit = onClickDeposit,
-                    onClickTransaction = onClickTransaction
+                    onClickTransaction = onClickTransaction,
+                    requestLoan = requestLoan,
+                    provideLoan = provideLoan
                 )
             }
             1 -> {

@@ -1,6 +1,8 @@
 package com.kucingoyen.dashboard.screen.component
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,16 +21,20 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kucingoyen.core.R
 import com.kucingoyen.core.theme.BaseColor
 
 @Composable
 fun LevelInterest(
     level : String = "",
+    onClick : () -> Unit = {}
 ) {
     Box(
         modifier = Modifier
@@ -36,17 +42,19 @@ fun LevelInterest(
             .background(
                 color = BaseColor.JetBlack.Normal, shape = RoundedCornerShape(0)
             )
+            .clickable {
+                onClick()
+            }
     ) {
         Row(
             modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
-                imageVector =  Icons.AutoMirrored.Filled.Note,
+                painter = painterResource(R.drawable.ic_profile),
                 contentDescription = "Image ",
-                modifier = Modifier
-                    .size(40.dp),
-                tint = BaseColor.White
+                modifier = Modifier.size(40.dp),
+                tint = Color.Unspecified
             )
             Spacer(modifier = Modifier.width(12.dp))
             Column {
@@ -63,7 +71,7 @@ fun LevelInterest(
                     horizontalArrangement = Arrangement.Start,
                 ) {
                     Text(
-                        text = "10% Interest Rate",
+                        text = "10% Base Rate + Level 1 (5%)",
                         fontFamily = FontFamily.Monospace,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 12.sp,

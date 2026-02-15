@@ -28,8 +28,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.kucingoyen.core.theme.BaseColor
 import com.kucingoyen.dashboard.DashboardViewModel
 import com.kucingoyen.dashboard.screen.component.AssetSection
@@ -44,7 +46,9 @@ fun HomeScreen(
     paddingValues: PaddingValues,
     onClickSend: () -> Unit = {},
     onClickDeposit: () -> Unit = {},
-    onClickTransaction: (Transaction) -> Unit = {}
+    onClickTransaction: (Transaction) -> Unit = {},
+    requestLoan: () -> Unit = {},
+    provideLoan : () -> Unit = {},
 ) {
     val listActivity by dashboardViewModel.listTransactionActivity.collectAsState()
     val balance by dashboardViewModel.balance.collectAsState()
@@ -67,7 +71,9 @@ fun HomeScreen(
             WalletCard(
                 dashboardViewModel,
                 onClickSend = onClickSend,
-                onClickDeposit = onClickDeposit
+                onClickDeposit = onClickDeposit,
+                onClickRequest = requestLoan,
+                onClickProvideFund = provideLoan
             )
             Spacer(modifier = Modifier.height(16.dp))
         }
@@ -157,4 +163,13 @@ fun formatMaskedAddress(address: String): String {
     val secondPart = "${address.substring(address.length - 6, address.length - 3)}...${address.substring(address.length - 3)}"
 
     return "$firstPart::$secondPart"
+}
+
+@Preview
+@Composable
+private fun HomePreview() {
+    HomeScreen(
+        hiltViewModel(),
+        PaddingValues()
+    )
 }

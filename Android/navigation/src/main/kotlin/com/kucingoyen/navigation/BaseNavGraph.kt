@@ -16,6 +16,8 @@ import com.kucingoyen.dashboard.DashboardViewModel
 import com.kucingoyen.dashboard.deposit.RequestBalanceScreen
 import com.kucingoyen.dashboard.screen.DetailRequestLoanScreen
 import com.kucingoyen.dashboard.screen.TransactionDetailScreen
+import com.kucingoyen.dashboard.screen.funding.DetailProvideFundScreen
+import com.kucingoyen.dashboard.screen.funding.ProvideFundingScreen
 
 @Composable
 fun BaseNavGraph(navController : NavHostController){
@@ -77,6 +79,8 @@ fun DashboardNavigation(
             }, onClickTransaction = {
                 dashboardViewModel.selectTransaction(it)
                 dashboardNavController.navigate(BaseNav.Dashboard.TransactionDetailScreen.name)
+            }, provideLoan = {
+                dashboardNavController.navigate(BaseNav.Dashboard.ListLoanRequestScreen.name)
             })
         }
         composable(route = BaseNav.Dashboard.DetailRequestLoanScreen.name) { navBackStackEntry ->
@@ -95,6 +99,16 @@ fun DashboardNavigation(
                     dashboardNavController.navigateUp()
                 }
             }
+        }
+        composable(route = BaseNav.Dashboard.ListLoanRequestScreen.name) {
+            ProvideFundingScreen(onClickDetail = {
+                dashboardNavController.navigate(BaseNav.Dashboard.DetailProvideFundScreen.name)
+            })
+        }
+        composable(route = BaseNav.Dashboard.DetailProvideFundScreen.name) {
+            DetailProvideFundScreen(
+                onBackClick = { dashboardNavController.navigateUp() }
+            )
         }
     }
 }
