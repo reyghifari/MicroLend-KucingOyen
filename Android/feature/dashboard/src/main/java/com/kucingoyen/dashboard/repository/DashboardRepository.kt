@@ -1,7 +1,14 @@
 package com.kucingoyen.dashboard.repository
 
+import com.kucingoyen.entity.model.CreateLoanRequest
+import com.kucingoyen.entity.model.CreateLoanResponse
 import com.kucingoyen.entity.model.DepositResponse
+import com.kucingoyen.entity.model.FillLoanRequest
+import com.kucingoyen.entity.model.FillLoanResponse
 import com.kucingoyen.entity.model.GetBalanceResponse
+import com.kucingoyen.entity.model.GetDataProfileResponse
+import com.kucingoyen.entity.model.ListLendingResponse
+import com.kucingoyen.entity.model.MyFundedResponse
 import com.kucingoyen.entity.model.Transaction
 import com.kucingoyen.entity.model.TransferRequest
 import com.kucingoyen.entity.model.TransferResponse
@@ -14,5 +21,13 @@ interface DashboardRepository {
     fun transferToken(transferRequest: TransferRequest): Flow<TransferResponse>
 
     fun setTransactionActivity(transaction: Transaction): Flow<Unit>
+
+    fun createLoanRequestAsBorrower(createLoanRequest: CreateLoanRequest): Flow<CreateLoanResponse>
+    fun fillLoanRequestAsLender(fillLoanRequest: FillLoanRequest): Flow<FillLoanResponse>
+    fun listLoanRequestAsLender(): Flow<ListLendingResponse>
+
+    fun getProfileUser(): Flow<GetDataProfileResponse>
+
+    fun listMyFunded(): Flow<List<MyFundedResponse>>
 
 }

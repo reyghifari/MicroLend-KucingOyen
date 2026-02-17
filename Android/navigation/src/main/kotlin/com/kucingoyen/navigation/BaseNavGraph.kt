@@ -101,12 +101,13 @@ fun DashboardNavigation(
             }
         }
         composable(route = BaseNav.Dashboard.ListLoanRequestScreen.name) {
-            ProvideFundingScreen(onClickDetail = {
+            ProvideFundingScreen(dashboardViewModel, onClickDetail = {
                 dashboardNavController.navigate(BaseNav.Dashboard.DetailProvideFundScreen.name)
             })
         }
         composable(route = BaseNav.Dashboard.DetailProvideFundScreen.name) {
             DetailProvideFundScreen(
+                dashboardViewModel,
                 onBackClick = { dashboardNavController.navigateUp() }
             )
         }

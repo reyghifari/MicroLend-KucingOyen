@@ -32,9 +32,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kucingoyen.core.theme.BaseColor
 import com.kucingoyen.entity.model.LoanRequest
+import com.kucingoyen.entity.model.LoanRequestItem
 
 @Composable
-fun LoanRequestItem(loan: LoanRequest, onClick : (LoanRequest) -> Unit = {}) {
+fun LoanRequestItem(loan: LoanRequestItem, onClick : (LoanRequestItem) -> Unit = {}) {
     Card(
         shape = RoundedCornerShape(0),
         modifier = Modifier
@@ -69,13 +70,13 @@ fun LoanRequestItem(loan: LoanRequest, onClick : (LoanRequest) -> Unit = {}) {
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = loan.userName,
+                        text = loan.borrowerDisplayName,
                         fontWeight = FontWeight.Bold,
                         fontSize = 18.sp,
                         fontFamily = FontFamily.Monospace,
                     )
                     Text(
-                        text = "Level${loan.level}",
+                        text = "Level${loan.borrowerLevel}",
                         color = Color.Gray,
                         fontSize = 14.sp,
                         fontFamily = FontFamily.Monospace
@@ -87,7 +88,7 @@ fun LoanRequestItem(loan: LoanRequest, onClick : (LoanRequest) -> Unit = {}) {
                     shape = RoundedCornerShape(4.dp)
                 ) {
                     Text(
-                        text = loan.status,
+                        text = "REQUEST",
                         color = Color(0xFFE65100),
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
@@ -109,12 +110,12 @@ fun LoanRequestItem(loan: LoanRequest, onClick : (LoanRequest) -> Unit = {}) {
             ) {
                 Text(text = "Loan: ", fontSize = 16.sp)
                 Text(
-                    text = loan.loanAmount,
+                    text = loan.loanAmount.toString(),
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp,
                     fontFamily = FontFamily.Monospace
                 )
-                Text(text = " ${loan.loanCurrency}", 
+                Text(text = " ${loan.loanAsset}",
                     fontFamily = FontFamily.Monospace,
                     fontSize = 16.sp)
 
@@ -124,7 +125,7 @@ fun LoanRequestItem(loan: LoanRequest, onClick : (LoanRequest) -> Unit = {}) {
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "Requested: ${loan.requestedDate}",
+                text = "Requested: ${loan.requestedAt}",
                 color = Color.Gray,
                 fontFamily = FontFamily.Monospace,
                 fontSize = 14.sp
@@ -156,20 +157,4 @@ fun LoanRequestItem(loan: LoanRequest, onClick : (LoanRequest) -> Unit = {}) {
             }
         }
     }
-}
-
-@Preview
-@Composable
-private fun LoanRequestPreview() {
-    LoanRequestItem(
-        LoanRequest(
-            userName = "John Doe",
-            level = 1,
-            loanAmount = "1000",
-            loanCurrency = "CC",
-            collateralAmount = "500",
-            collateralCurrency = "USDCx",
-            requestedDate = "2023-09-15"
-        )
-    )
 }

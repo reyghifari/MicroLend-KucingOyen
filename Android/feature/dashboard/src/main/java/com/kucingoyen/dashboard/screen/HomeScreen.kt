@@ -87,13 +87,13 @@ fun HomeScreen(
             AssetSection(
                 assetName = "Canton",
                 assetSymbol = "CC",
-                balance = balance.CC.toString(),
+                balance = balance.balances.CC.toString(),
             )
             Spacer(modifier = Modifier.height(8.dp))
             AssetSection(
                 assetName = "Stablecoin",
                 assetSymbol = "USDx",
-                balance = balance.USDx.toString(),
+                balance = balance.balances.USDx.toString(),
             )
             Spacer(modifier = Modifier.height(16.dp))
         }

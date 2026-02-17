@@ -23,7 +23,6 @@ import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -39,6 +38,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kucingoyen.core.R
 import com.kucingoyen.core.components.bottomsheet.BaseBottomSheet
+import com.kucingoyen.core.components.bottomsheet.ErrorBottomSheet
+import com.kucingoyen.core.components.bottomsheet.SuccessTransferSheet
 import com.kucingoyen.core.theme.BaseColor
 import com.kucingoyen.dashboard.DashboardViewModel
 import com.kucingoyen.dashboard.screen.component.InputCard
@@ -71,6 +72,8 @@ fun ContentRequestLoan(modifier: Modifier = Modifier,
 ) {
     val loanAmount by dashboardViewModel.loanAmount.collectAsStateWithLifecycle()
     val bottomSheetLevelInfo by dashboardViewModel.bottomSheetLevelInfo.collectAsStateWithLifecycle()
+    val bottomSheetSuccessLoan by dashboardViewModel.bottomSheetSuccessRequestLoan.collectAsStateWithLifecycle()
+    val bottomSheetNotEnoughCollateral by dashboardViewModel.bottomSheetNotEnoughCollateral.collectAsStateWithLifecycle()
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -125,11 +128,28 @@ fun ContentRequestLoan(modifier: Modifier = Modifier,
             dashboardViewModel.updateBottomBarLevelInfo(false)
         })
     }
+    if (bottomSheetSuccessLoan){
+        SuccessTransferSheet(
+            title = "Success",
+            desc = "Success Request loan"
+        ) {
+            dashboardViewModel.updateBottomSuccessRequestLoan(false)
+        }
+    }
+    if (bottomSheetNotEnoughCollateral){
+        ErrorBottomSheet(
+            title = "Failed",
+            desc = "Not enough collateral"
+        ) {
+            dashboardViewModel.updateBottomBarNotEnoughCollateral(false)
+        }
+    }
 }
 
 @Composable
 fun StickyContentLoan(dashboardViewModel: DashboardViewModel) {
     val totalCollateral by dashboardViewModel.totalCollateral.collectAsStateWithLifecycle()
+    val loanAmount by dashboardViewModel.loanAmount.collectAsStateWithLifecycle()
 
     Column {
         HorizontalDivider(thickness = 2.dp, color = BaseColor.JetBlack.Minus80)
@@ -171,7 +191,7 @@ fun StickyContentLoan(dashboardViewModel: DashboardViewModel) {
                 Spacer(modifier = Modifier.width(16.dp))
                 Button(
                     onClick = {
-
+                        dashboardViewModel.createLoanRequestAsBorrower(loanAmount)
                     },
                     modifier = Modifier
                         .height(48.dp)

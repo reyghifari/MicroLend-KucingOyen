@@ -9,6 +9,11 @@ import com.kucingoyen.data.cache.UserInfoCache
 import com.kucingoyen.data.cache.database.room.TransactionDao
 import com.kucingoyen.data.cache.database.room.TransactionEntity
 import com.kucingoyen.entity.model.BalanceItem
+import com.kucingoyen.entity.model.CreateLoanRequest
+import com.kucingoyen.entity.model.FillLoanRequest
+import com.kucingoyen.entity.model.GetBalanceResponse
+import com.kucingoyen.entity.model.HoldingItem
+import com.kucingoyen.entity.model.LoanRequestItem
 import com.kucingoyen.entity.model.Transaction
 import com.kucingoyen.entity.model.TransactionType
 import com.kucingoyen.entity.model.TransferRequest
@@ -44,8 +49,8 @@ class DashboardViewModel @Inject constructor(
     private val _showSuccessRequestSheet = MutableStateFlow(false)
     val showSuccessRequestSheet: StateFlow<Boolean> = _showSuccessRequestSheet.asStateFlow()
 
-    private val _balance = MutableStateFlow<BalanceItem>(BalanceItem())
-    val balance: StateFlow<BalanceItem> = _balance.asStateFlow()
+    private val _balance = MutableStateFlow<GetBalanceResponse>(GetBalanceResponse())
+    val balance: StateFlow<GetBalanceResponse> = _balance.asStateFlow()
 
     private val _getTotalBalance = MutableStateFlow<Double>(0.0)
     val getTotalBalance: StateFlow<Double> = _getTotalBalance.asStateFlow()
@@ -59,6 +64,24 @@ class DashboardViewModel @Inject constructor(
     private val _bottomSheetLevelInfo = MutableStateFlow(false)
     val bottomSheetLevelInfo: StateFlow<Boolean> = _bottomSheetLevelInfo.asStateFlow()
 
+    private val _bottomSheetNotEnoughCollateral = MutableStateFlow(false)
+    val bottomSheetNotEnoughCollateral: StateFlow<Boolean> = _bottomSheetNotEnoughCollateral.asStateFlow()
+
+    private val _bottomSheetSuccessRequestLoan = MutableStateFlow(false)
+    val bottomSheetSuccessRequestLoan: StateFlow<Boolean> = _bottomSheetSuccessRequestLoan.asStateFlow()
+
+    private val _bottomSheetNotEnoughFund = MutableStateFlow(false)
+    val bottomSheetNotEnoughFund: StateFlow<Boolean> = _bottomSheetNotEnoughFund.asStateFlow()
+
+    private val _bottomSheetSuccessFundLoan = MutableStateFlow(false)
+    val bottomSheetSuccessFundLoan: StateFlow<Boolean> = _bottomSheetSuccessFundLoan.asStateFlow()
+
+    private val _listLoanRequest = MutableStateFlow<List<LoanRequestItem>>(emptyList())
+    val listLoanRequest: StateFlow<List<LoanRequestItem>> = _listLoanRequest.asStateFlow()
+
+    private val _selectedLoanRequest = MutableStateFlow<LoanRequestItem>(LoanRequestItem())
+    val selectedLoanRequest: StateFlow<LoanRequestItem> = _selectedLoanRequest.asStateFlow()
+
 
     init {
         getBalance()
@@ -70,6 +93,23 @@ class DashboardViewModel @Inject constructor(
     fun updateBottomBarSelected(value: Int) {
         _bottomBarSelected.value = value
     }
+    fun updateBottomBarNotEnoughCollateral(value: Boolean) {
+        _bottomSheetNotEnoughCollateral.value = value
+    }
+
+    fun updateBottomBarNotEnoughFund(value: Boolean) {
+        _bottomSheetNotEnoughFund.value = value
+    }
+
+    fun updateBottomSuccessRequestLoan(value: Boolean) {
+        _bottomSheetSuccessRequestLoan.value = value
+    }
+
+    fun updateBottomSuccessFundLoan(value: Boolean) {
+        _bottomSheetSuccessFundLoan.value = value
+    }
+
+
 
     fun getLevelUser(): Int {
         return userInfoSession.level
@@ -148,8 +188,7 @@ class DashboardViewModel @Inject constructor(
                     LoadingAction.show(false)
                 }
                 .collect { response ->
-                    _balance.emit(response.balances)
-
+                    _balance.emit(response)
                     _getTotalBalance.emit((response.balances.CC * 0.17) + response.balances.USDx)
                     getTransactionActivity()
                 }
@@ -218,4 +257,115 @@ class DashboardViewModel @Inject constructor(
     }
 
 
+    fun createLoanRequestAsBorrower(amount : String){
+        val doubleAmount = amount
+            .replace(",", ".")
+            .toDoubleOrNull() ?: 0.0
+        val holdingItem = validateLoanRequest(doubleAmount)
+        if (holdingItem.contractId.isNotEmpty()){
+            viewModelScope.launch {
+                dashboardRepository.createLoanRequestAsBorrower(
+                    CreateLoanRequest(loanAmount = doubleAmount, collateralHoldingContractId = holdingItem.contractId)
+                )
+                    .onStart {
+                        LoadingAction.show(true)
+                    }
+                    .onCompletion {
+                        LoadingAction.show(false)
+                    }
+                    .collect { response ->
+                        if (response.success){
+                            updateBottomSuccessRequestLoan(true)
+                        }else{
+                            updateBottomBarNotEnoughCollateral(true)
+                        }
+                    }
+            }
+        }else{
+            updateBottomBarNotEnoughCollateral(true)
+        }
+    }
+
+    private fun validateLoanRequest(amount: Double) : HoldingItem {
+        val interestRate = when (getLevelUser()) {
+            1 -> 0.15
+            2 -> 0.14
+            3 -> 0.13
+            4 -> 0.12
+            5 -> 0.11
+            else -> 0.15
+        }
+        val total = amount + (amount * interestRate)
+        val USDx = _balance.value.holdings.USDx.filter { it.amount > total }
+        return USDx.first()
+    }
+
+    fun listLoanRequestAsLender(){
+        viewModelScope.launch {
+            dashboardRepository.listLoanRequestAsLender()
+                .onStart {
+                    LoadingAction.show(true)
+                }
+                .onCompletion {
+                    LoadingAction.show(false)
+                }
+                .collect { response ->
+                    _listLoanRequest.emit(response.loanRequests)
+                }
+        }
+    }
+
+    fun fillLoanRequestAsLender(loanContractId : String, loanAmount : Double){
+        val getLoanContractId = getHoldingLoanContractId(loanAmount)
+
+        if (getLoanContractId.isNotEmpty()){
+            viewModelScope.launch {
+                dashboardRepository.fillLoanRequestAsLender(
+                    FillLoanRequest(
+                        contractId = loanContractId,
+                        loanHoldingContractId = getLoanContractId
+                    ))
+                    .onStart {
+                        LoadingAction.show(true)
+                    }
+                    .onCompletion {
+                        LoadingAction.show(false)
+                    }
+                    .collect { response ->
+                        if (response.success){
+                            updateBottomSuccessFundLoan(true)
+                        }else{
+                            updateBottomBarNotEnoughFund(true)
+                        }
+                    }
+            }
+        }else{
+            updateBottomBarNotEnoughFund(true)
+        }
+
+    }
+
+    fun myListFunded(){
+        viewModelScope.launch {
+            dashboardRepository.listMyFunded()
+                .onStart {
+                    LoadingAction.show(true)
+                }
+                .onCompletion {
+                    LoadingAction.show(false)
+                }
+                .collect { response ->
+
+                }
+        }
+    }
+
+    private fun getHoldingLoanContractId(loanAmount: Double) : String{
+        val getContractId = _balance.value.holdings.CC.filter { it.amount > loanAmount }
+        return getContractId.first().contractId
+    }
+
+    fun setDetailLoanRequest(loanRequestItem: LoanRequestItem){
+        _selectedLoanRequest.value = loanRequestItem
+    }
 }

@@ -8,16 +8,23 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kucingoyen.core.components.LoanRequestItem
+import com.kucingoyen.dashboard.DashboardViewModel
 import com.kucingoyen.dashboard.screen.component.NavbarMicroLend
-import com.kucingoyen.entity.model.LoanRequest
 
 @Composable
-fun ProvideFundingScreen(modifier: Modifier = Modifier, onClickDetail : () -> Unit) {
-    val a = listOf(LoanRequest.get(), LoanRequest.get(), LoanRequest.get())
+fun ProvideFundingScreen(dashboardViewModel: DashboardViewModel, modifier: Modifier = Modifier, onClickDetail : () -> Unit) {
+    val listLoanRequest by dashboardViewModel.listLoanRequest.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        dashboardViewModel.listLoanRequestAsLender()
+    }
+
     Column {
         NavbarMicroLend(title = "List loan")
         LazyColumn(
@@ -27,8 +34,9 @@ fun ProvideFundingScreen(modifier: Modifier = Modifier, onClickDetail : () -> Un
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            items(a) { loan ->
+            items(listLoanRequest) { loan ->
                 LoanRequestItem(loan){
+                    dashboardViewModel.setDetailLoanRequest(it)
                     onClickDetail()
                 }
             }
@@ -36,11 +44,4 @@ fun ProvideFundingScreen(modifier: Modifier = Modifier, onClickDetail : () -> Un
     }
 
 
-}
-
-
-@Preview(showBackground = true)
-@Composable
-private fun ProvideFundingScreenPreview() {
-    ProvideFundingScreen {}
 }

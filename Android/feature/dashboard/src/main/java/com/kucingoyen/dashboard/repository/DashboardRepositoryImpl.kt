@@ -4,9 +4,16 @@ import com.kucingoyen.core.utils.DispatcherProvider
 import com.kucingoyen.data.cache.database.room.TransactionDao
 import com.kucingoyen.data.cache.database.room.TransactionEntity
 import com.kucingoyen.data.service.DashboardService
+import com.kucingoyen.entity.model.CreateLoanRequest
+import com.kucingoyen.entity.model.CreateLoanResponse
 import com.kucingoyen.entity.model.DepositRequest
 import com.kucingoyen.entity.model.DepositResponse
+import com.kucingoyen.entity.model.FillLoanRequest
+import com.kucingoyen.entity.model.FillLoanResponse
 import com.kucingoyen.entity.model.GetBalanceResponse
+import com.kucingoyen.entity.model.GetDataProfileResponse
+import com.kucingoyen.entity.model.ListLendingResponse
+import com.kucingoyen.entity.model.MyFundedResponse
 import com.kucingoyen.entity.model.Transaction
 import com.kucingoyen.entity.model.TransferRequest
 import com.kucingoyen.entity.model.TransferResponse
@@ -55,5 +62,43 @@ internal class DashboardRepositoryImpl @Inject constructor(
             emit(Unit)
         }.flowOn(dispatcher.io)
 
+    override fun createLoanRequestAsBorrower(createLoanRequest: CreateLoanRequest): Flow<CreateLoanResponse>  =
+        flow {
+            emit(
+                dashboardService.createLoanRequestAsBorrower(
+                    createLoanRequest
+                )
+            )
+        }.flowOn(dispatcher.io)
+
+    override fun fillLoanRequestAsLender(fillLoanRequest: FillLoanRequest): Flow<FillLoanResponse>  =
+        flow {
+            emit(
+                dashboardService.fillLoanRequestAsLender(
+                    fillLoanRequest
+                )
+            )
+        }.flowOn(dispatcher.io)
+
+    override fun listLoanRequestAsLender(): Flow<ListLendingResponse> =
+        flow {
+            emit(
+                dashboardService.listLoanRequestAsLender()
+            )
+        }.flowOn(dispatcher.io)
+
+    override fun getProfileUser(): Flow<GetDataProfileResponse> =
+        flow {
+            emit(
+                dashboardService.createProfile()
+            )
+        }.flowOn(dispatcher.io)
+
+    override fun listMyFunded(): Flow<List<MyFundedResponse>> =
+        flow {
+            emit(
+                dashboardService.listMyFunded()
+            )
+        }.flowOn(dispatcher.io)
 
 }

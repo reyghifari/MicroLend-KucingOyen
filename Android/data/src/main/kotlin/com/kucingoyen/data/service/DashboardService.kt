@@ -1,9 +1,16 @@
 package com.kucingoyen.data.service
 
 import com.kucingoyen.data.utils.Endpoint
+import com.kucingoyen.entity.model.CreateLoanRequest
+import com.kucingoyen.entity.model.CreateLoanResponse
 import com.kucingoyen.entity.model.DepositRequest
 import com.kucingoyen.entity.model.DepositResponse
+import com.kucingoyen.entity.model.FillLoanRequest
+import com.kucingoyen.entity.model.FillLoanResponse
 import com.kucingoyen.entity.model.GetBalanceResponse
+import com.kucingoyen.entity.model.GetDataProfileResponse
+import com.kucingoyen.entity.model.ListLendingResponse
+import com.kucingoyen.entity.model.MyFundedResponse
 import com.kucingoyen.entity.model.TransferRequest
 import com.kucingoyen.entity.model.TransferResponse
 import retrofit2.http.Body
@@ -24,5 +31,27 @@ interface DashboardService {
     suspend fun transferToken(
         @Body request: TransferRequest
     ): TransferResponse
+
+    @POST(Endpoint.CREATE_LOAN_REQUEST)
+    suspend fun createLoanRequestAsBorrower(
+        @Body request: CreateLoanRequest
+    ): CreateLoanResponse
+
+    @GET(Endpoint.LIST_LENDING)
+    suspend fun listLoanRequestAsLender(
+    ): ListLendingResponse
+
+    @POST(Endpoint.LENDER_FILL_LOAN)
+    suspend fun fillLoanRequestAsLender(
+        @Body request: FillLoanRequest
+    ): FillLoanResponse
+
+    @GET(Endpoint.CREATE_PROFILE)
+    suspend fun createProfile(
+    ): GetDataProfileResponse
+
+    @GET(Endpoint.MY_FUNDED)
+    suspend fun listMyFunded(
+    ): List<MyFundedResponse>
 
 }

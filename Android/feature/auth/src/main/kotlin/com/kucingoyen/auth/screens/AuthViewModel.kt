@@ -76,6 +76,23 @@ class AuthViewModel @Inject constructor(
                         partyId = response.damlPartyId
                     }
                     appSessionCache.token = response.token
+                    getProfile {
+                        onSuccess()
+                    }
+                }
+        }
+    }
+
+    fun getProfile(onSuccess: () -> Unit) {
+        viewModelScope.launch(exceptionHandler) {
+            repository.getProfileUser()
+                .onStart {
+                    LoadingAction.show(true)
+                }
+                .onCompletion {
+                    LoadingAction.show(false)
+                }
+                .collect { response ->
                     onSuccess()
                 }
         }

@@ -49,7 +49,7 @@ fun SendContent(
 
     var recipientAddress by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
-    val userBalance = balance.CC.toString()
+    val userBalance = balance.balances.CC.toString()
 
     Column(
         modifier = Modifier
@@ -67,7 +67,7 @@ fun SendContent(
         )
 
         Text(
-            text = "$${balance.CC} CC",
+            text = "$${balance.balances.CC} CC",
             fontSize = 28.sp,
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.Bold,
