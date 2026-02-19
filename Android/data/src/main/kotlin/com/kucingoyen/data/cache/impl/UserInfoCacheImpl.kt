@@ -27,7 +27,7 @@ internal class UserInfoCacheImpl @Inject constructor(
             pref.update(value to LEVEL)
         }
 
-    override var isLoggedIn: Boolean
+    override var isLoggedInBefore: Boolean
         get() = pref.getBoolean(IS_LOGGED_IN, false)
         set(value) {
             pref.update(value to IS_LOGGED_IN)

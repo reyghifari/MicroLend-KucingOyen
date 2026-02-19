@@ -5,6 +5,11 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.widget.Toast
 
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+
 fun Context.copyToClipboard(label: String = "Copied", text: String) {
     val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
     if (clipboard == null) {
@@ -16,4 +21,17 @@ fun Context.copyToClipboard(label: String = "Copied", text: String) {
     } catch (e: Exception) {
         Toast.makeText(this, "Failed Copied", Toast.LENGTH_SHORT).show()
     }
+}
+
+fun formatReadableDateTime(isoString: String): String {
+    val instant = Instant.parse(isoString)
+
+    val formatter = DateTimeFormatter.ofPattern(
+        "dd MMM yyyy, HH:mm",
+        Locale("id", "ID")
+    )
+
+    return instant
+        .atZone(ZoneId.of("Asia/Jakarta"))
+        .format(formatter)
 }

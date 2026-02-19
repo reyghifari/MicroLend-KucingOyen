@@ -5,7 +5,7 @@ interface UserInfoCache : BaseCache {
     /**
      * Emit whenever [isLoggedIn] value changed
      */
-    var isLoggedIn: Boolean
+    var isLoggedInBefore: Boolean
     var email: String
     var partyId: String
     var level: Int

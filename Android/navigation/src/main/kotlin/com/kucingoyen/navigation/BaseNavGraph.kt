@@ -81,6 +81,10 @@ fun DashboardNavigation(
                 dashboardNavController.navigate(BaseNav.Dashboard.TransactionDetailScreen.name)
             }, provideLoan = {
                 dashboardNavController.navigate(BaseNav.Dashboard.ListLoanRequestScreen.name)
+            }, onClickFundLoan = {
+                dashboardNavController.navigate(BaseNav.Dashboard.ListLoanRequestScreen.name)
+            }, onClickRequestLoan = {
+                dashboardNavController.navigate(BaseNav.Dashboard.DetailRequestLoanScreen.name)
             })
         }
         composable(route = BaseNav.Dashboard.DetailRequestLoanScreen.name) { navBackStackEntry ->

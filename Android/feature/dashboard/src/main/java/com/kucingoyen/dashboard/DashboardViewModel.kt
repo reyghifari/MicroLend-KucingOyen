@@ -14,6 +14,7 @@ import com.kucingoyen.entity.model.FillLoanRequest
 import com.kucingoyen.entity.model.GetBalanceResponse
 import com.kucingoyen.entity.model.HoldingItem
 import com.kucingoyen.entity.model.LoanRequestItem
+import com.kucingoyen.entity.model.MyFundedResponse
 import com.kucingoyen.entity.model.Transaction
 import com.kucingoyen.entity.model.TransactionType
 import com.kucingoyen.entity.model.TransferRequest
@@ -82,9 +83,15 @@ class DashboardViewModel @Inject constructor(
     private val _selectedLoanRequest = MutableStateFlow<LoanRequestItem>(LoanRequestItem())
     val selectedLoanRequest: StateFlow<LoanRequestItem> = _selectedLoanRequest.asStateFlow()
 
+    private val _listMyFunded = MutableStateFlow<List<MyFundedResponse>>(emptyList())
+    val listMyFunded: StateFlow<List<MyFundedResponse>> = _listMyFunded.asStateFlow()
+
+    private val _listMyLoan = MutableStateFlow<List<MyFundedResponse>>(emptyList())
+    val listMyLoan: StateFlow<List<MyFundedResponse>> = _listMyLoan.asStateFlow()
 
     init {
         getBalance()
+        getProfile()
     }
 
     fun updateBottomBarLevelInfo(value: Boolean) {
@@ -174,6 +181,7 @@ class DashboardViewModel @Inject constructor(
                         )
                     )
                     getBalance()
+                    getProfile()
                 }
         }
     }
@@ -191,6 +199,21 @@ class DashboardViewModel @Inject constructor(
                     _balance.emit(response)
                     _getTotalBalance.emit((response.balances.CC * 0.17) + response.balances.USDx)
                     getTransactionActivity()
+                }
+        }
+    }
+
+    fun getProfile() {
+        viewModelScope.launch(exceptionHandler) {
+            dashboardRepository.getProfileUser()
+                .onStart {
+                    LoadingAction.show(true)
+                }
+                .onCompletion {
+                    LoadingAction.show(false)
+                }
+                .collect { response ->
+
                 }
         }
     }
@@ -276,6 +299,8 @@ class DashboardViewModel @Inject constructor(
                     .collect { response ->
                         if (response.success){
                             updateBottomSuccessRequestLoan(true)
+                            getBalance()
+                            getProfile()
                         }else{
                             updateBottomBarNotEnoughCollateral(true)
                         }
@@ -334,6 +359,8 @@ class DashboardViewModel @Inject constructor(
                     .collect { response ->
                         if (response.success){
                             updateBottomSuccessFundLoan(true)
+                            getBalance()
+                            getProfile()
                         }else{
                             updateBottomBarNotEnoughFund(true)
                         }
@@ -355,7 +382,7 @@ class DashboardViewModel @Inject constructor(
                     LoadingAction.show(false)
                 }
                 .collect { response ->
-
+                    _listMyFunded.emit(response)
                 }
         }
     }

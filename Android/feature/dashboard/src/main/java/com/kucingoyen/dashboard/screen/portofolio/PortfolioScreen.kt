@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -25,6 +27,8 @@ import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -35,17 +39,32 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kucingoyen.core.R
+import com.kucingoyen.core.components.FundedCard
 import com.kucingoyen.core.theme.BaseColor
+import com.kucingoyen.dashboard.DashboardViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PortfolioScreen() {
-    val tabs = listOf("Lender Portfolio", "Borrower Portfolio")
+fun PortfolioScreen(
+    dashboardViewModel: DashboardViewModel,
+    onClickRequestLoan : () -> Unit = {},
+    onClickFundLoan : () -> Unit = {}
+) {
+    val tabs = listOf( "Borrower Portfolio", "Lender Portfolio")
     var selectedTabIndex by remember { mutableIntStateOf(1) }
+
+    val listFunded by dashboardViewModel.listMyFunded.collectAsState()
+    val listMyLoan by dashboardViewModel.listMyLoan.collectAsState()
+
+    val isLenderTab = selectedTabIndex == 0
+    val currentList = if (isLenderTab) listMyLoan else listFunded
+
+    LaunchedEffect(Unit) {
+        dashboardViewModel.myListFunded()
+    }
 
     Scaffold(
         topBar = {
@@ -102,8 +121,37 @@ fun PortfolioScreen() {
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                EmptyPortfolioState(true){}
+                if (currentList.isEmpty()) {
+                    EmptyPortfolioState(
+                        isLender = isLenderTab,
+                        onButtonClick = {
+                            if (isLenderTab){
+                                onClickRequestLoan()
+                            }else{
+                                onClickFundLoan()
+                            }
+                        }
+                    )
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize().padding(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        items(currentList) { loan ->
+                            FundedCard(
+                                cardImageRes = R.drawable.img_create_loan,
+                                status = loan.status,
+                                loan = loan.loanAmount.toString(),
+                                expiredDate = loan.endTime,
+                                onClick = {
+
+                                }
+                            )
+                        }
+                    }
+                }
             }
+
         }
     }
 }
@@ -154,9 +202,4 @@ fun EmptyPortfolioState(isLender: Boolean, onButtonClick : () -> Unit) {
             )
         }
     }
-}
-@Preview
-@Composable
-private fun PortfolioScreenPreview() {
-    PortfolioScreen()
 }

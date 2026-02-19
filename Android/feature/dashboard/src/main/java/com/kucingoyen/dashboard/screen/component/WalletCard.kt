@@ -82,8 +82,7 @@ fun WalletCard(
                         fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
                     )
                     Text(
-                        text = "$ $totalBalance",
-                        fontSize = 18.sp,
+                        text = "$ ${"%.2f".format(totalBalance)}",                        fontSize = 18.sp,
                         color = Color.White.copy(alpha = 0.85f),
                         fontWeight = FontWeight.Medium,
                         fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace

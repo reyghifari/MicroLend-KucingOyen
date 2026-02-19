@@ -24,6 +24,8 @@ fun DashboardScreen(
     provideLoan : () -> Unit = {},
     onClickSend : () -> Unit = {},
     onClickDeposit : () -> Unit = {},
+    onClickRequestLoan : () -> Unit = {},
+    onClickFundLoan : () -> Unit = {},
     onClickTransaction: (Transaction) -> Unit = {}
 ) {
     val selectedBar by dashboardViewModel.bottomBarSelected.collectAsStateWithLifecycle()
@@ -44,7 +46,7 @@ fun DashboardScreen(
                 )
             }
             1 -> {
-                PortfolioScreen()
+                PortfolioScreen(dashboardViewModel, onClickRequestLoan = onClickRequestLoan, onClickFundLoan = onClickFundLoan)
             }
             2 -> {
                 ProfileScreen(dashboardViewModel, paddingValues)

@@ -90,7 +90,7 @@ internal class DashboardRepositoryImpl @Inject constructor(
     override fun getProfileUser(): Flow<GetDataProfileResponse> =
         flow {
             emit(
-                dashboardService.createProfile()
+                dashboardService.getProfile()
             )
         }.flowOn(dispatcher.io)
 

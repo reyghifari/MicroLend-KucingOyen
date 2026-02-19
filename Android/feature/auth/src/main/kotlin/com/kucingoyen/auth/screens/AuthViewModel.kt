@@ -76,14 +76,18 @@ class AuthViewModel @Inject constructor(
                         partyId = response.damlPartyId
                     }
                     appSessionCache.token = response.token
-                    getProfile {
+                    if (userInfoCache.isLoggedInBefore){
                         onSuccess()
+                    }else{
+                        createProfile {
+                            onSuccess()
+                        }
                     }
                 }
         }
     }
 
-    fun getProfile(onSuccess: () -> Unit) {
+    fun createProfile(onSuccess: () -> Unit) {
         viewModelScope.launch(exceptionHandler) {
             repository.getProfileUser()
                 .onStart {
@@ -93,6 +97,7 @@ class AuthViewModel @Inject constructor(
                     LoadingAction.show(false)
                 }
                 .collect { response ->
+                    userInfoCache.isLoggedInBefore = true
                     onSuccess()
                 }
         }

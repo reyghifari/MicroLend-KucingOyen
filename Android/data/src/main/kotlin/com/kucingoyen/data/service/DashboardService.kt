@@ -46,8 +46,12 @@ interface DashboardService {
         @Body request: FillLoanRequest
     ): FillLoanResponse
 
-    @GET(Endpoint.CREATE_PROFILE)
+    @POST(Endpoint.CREATE_PROFILE)
     suspend fun createProfile(
+    ): GetDataProfileResponse
+
+    @GET(Endpoint.CREATE_PROFILE)
+    suspend fun getProfile(
     ): GetDataProfileResponse
 
     @GET(Endpoint.MY_FUNDED)
