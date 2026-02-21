@@ -89,6 +89,9 @@ class DashboardViewModel @Inject constructor(
     private val _listMyLoan = MutableStateFlow<List<MyFundedResponse>>(emptyList())
     val listMyLoan: StateFlow<List<MyFundedResponse>> = _listMyLoan.asStateFlow()
 
+    private val _selectedFundedItem = MutableStateFlow(MyFundedResponse())
+    val selectedFundedItem: StateFlow<MyFundedResponse> = _selectedFundedItem.asStateFlow()
+
     init {
         getBalance()
         getProfile()
@@ -394,5 +397,9 @@ class DashboardViewModel @Inject constructor(
 
     fun setDetailLoanRequest(loanRequestItem: LoanRequestItem){
         _selectedLoanRequest.value = loanRequestItem
+    }
+
+    fun selectFundedItem(item: MyFundedResponse) {
+        _selectedFundedItem.value = item
     }
 }

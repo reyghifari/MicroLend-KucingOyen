@@ -20,4 +20,6 @@ object Endpoint {
     const val CREATE_PROFILE = "api/lending/profile"
 
     const val MY_FUNDED = "api/lending/loan/funded"
+
+    const val MY_LOAN = "api/lending/loan/my-loans"
 }

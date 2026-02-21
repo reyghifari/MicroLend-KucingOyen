@@ -45,13 +45,15 @@ import com.kucingoyen.core.R
 import com.kucingoyen.core.components.FundedCard
 import com.kucingoyen.core.theme.BaseColor
 import com.kucingoyen.dashboard.DashboardViewModel
+import com.kucingoyen.entity.model.MyFundedResponse
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PortfolioScreen(
     dashboardViewModel: DashboardViewModel,
     onClickRequestLoan : () -> Unit = {},
-    onClickFundLoan : () -> Unit = {}
+    onClickFundLoan : () -> Unit = {},
+    onClickFundedDetail : (MyFundedResponse) -> Unit = {}
 ) {
     val tabs = listOf( "Borrower Portfolio", "Lender Portfolio")
     var selectedTabIndex by remember { mutableIntStateOf(1) }
@@ -144,7 +146,7 @@ fun PortfolioScreen(
                                 loan = loan.loanAmount.toString(),
                                 expiredDate = loan.endTime,
                                 onClick = {
-
+                                    onClickFundedDetail(loan)
                                 }
                             )
                         }

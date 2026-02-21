@@ -58,4 +58,8 @@ interface DashboardService {
     suspend fun listMyFunded(
     ): List<MyFundedResponse>
 
+    @GET(Endpoint.MY_LOAN)
+    suspend fun listMyLoan(
+    ): List<MyFundedResponse>
+
 }
