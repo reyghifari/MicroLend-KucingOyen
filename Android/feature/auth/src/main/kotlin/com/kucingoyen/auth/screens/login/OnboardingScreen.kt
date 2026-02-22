@@ -39,7 +39,7 @@ fun LoginScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BaseColor.Irish.Minus70)
+            .background(BaseColor.White)
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
