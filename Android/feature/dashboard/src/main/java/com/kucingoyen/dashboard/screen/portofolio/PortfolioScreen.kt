@@ -46,6 +46,7 @@ import com.kucingoyen.core.components.FundedCard
 import com.kucingoyen.core.theme.BaseColor
 import com.kucingoyen.dashboard.DashboardViewModel
 import com.kucingoyen.entity.model.MyFundedResponse
+import com.kucingoyen.entity.model.MyLoanResponse
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,7 +54,8 @@ fun PortfolioScreen(
     dashboardViewModel: DashboardViewModel,
     onClickRequestLoan : () -> Unit = {},
     onClickFundLoan : () -> Unit = {},
-    onClickFundedDetail : (MyFundedResponse) -> Unit = {}
+    onClickFundedDetail : (MyFundedResponse) -> Unit = {},
+    onClickLoanDetail : (MyLoanResponse) -> Unit = {}
 ) {
     val tabs = listOf( "Borrower Portfolio", "Lender Portfolio")
     var selectedTabIndex by remember { mutableIntStateOf(1) }
@@ -62,10 +64,10 @@ fun PortfolioScreen(
     val listMyLoan by dashboardViewModel.listMyLoan.collectAsState()
 
     val isLenderTab = selectedTabIndex == 0
-    val currentList = if (isLenderTab) listMyLoan else listFunded
 
     LaunchedEffect(Unit) {
         dashboardViewModel.myListFunded()
+        dashboardViewModel.myListLoan()
     }
 
     Scaffold(
@@ -123,32 +125,52 @@ fun PortfolioScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                if (currentList.isEmpty()) {
-                    EmptyPortfolioState(
-                        isLender = isLenderTab,
-                        onButtonClick = {
-                            if (isLenderTab){
-                                onClickRequestLoan()
-                            }else{
-                                onClickFundLoan()
+                if (isLenderTab) {
+                    if (listMyLoan.isEmpty()) {
+                        EmptyPortfolioState(
+                            isLender = true,
+                            onButtonClick = { onClickRequestLoan() }
+                        )
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize().padding(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            items(listMyLoan) { loan ->
+                                FundedCard(
+                                    cardImageRes = R.drawable.img_create_loan,
+                                    status = loan.status,
+                                    loan = loan.loanAmount.toString(),
+                                    expiredDate = loan.endTime,
+                                    onClick = {
+                                        onClickLoanDetail(loan)
+                                    }
+                                )
                             }
                         }
-                    )
+                    }
                 } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize().padding(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        items(currentList) { loan ->
-                            FundedCard(
-                                cardImageRes = R.drawable.img_create_loan,
-                                status = loan.status,
-                                loan = loan.loanAmount.toString(),
-                                expiredDate = loan.endTime,
-                                onClick = {
-                                    onClickFundedDetail(loan)
-                                }
-                            )
+                    if (listFunded.isEmpty()) {
+                        EmptyPortfolioState(
+                            isLender = false,
+                            onButtonClick = { onClickFundLoan() }
+                        )
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize().padding(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            items(listFunded) { loan ->
+                                FundedCard(
+                                    cardImageRes = R.drawable.img_create_loan,
+                                    status = loan.status,
+                                    loan = loan.loanAmount.toString(),
+                                    expiredDate = loan.endTime,
+                                    onClick = {
+                                        onClickFundedDetail(loan)
+                                    }
+                                )
+                            }
                         }
                     }
                 }

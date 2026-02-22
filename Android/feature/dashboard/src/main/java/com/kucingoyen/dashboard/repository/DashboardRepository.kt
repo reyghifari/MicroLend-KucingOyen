@@ -9,6 +9,7 @@ import com.kucingoyen.entity.model.GetBalanceResponse
 import com.kucingoyen.entity.model.GetDataProfileResponse
 import com.kucingoyen.entity.model.ListLendingResponse
 import com.kucingoyen.entity.model.MyFundedResponse
+import com.kucingoyen.entity.model.MyLoanResponse
 import com.kucingoyen.entity.model.Transaction
 import com.kucingoyen.entity.model.TransferRequest
 import com.kucingoyen.entity.model.TransferResponse
@@ -29,5 +30,7 @@ interface DashboardRepository {
     fun getProfileUser(): Flow<GetDataProfileResponse>
 
     fun listMyFunded(): Flow<List<MyFundedResponse>>
+
+    fun listMyLoan(): Flow<List<MyLoanResponse>>
 
 }

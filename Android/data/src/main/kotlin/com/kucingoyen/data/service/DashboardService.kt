@@ -11,6 +11,7 @@ import com.kucingoyen.entity.model.GetBalanceResponse
 import com.kucingoyen.entity.model.GetDataProfileResponse
 import com.kucingoyen.entity.model.ListLendingResponse
 import com.kucingoyen.entity.model.MyFundedResponse
+import com.kucingoyen.entity.model.MyLoanResponse
 import com.kucingoyen.entity.model.TransferRequest
 import com.kucingoyen.entity.model.TransferResponse
 import retrofit2.http.Body
@@ -60,6 +61,6 @@ interface DashboardService {
 
     @GET(Endpoint.MY_LOAN)
     suspend fun listMyLoan(
-    ): List<MyFundedResponse>
+    ): List<MyLoanResponse>
 
 }

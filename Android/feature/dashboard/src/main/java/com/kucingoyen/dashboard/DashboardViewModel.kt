@@ -15,6 +15,7 @@ import com.kucingoyen.entity.model.GetBalanceResponse
 import com.kucingoyen.entity.model.HoldingItem
 import com.kucingoyen.entity.model.LoanRequestItem
 import com.kucingoyen.entity.model.MyFundedResponse
+import com.kucingoyen.entity.model.MyLoanResponse
 import com.kucingoyen.entity.model.Transaction
 import com.kucingoyen.entity.model.TransactionType
 import com.kucingoyen.entity.model.TransferRequest
@@ -86,11 +87,14 @@ class DashboardViewModel @Inject constructor(
     private val _listMyFunded = MutableStateFlow<List<MyFundedResponse>>(emptyList())
     val listMyFunded: StateFlow<List<MyFundedResponse>> = _listMyFunded.asStateFlow()
 
-    private val _listMyLoan = MutableStateFlow<List<MyFundedResponse>>(emptyList())
-    val listMyLoan: StateFlow<List<MyFundedResponse>> = _listMyLoan.asStateFlow()
+    private val _listMyLoan = MutableStateFlow<List<MyLoanResponse>>(emptyList())
+    val listMyLoan: StateFlow<List<MyLoanResponse>> = _listMyLoan.asStateFlow()
 
     private val _selectedFundedItem = MutableStateFlow(MyFundedResponse())
     val selectedFundedItem: StateFlow<MyFundedResponse> = _selectedFundedItem.asStateFlow()
+
+    private val _selectedLoanItem = MutableStateFlow(MyLoanResponse())
+    val selectedLoanItem: StateFlow<MyLoanResponse> = _selectedLoanItem.asStateFlow()
 
     init {
         getBalance()
@@ -390,6 +394,21 @@ class DashboardViewModel @Inject constructor(
         }
     }
 
+    fun myListLoan(){
+        viewModelScope.launch {
+            dashboardRepository.listMyLoan()
+                .onStart {
+                    LoadingAction.show(true)
+                }
+                .onCompletion {
+                    LoadingAction.show(false)
+                }
+                .collect { response ->
+                    _listMyLoan.emit(response)
+                }
+        }
+    }
+
     private fun getHoldingLoanContractId(loanAmount: Double) : String{
         val getContractId = _balance.value.holdings.CC.filter { it.amount > loanAmount }
         return getContractId.first().contractId
@@ -401,5 +420,9 @@ class DashboardViewModel @Inject constructor(
 
     fun selectFundedItem(item: MyFundedResponse) {
         _selectedFundedItem.value = item
+    }
+
+    fun selectLoanItem(item: MyLoanResponse) {
+        _selectedLoanItem.value = item
     }
 }
