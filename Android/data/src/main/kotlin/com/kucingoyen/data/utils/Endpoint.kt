@@ -22,4 +22,8 @@ object Endpoint {
     const val MY_FUNDED = "api/lending/loan/funded"
 
     const val MY_LOAN = "api/lending/loan/requests"
+
+    const val REVIEWS = "api/reviews"
+
+    const val REVIEW_SUMMARY = "api/reviews/summary/{partyId}"
 }

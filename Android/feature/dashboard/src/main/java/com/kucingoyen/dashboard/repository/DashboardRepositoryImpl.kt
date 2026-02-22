@@ -6,6 +6,8 @@ import com.kucingoyen.data.cache.database.room.TransactionEntity
 import com.kucingoyen.data.service.DashboardService
 import com.kucingoyen.entity.model.CreateLoanRequest
 import com.kucingoyen.entity.model.CreateLoanResponse
+import com.kucingoyen.entity.model.CreateReviewRequest
+import com.kucingoyen.entity.model.CreateReviewResponse
 import com.kucingoyen.entity.model.DepositRequest
 import com.kucingoyen.entity.model.DepositResponse
 import com.kucingoyen.entity.model.FillLoanRequest
@@ -15,6 +17,7 @@ import com.kucingoyen.entity.model.GetDataProfileResponse
 import com.kucingoyen.entity.model.ListLendingResponse
 import com.kucingoyen.entity.model.MyFundedResponse
 import com.kucingoyen.entity.model.MyLoanResponse
+import com.kucingoyen.entity.model.ReviewSummaryResponse
 import com.kucingoyen.entity.model.Transaction
 import com.kucingoyen.entity.model.TransferRequest
 import com.kucingoyen.entity.model.TransferResponse
@@ -106,6 +109,20 @@ internal class DashboardRepositoryImpl @Inject constructor(
         flow {
             emit(
                 dashboardService.listMyLoan()
+            )
+        }.flowOn(dispatcher.io)
+
+    override fun createReview(request: CreateReviewRequest): Flow<CreateReviewResponse> =
+        flow {
+            emit(
+                dashboardService.createReview(request)
+            )
+        }.flowOn(dispatcher.io)
+
+    override fun getReviewSummary(partyId: String): Flow<ReviewSummaryResponse> =
+        flow {
+            emit(
+                dashboardService.getReviewSummary(partyId)
             )
         }.flowOn(dispatcher.io)
 

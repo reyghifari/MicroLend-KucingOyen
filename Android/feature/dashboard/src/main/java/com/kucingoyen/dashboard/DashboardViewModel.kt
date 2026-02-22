@@ -10,12 +10,15 @@ import com.kucingoyen.data.cache.database.room.TransactionDao
 import com.kucingoyen.data.cache.database.room.TransactionEntity
 import com.kucingoyen.entity.model.BalanceItem
 import com.kucingoyen.entity.model.CreateLoanRequest
+import com.kucingoyen.entity.model.CreateReviewRequest
+import com.kucingoyen.entity.model.CreateReviewResponse
 import com.kucingoyen.entity.model.FillLoanRequest
 import com.kucingoyen.entity.model.GetBalanceResponse
 import com.kucingoyen.entity.model.HoldingItem
 import com.kucingoyen.entity.model.LoanRequestItem
 import com.kucingoyen.entity.model.MyFundedResponse
 import com.kucingoyen.entity.model.MyLoanResponse
+import com.kucingoyen.entity.model.ReviewSummaryResponse
 import com.kucingoyen.entity.model.Transaction
 import com.kucingoyen.entity.model.TransactionType
 import com.kucingoyen.entity.model.TransferRequest
@@ -96,6 +99,9 @@ class DashboardViewModel @Inject constructor(
     private val _selectedLoanItem = MutableStateFlow(MyLoanResponse())
     val selectedLoanItem: StateFlow<MyLoanResponse> = _selectedLoanItem.asStateFlow()
 
+    private val _reviewSummary = MutableStateFlow(ReviewSummaryResponse())
+    val reviewSummary: StateFlow<ReviewSummaryResponse> = _reviewSummary.asStateFlow()
+
     init {
         getBalance()
         getProfile()
@@ -154,8 +160,9 @@ class DashboardViewModel @Inject constructor(
                 .replace(",", ".")
                 .toDoubleOrNull() ?: 0.0
 
-            val total = principal + (principal * interestRate)
-            updateTotalCollateral(total.toString())
+            val totalCC = principal + (principal * interestRate)
+            val totalUSDxRate = totalCC * 0.16
+            updateTotalCollateral("%.2f".format(totalUSDxRate))
         } else {
             updateTotalCollateral("")
         }
@@ -424,5 +431,47 @@ class DashboardViewModel @Inject constructor(
 
     fun selectLoanItem(item: MyLoanResponse) {
         _selectedLoanItem.value = item
+    }
+
+    fun createReview(request: CreateReviewRequest) {
+        viewModelScope.launch(exceptionHandler) {
+            dashboardRepository.createReview(request)
+                .onStart {
+                    LoadingAction.show(true)
+                }
+                .onCompletion {
+                    LoadingAction.show(false)
+                }
+                .collect { response ->
+
+                }
+        }
+    }
+
+    fun getReviewSummary(partyId: String) {
+        // TODO: Replace dummy data with actual API call
+        viewModelScope.launch {
+            val dummyReviews = listOf(
+                CreateReviewResponse(
+                    id = 1,
+                    reviewerEmail = "user_abc@gmail.com",
+                    revieweePartyId = partyId,
+                    reviewerRole = "LENDER",
+                    loanContractId = "contract123",
+                    rating = 5,
+                    comment = "Very smooth repayment",
+                    createdDate = "2026-02-20T10:30:00Z"
+                ),
+            )
+            val avgRating = dummyReviews.map { it.rating }.average()
+            _reviewSummary.emit(
+                ReviewSummaryResponse(
+                    revieweePartyId = partyId,
+                    averageRating = avgRating,
+                    totalReviews = dummyReviews.size,
+                    reviews = dummyReviews
+                )
+            )
+        }
     }
 }

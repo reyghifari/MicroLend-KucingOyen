@@ -253,7 +253,7 @@ private fun LoanDetailSummaryCard(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "$${loanAmount.toInt()}",
+                        text = "${loanAmount.toInt()} CC",
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace,
@@ -270,7 +270,7 @@ private fun LoanDetailSummaryCard(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "$${collateralAmount.toInt()}",
+                        text = "${collateralAmount.toInt()} USDCx",
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace,

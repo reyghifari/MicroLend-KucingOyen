@@ -47,7 +47,7 @@ fun InputCard(
             modifier = Modifier.padding(16.dp)
         ) {
             Text(
-                text = "Input Collateral",
+                text = "Input Loans",
                 color = BaseColor.JetBlack.Normal,
                 fontSize = 12.sp,
                 fontFamily = FontFamily.Monospace,
@@ -93,7 +93,7 @@ fun InputCard(
                 Spacer(modifier = Modifier.width(4.dp))
 
                 Text(
-                    text = "$",
+                    text = "CC",
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     fontFamily = FontFamily.Monospace,

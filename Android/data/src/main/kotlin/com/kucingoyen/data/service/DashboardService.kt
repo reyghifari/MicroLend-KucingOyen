@@ -3,6 +3,8 @@ package com.kucingoyen.data.service
 import com.kucingoyen.data.utils.Endpoint
 import com.kucingoyen.entity.model.CreateLoanRequest
 import com.kucingoyen.entity.model.CreateLoanResponse
+import com.kucingoyen.entity.model.CreateReviewRequest
+import com.kucingoyen.entity.model.CreateReviewResponse
 import com.kucingoyen.entity.model.DepositRequest
 import com.kucingoyen.entity.model.DepositResponse
 import com.kucingoyen.entity.model.FillLoanRequest
@@ -12,11 +14,13 @@ import com.kucingoyen.entity.model.GetDataProfileResponse
 import com.kucingoyen.entity.model.ListLendingResponse
 import com.kucingoyen.entity.model.MyFundedResponse
 import com.kucingoyen.entity.model.MyLoanResponse
+import com.kucingoyen.entity.model.ReviewSummaryResponse
 import com.kucingoyen.entity.model.TransferRequest
 import com.kucingoyen.entity.model.TransferResponse
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
 
 interface DashboardService {
 
@@ -62,5 +66,15 @@ interface DashboardService {
     @GET(Endpoint.MY_LOAN)
     suspend fun listMyLoan(
     ): List<MyLoanResponse>
+
+    @POST(Endpoint.REVIEWS)
+    suspend fun createReview(
+        @Body request: CreateReviewRequest
+    ): CreateReviewResponse
+
+    @GET(Endpoint.REVIEW_SUMMARY)
+    suspend fun getReviewSummary(
+        @Path("partyId") partyId: String
+    ): ReviewSummaryResponse
 
 }
