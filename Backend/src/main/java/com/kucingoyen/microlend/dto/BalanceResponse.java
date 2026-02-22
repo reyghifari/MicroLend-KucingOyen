@@ -5,10 +5,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 
 /**
  * Response DTO for balance query.
+ * Contains both aggregate balances and individual holdings.
  */
 @Data
 @NoArgsConstructor
@@ -16,4 +18,5 @@ import java.util.Map;
 public class BalanceResponse {
 
     private Map<String, BigDecimal> balances;
+    private Map<String, List<HoldingDto>> holdings;
 }

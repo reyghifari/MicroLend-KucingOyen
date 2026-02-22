@@ -405,6 +405,45 @@ public class DamlLedgerService {
     }
 
     /**
+     * Generate a JWT token for multiple parties to interact with DAML.
+     * Used for submitMulti commands that require multiple acting parties.
+     * 
+     * @param partyIds List of party IDs that will act together
+     * @return JWT token string
+     */
+    public String generateMultiPartyToken(java.util.List<String> partyIds) {
+        String header = "{\"alg\":\"HS256\",\"typ\":\"JWT\"}";
+
+        long expirationTime = System.currentTimeMillis() / 1000 + 3600; // 1 hour from now
+
+        // Build actAs array with all parties
+        String partiesJson = partyIds.stream()
+                .map(p -> "\"" + p + "\"")
+                .collect(java.util.stream.Collectors.joining(","));
+
+        String payload = String.format("""
+                {
+                    "https://daml.com/ledger-api": {
+                        "ledgerId": "sandbox",
+                        "applicationId": "microlend-android",
+                        "actAs": [%s],
+                        "readAs": [%s]
+                    },
+                    "exp": %d
+                }
+                """, partiesJson, partiesJson, expirationTime).replaceAll("\\s+", "");
+
+        String encodedHeader = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(header.getBytes(StandardCharsets.UTF_8));
+        String encodedPayload = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(payload.getBytes(StandardCharsets.UTF_8));
+        String signature = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString("signature".getBytes(StandardCharsets.UTF_8));
+
+        return encodedHeader + "." + encodedPayload + "." + signature;
+    }
+
+    /**
      * Generate a JWT token for a user to interact with DAML.
      * 
      * @param partyId The party ID of the user
@@ -434,6 +473,47 @@ public class DamlLedgerService {
                 .encodeToString("signature".getBytes(StandardCharsets.UTF_8));
 
         return encodedHeader + "." + encodedPayload + "." + signature;
+    }
+
+    /**
+     * Exercise a choice on a contract with multiple acting parties (submitMulti).
+     * Required when a choice needs multiple controllers.
+     *
+     * @param templateId     The template ID of the contract
+     * @param contractId     The contract ID to exercise the choice on
+     * @param choice         The choice name to exercise
+     * @param argument       The argument for the choice
+     * @param actingPartyIds List of party IDs to act as (submitMulti)
+     * @return ExerciseResponse containing the result
+     */
+    public ExerciseResponse exerciseChoiceMulti(
+            String templateId,
+            String contractId,
+            String choice,
+            java.util.Map<String, Object> argument,
+            java.util.List<String> actingPartyIds) {
+
+        String fullTemplateId = buildTemplateId(templateId);
+        ExerciseRequest request = new ExerciseRequest(fullTemplateId, contractId, choice, argument);
+        String token = generateMultiPartyToken(actingPartyIds);
+
+        try {
+            log.debug("Exercising choice {} on contract {} with template {} acting as {} (submitMulti)",
+                    choice, contractId, fullTemplateId, actingPartyIds);
+
+            return webClient.post()
+                    .uri("/v1/exercise")
+                    .header("Authorization", "Bearer " + token)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(request)
+                    .retrieve()
+                    .bodyToMono(ExerciseResponse.class)
+                    .block();
+        } catch (WebClientResponseException e) {
+            log.error("DAML JSON API error while exercising choice (submitMulti): {} - {}",
+                    e.getStatusCode(), e.getResponseBodyAsString());
+            throw new DamlIntegrationException("Failed to exercise choice (submitMulti): " + e.getMessage(), e);
+        }
     }
 
     // DTOs for DAML JSON API operations

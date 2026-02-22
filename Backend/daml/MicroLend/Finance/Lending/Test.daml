@@ -1,0 +1,773 @@
+-- | Test scenarios for MicroLend Lending module
+-- Comprehensive tests for loan request, fill, repay, liquidate lifecycle
+module MicroLend.Finance.Lending.Test where
+
+import Daml.Script
+import DA.Time (time)
+import DA.Date (date, Month(..))
+
+import MicroLend.Finance.Types
+import MicroLend.Finance.Holding
+import MicroLend.Finance.Asset
+import MicroLend.Finance.Lending.Types
+import MicroLend.Finance.Lending.UserProfile
+import MicroLend.Finance.Lending.LoanRequest
+import MicroLend.Finance.Lending.ActiveLoan
+import MicroLend.Finance.Lending.LendingService
+import MicroLend.Finance.Lending.TimeOracle
+
+-- | Test parties setup for lending tests
+data LendingTestParties = LendingTestParties
+  with
+    operator : Party    -- ^ System operator (admin/bank)
+    alice : Party       -- ^ Borrower
+    bob : Party         -- ^ Lender
+    charlie : Party     -- ^ Another potential lender
+  deriving (Eq, Show)
+
+-- | Setup test parties
+setupLendingParties : Script LendingTestParties
+setupLendingParties = do
+  operator <- allocateParty "Operator"
+  alice <- allocateParty "Alice"
+  bob <- allocateParty "Bob"
+  charlie <- allocateParty "Charlie"
+  pure LendingTestParties{..}
+
+-- | Helper: Setup asset factories and mint tokens
+-- Returns (ccFactoryCid, usdxFactoryCid)
+setupAssetFactories : Party -> Script (ContractId AssetFactory, ContractId AssetFactory)
+setupAssetFactories operator = do
+  -- Create AssetIssuerService
+  issuerServiceCid <- submit operator do
+    createCmd AssetIssuerService with
+      issuer = operator
+      observers = []
+
+  -- Create CC Factory
+  ccFactoryCid <- submit operator do
+    exerciseCmd issuerServiceCid CreateCCFactory with
+      maxSupply = None
+
+  -- Create USDx Factory
+  usdxFactoryCid <- submit operator do
+    exerciseCmd issuerServiceCid CreateUSDxFactory with
+      maxSupply = None
+
+  pure (ccFactoryCid, usdxFactoryCid)
+
+-- ============================================================
+-- TEST 1: User Profile Management
+-- ============================================================
+
+testUserProfile : Script ()
+testUserProfile = do
+  LendingTestParties{..} <- setupLendingParties
+
+  debug "=== Test 1: User Profile Management ==="
+
+  -- Create UserProfileFactory
+  profileFactoryCid <- submit operator do
+    createCmd UserProfileFactory with operator
+
+  -- Create profile for Alice (Borrower)
+  aliceProfileCid <- submit operator do
+    exerciseCmd profileFactoryCid CreateUserProfile with
+      user = alice
+
+  -- Verify Alice starts at Level1
+  (level, completed, defaulted, borrowed, lent) <- submit alice do
+    exerciseCmd aliceProfileCid GetProfileInfo
+
+  debug $ "Alice Level: " <> show level <> ", Completed: " <> show completed
+  assertMsg "Alice should start at Level1" (level == Level1)
+  assertMsg "Alice should have 0 completed loans" (completed == 0)
+
+  -- Upgrade Alice to Level2
+  aliceProfileCid2 <- submit operator do
+    exerciseCmd aliceProfileCid UpgradeLevel with
+      newLevel = Level2
+
+  (level2, _, _, _, _) <- submit alice do
+    exerciseCmd aliceProfileCid2 GetProfileInfo
+
+  assertMsg "Alice should be Level2" (level2 == Level2)
+
+  -- Record a loan completion
+  aliceProfileCid3 <- submit operator do
+    exerciseCmd aliceProfileCid2 RecordLoanCompletion with
+      loanAmount = 100.0
+
+  (_, completed2, _, borrowed2, _) <- submit alice do
+    exerciseCmd aliceProfileCid3 GetProfileInfo
+
+  assertMsg "Alice should have 1 completed loan" (completed2 == 1)
+  assertMsg "Alice total borrowed should be 100.0" (borrowed2 == 100.0)
+
+  debug "=== User Profile Test PASSED ==="
+
+-- ============================================================
+-- TEST 2: Time Oracle
+-- ============================================================
+
+testTimeOracle : Script ()
+testTimeOracle = do
+  LendingTestParties{..} <- setupLendingParties
+
+  debug "=== Test 2: Time Oracle ==="
+
+  let initialTime = time (date 2026 Feb 1) 0 0 0
+
+  -- Create TimeOracle
+  oracleCid <- submit operator do
+    createCmd TimeOracle with
+      operator
+      currentTime = initialTime
+      observers = [alice, bob]
+
+  -- Get current time
+  currentTime' <- submit operator do
+    exerciseCmd oracleCid GetCurrentTime
+
+  assertMsg "Time should match initial time" (currentTime' == initialTime)
+
+  -- Update time (simulating cron job)
+  let newTime = time (date 2026 Mar 1) 0 0 0
+  oracleCid2 <- submit operator do
+    exerciseCmd oracleCid UpdateTime with newTime
+
+  updatedTime <- submit operator do
+    exerciseCmd oracleCid2 GetCurrentTime
+
+  assertMsg "Time should be updated" (updatedTime == newTime)
+
+  debug "=== Time Oracle Test PASSED ==="
+
+-- ============================================================
+-- TEST 3: Collateral Calculation
+-- ============================================================
+
+testCollateralCalculation : Script ()
+testCollateralCalculation = do
+  debug "=== Test 3: Collateral Calculation ==="
+
+  -- Test Level1: 110% + 5% = 115%
+  let collateral1 = calculateCollateral 100.0 1.10 Level1
+  debug $ "Level1 collateral for 100 CC: " <> show collateral1 <> " USDx"
+  assertMsg "Level1 collateral should be 115.0" (collateral1 == 115.0)
+
+  -- Test Level2: 110% + 4% = 114%
+  let collateral2 = calculateCollateral 100.0 1.10 Level2
+  debug $ "Level2 collateral for 100 CC: " <> show collateral2 <> " USDx"
+  assertMsg "Level2 collateral should be 114.0" (collateral2 == 114.0)
+
+  -- Test Level3: 110% + 3% = 113%
+  let collateral3 = calculateCollateral 100.0 1.10 Level3
+  debug $ "Level3 collateral for 100 CC: " <> show collateral3 <> " USDx"
+  assertMsg "Level3 collateral should be 113.0" (collateral3 == 113.0)
+
+  -- Test Level5: 110% + 1% = 111%
+  let collateral5 = calculateCollateral 100.0 1.10 Level5
+  debug $ "Level5 collateral for 100 CC: " <> show collateral5 <> " USDx"
+  assertMsg "Level5 collateral should be 111.0" (collateral5 == 111.0)
+
+  -- Test repayment calculation (5% interest)
+  let repayment = calculateRepayment 100.0 0.05
+  debug $ "Repayment for 100 CC at 5%: " <> show repayment <> " CC"
+  assertMsg "Repayment should be 105.0" (repayment == 105.0)
+
+  debug "=== Collateral Calculation Test PASSED ==="
+
+-- ============================================================
+-- TEST 4: Loan Request Creation (via LendingService)
+-- ============================================================
+
+testLoanRequest : Script ()
+testLoanRequest = do
+  LendingTestParties{..} <- setupLendingParties
+
+  debug "=== Test 4: Loan Request Creation ==="
+
+  -- Setup asset factories
+  (ccFactoryCid, usdxFactoryCid) <- setupAssetFactories operator
+
+  -- Mint USDx to Alice (Borrower) for collateral
+  (usdxFactoryCid2, aliceUsdxCid) <- submit operator do
+    exerciseCmd usdxFactoryCid Mint with
+      recipient = alice
+      mintAmount = 200.0  -- Enough for 115% of 100 CC
+
+  -- Create LendingService
+  lendingServiceCid <- submit operator do
+    createCmd LendingService with
+      operator
+      baseCollateralRate = 1.10
+      interestRate = 0.05
+      loanDurationDays = 30
+      observers = [alice, bob, charlie]
+
+  let requestTime = time (date 2026 Feb 1) 12 0 0
+  let ccAsset = ccAssetId operator
+  let usdxAsset = usdxAssetId operator
+
+  -- Alice requests a loan of 100 CC
+  -- Required collateral: 100 * 1.15 (Level1) = 115 USDx
+  (loanRequestCid, aliceRemainderCid) <- submitMulti [operator, alice] [] do
+    exerciseCmd lendingServiceCid RequestLoanWithSplit with
+      borrower = alice
+      loanAmount = 100.0
+      loanAssetId = ccAsset
+      collateralAssetId = usdxAsset
+      collateralHoldingCid = aliceUsdxCid
+      borrowerLevel = Level1
+      requestTime
+
+  -- Verify loan request was created
+  loanRequest <- queryContractId alice loanRequestCid
+  case loanRequest of
+    Some lr -> do
+      debug $ "Loan Request created: " <> show lr.loanAmount <> " CC"
+      debug $ "Collateral locked: " <> show lr.collateralAmount <> " USDx"
+      assertMsg "Loan amount should be 100" (lr.loanAmount == 100.0)
+      assertMsg "Collateral should be 115" (lr.collateralAmount == 115.0)
+    None -> abort "ERROR: Loan request not found"
+
+  -- Verify remaining USDx for Alice
+  remainder <- queryContractId alice aliceRemainderCid
+  case remainder of
+    Some h -> do
+      debug $ "Alice remaining USDx: " <> show h.amount
+      assertMsg "Alice should have 85 USDx remaining" (h.amount == 85.0)
+    None -> debug "Note: No remainder (exact collateral match)"
+
+  debug "=== Loan Request Test PASSED ==="
+
+-- ============================================================
+-- TEST 5: Fill Loan (Lender provides CC)
+-- ============================================================
+
+testFillLoan : Script ()
+testFillLoan = do
+  LendingTestParties{..} <- setupLendingParties
+
+  debug "=== Test 5: Fill Loan (Marketplace) ==="
+
+  -- Setup
+  (ccFactoryCid, usdxFactoryCid) <- setupAssetFactories operator
+  let ccAsset = ccAssetId operator
+  let usdxAsset = usdxAssetId operator
+  let requestTime = time (date 2026 Feb 1) 12 0 0
+
+  -- Mint USDx to Alice (Borrower)
+  (usdxFactoryCid2, aliceUsdxCid) <- submit operator do
+    exerciseCmd usdxFactoryCid Mint with
+      recipient = alice
+      mintAmount = 115.0  -- Exact collateral for Level1
+
+  -- Mint CC to Bob (Lender)
+  (ccFactoryCid2, bobCcCid) <- submit operator do
+    exerciseCmd ccFactoryCid Mint with
+      recipient = bob
+      mintAmount = 100.0  -- Enough to fund the loan
+
+  -- Create LendingService
+  lendingServiceCid <- submit operator do
+    createCmd LendingService with
+      operator
+      baseCollateralRate = 1.10
+      interestRate = 0.05
+      loanDurationDays = 30
+      observers = [alice, bob, charlie]
+
+  -- Alice requests loan
+  loanRequestCid <- submitMulti [operator, alice] [] do
+    exerciseCmd lendingServiceCid RequestLoan with
+      borrower = alice
+      loanAmount = 100.0
+      loanAssetId = ccAsset
+      collateralAssetId = usdxAsset
+      collateralHoldingCid = aliceUsdxCid
+      borrowerLevel = Level1
+      requestTime
+
+  -- Bob fills the loan request
+  activeLoanCid <- submit bob do
+    exerciseCmd loanRequestCid FillLoan with
+      lender = bob
+      loanHoldingCid = bobCcCid
+
+  -- Verify ActiveLoan was created
+  activeLoan <- queryContractId bob activeLoanCid
+  case activeLoan of
+    Some al -> do
+      debug "Active Loan created!"
+      debug $ "  Borrower: " <> show al.borrower
+      debug $ "  Lender: " <> show al.lender
+      debug $ "  Loan Amount: " <> show al.loanAmount <> " CC"
+      debug $ "  Collateral: " <> show al.collateralAmount <> " USDx"
+      debug $ "  Status: " <> show al.status
+      assertMsg "Status should be Active" (al.status == Active)
+      assertMsg "Borrower should be Alice" (al.borrower == alice)
+      assertMsg "Lender should be Bob" (al.lender == bob)
+    None -> abort "ERROR: Active loan not found"
+
+  debug "=== Fill Loan Test PASSED ==="
+
+-- ============================================================
+-- TEST 6: Loan Repayment
+-- ============================================================
+
+testLoanRepayment : Script ()
+testLoanRepayment = do
+  LendingTestParties{..} <- setupLendingParties
+
+  debug "=== Test 6: Loan Repayment ==="
+
+  -- Setup
+  (ccFactoryCid, usdxFactoryCid) <- setupAssetFactories operator
+  let ccAsset = ccAssetId operator
+  let usdxAsset = usdxAssetId operator
+  let requestTime = time (date 2026 Feb 1) 12 0 0
+
+  -- Mint USDx to Alice for collateral
+  (usdxFactoryCid2, aliceUsdxCid) <- submit operator do
+    exerciseCmd usdxFactoryCid Mint with
+      recipient = alice
+      mintAmount = 115.0
+
+  -- Mint CC to Bob (Lender)
+  (ccFactoryCid2, bobCcCid) <- submit operator do
+    exerciseCmd ccFactoryCid Mint with
+      recipient = bob
+      mintAmount = 100.0
+
+  -- Mint extra CC to Alice for repayment (principal + 5% interest = 105 CC)
+  (ccFactoryCid3, aliceRepaymentCcCid) <- submit operator do
+    exerciseCmd ccFactoryCid2 Mint with
+      recipient = alice
+      mintAmount = 105.0
+
+  -- Create LendingService
+  lendingServiceCid <- submit operator do
+    createCmd LendingService with
+      operator
+      baseCollateralRate = 1.10
+      interestRate = 0.05
+      loanDurationDays = 30
+      observers = [alice, bob]
+
+  -- Alice requests loan
+  loanRequestCid <- submitMulti [operator, alice] [] do
+    exerciseCmd lendingServiceCid RequestLoan with
+      borrower = alice
+      loanAmount = 100.0
+      loanAssetId = ccAsset
+      collateralAssetId = usdxAsset
+      collateralHoldingCid = aliceUsdxCid
+      borrowerLevel = Level1
+      requestTime
+
+  -- Bob fills loan
+  activeLoanCid <- submit bob do
+    exerciseCmd loanRequestCid FillLoan with
+      lender = bob
+      loanHoldingCid = bobCcCid
+
+  -- Alice repays the loan with 105 CC (100 principal + 5% interest)
+  (repaidHoldingCid, collateralReturnCid) <- submit alice do
+    exerciseCmd activeLoanCid Repay with
+      repaymentHoldingCid = aliceRepaymentCcCid
+
+  -- Verify Bob received repayment
+  repaidHolding <- queryContractId bob repaidHoldingCid
+  case repaidHolding of
+    Some h -> do
+      debug $ "Bob received repayment: " <> show h.amount <> " CC"
+      assertMsg "Bob should receive 105 CC" (h.amount == 105.0)
+    None -> abort "ERROR: Repayment holding not found"
+
+  -- Verify Alice got collateral back
+  collateralReturn <- queryContractId alice collateralReturnCid
+  case collateralReturn of
+    Some h -> do
+      debug $ "Alice collateral returned: " <> show h.amount <> " USDx"
+      assertMsg "Alice should get 115 USDx collateral back" (h.amount == 115.0)
+    None -> abort "ERROR: Collateral return not found"
+
+  debug "=== Loan Repayment Test PASSED ==="
+
+-- ============================================================
+-- TEST 7: Loan Liquidation (Default)
+-- ============================================================
+
+testLoanLiquidation : Script ()
+testLoanLiquidation = do
+  LendingTestParties{..} <- setupLendingParties
+
+  debug "=== Test 7: Loan Liquidation (Default) ==="
+
+  -- Setup
+  (ccFactoryCid, usdxFactoryCid) <- setupAssetFactories operator
+  let ccAsset = ccAssetId operator
+  let usdxAsset = usdxAssetId operator
+  let requestTime = time (date 2026 Feb 1) 12 0 0
+
+  -- Mint tokens
+  (usdxFactoryCid2, aliceUsdxCid) <- submit operator do
+    exerciseCmd usdxFactoryCid Mint with
+      recipient = alice
+      mintAmount = 115.0
+
+  (ccFactoryCid2, bobCcCid) <- submit operator do
+    exerciseCmd ccFactoryCid Mint with
+      recipient = bob
+      mintAmount = 100.0
+
+  -- Create LendingService
+  lendingServiceCid <- submit operator do
+    createCmd LendingService with
+      operator
+      baseCollateralRate = 1.10
+      interestRate = 0.05
+      loanDurationDays = 30
+      observers = [alice, bob]
+
+  -- Alice requests loan
+  loanRequestCid <- submitMulti [operator, alice] [] do
+    exerciseCmd lendingServiceCid RequestLoan with
+      borrower = alice
+      loanAmount = 100.0
+      loanAssetId = ccAsset
+      collateralAssetId = usdxAsset
+      collateralHoldingCid = aliceUsdxCid
+      borrowerLevel = Level1
+      requestTime
+
+  -- Bob fills loan
+  activeLoanCid <- submit bob do
+    exerciseCmd loanRequestCid FillLoan with
+      lender = bob
+      loanHoldingCid = bobCcCid
+
+  -- Simulate time passing: 31 days later (past the 30-day loan duration)
+  let liquidationTime = time (date 2026 Mar 4) 12 0 0  -- > 30 days from Feb 1
+
+  -- Bob liquidates the loan (claims collateral)
+  liquidatedHoldingCid <- submit bob do
+    exerciseCmd activeLoanCid Liquidate with
+      currentTime = liquidationTime
+
+  -- Verify Bob received Alice's collateral
+  liquidatedHolding <- queryContractId bob liquidatedHoldingCid
+  case liquidatedHolding of
+    Some h -> do
+      debug $ "Bob claimed collateral: " <> show h.amount <> " USDx"
+      assertMsg "Bob should receive 115 USDx collateral" (h.amount == 115.0)
+      assertMsg "Asset should be USDx" (h.assetId.symbol == "USDx")
+    None -> abort "ERROR: Liquidated holding not found"
+
+  debug "=== Loan Liquidation Test PASSED ==="
+
+-- ============================================================
+-- TEST 8: Cancel Loan Request
+-- ============================================================
+
+testCancelLoanRequest : Script ()
+testCancelLoanRequest = do
+  LendingTestParties{..} <- setupLendingParties
+
+  debug "=== Test 8: Cancel Loan Request ==="
+
+  -- Setup
+  (ccFactoryCid, usdxFactoryCid) <- setupAssetFactories operator
+  let ccAsset = ccAssetId operator
+  let usdxAsset = usdxAssetId operator
+  let requestTime = time (date 2026 Feb 1) 12 0 0
+
+  -- Mint USDx to Alice
+  (usdxFactoryCid2, aliceUsdxCid) <- submit operator do
+    exerciseCmd usdxFactoryCid Mint with
+      recipient = alice
+      mintAmount = 115.0
+
+  -- Create LendingService
+  lendingServiceCid <- submit operator do
+    createCmd LendingService with
+      operator
+      baseCollateralRate = 1.10
+      interestRate = 0.05
+      loanDurationDays = 30
+      observers = [alice, bob]
+
+  -- Alice requests loan
+  loanRequestCid <- submitMulti [operator, alice] [] do
+    exerciseCmd lendingServiceCid RequestLoan with
+      borrower = alice
+      loanAmount = 100.0
+      loanAssetId = ccAsset
+      collateralAssetId = usdxAsset
+      collateralHoldingCid = aliceUsdxCid
+      borrowerLevel = Level1
+      requestTime
+
+  -- Alice cancels the request
+  returnedCollateralCid <- submit alice do
+    exerciseCmd loanRequestCid CancelRequest
+
+  -- Verify Alice gets collateral back
+  returnedCollateral <- queryContractId alice returnedCollateralCid
+  case returnedCollateral of
+    Some h -> do
+      debug $ "Alice got collateral back: " <> show h.amount <> " USDx"
+      assertMsg "Alice should get 115 USDx back" (h.amount == 115.0)
+    None -> abort "ERROR: Returned collateral not found"
+
+  debug "=== Cancel Loan Request Test PASSED ==="
+
+-- ============================================================
+-- TEST 9: Full Lifecycle (End-to-End Happy Path)
+-- ============================================================
+
+testFullLendingLifecycle : Script ()
+testFullLendingLifecycle = do
+  LendingTestParties{..} <- setupLendingParties
+
+  debug "=== Test 9: Full Lending Lifecycle ==="
+
+  -- Step 1: Setup
+  debug "Step 1: Setting up factories and tokens"
+  (ccFactoryCid, usdxFactoryCid) <- setupAssetFactories operator
+  let ccAsset = ccAssetId operator
+  let usdxAsset = usdxAssetId operator
+
+  -- Step 2: Create user profiles
+  debug "Step 2: Creating user profiles"
+  profileFactoryCid <- submit operator do
+    createCmd UserProfileFactory with operator
+
+  aliceProfileCid <- submit operator do
+    exerciseCmd profileFactoryCid CreateUserProfile with
+      user = alice
+
+  bobProfileCid <- submit operator do
+    exerciseCmd profileFactoryCid CreateUserProfile with
+      user = bob
+
+  -- Step 3: Mint tokens
+  debug "Step 3: Minting tokens"
+
+  -- Alice gets 500 USDx for collateral
+  (usdxFactoryCid2, aliceUsdxCid) <- submit operator do
+    exerciseCmd usdxFactoryCid Mint with
+      recipient = alice
+      mintAmount = 500.0
+
+  -- Bob gets 1000 CC to lend
+  (ccFactoryCid2, bobCcCid) <- submit operator do
+    exerciseCmd ccFactoryCid Mint with
+      recipient = bob
+      mintAmount = 1000.0
+
+  -- Alice gets 200 CC for repayment later
+  (ccFactoryCid3, aliceRepaymentCcCid) <- submit operator do
+    exerciseCmd ccFactoryCid2 Mint with
+      recipient = alice
+      mintAmount = 200.0
+
+  -- Step 4: Create services
+  debug "Step 4: Creating LendingService and TimeOracle"
+  let startTime = time (date 2026 Feb 1) 12 0 0
+
+  lendingServiceCid <- submit operator do
+    createCmd LendingService with
+      operator
+      baseCollateralRate = 1.10
+      interestRate = 0.05
+      loanDurationDays = 30
+      observers = [alice, bob, charlie]
+
+  submit operator do
+    createCmd TimeOracle with
+      operator
+      currentTime = startTime
+      observers = [alice, bob]
+
+  -- Step 5: Alice requests a loan
+  debug "Step 5: Alice requests 100 CC loan"
+  (loanRequestCid, aliceRemainingUsdxCid) <- submitMulti [operator, alice] [] do
+    exerciseCmd lendingServiceCid RequestLoanWithSplit with
+      borrower = alice
+      loanAmount = 100.0
+      loanAssetId = ccAsset
+      collateralAssetId = usdxAsset
+      collateralHoldingCid = aliceUsdxCid
+      borrowerLevel = Level1
+      requestTime = startTime
+
+  loanRequest <- queryContractId alice loanRequestCid
+  case loanRequest of
+    Some lr -> debug $ "Loan request: " <> show lr.loanAmount <> " CC, collateral: " <> show lr.collateralAmount <> " USDx"
+    None -> abort "Loan request not found"
+
+  -- Step 6: Bob fills the loan
+  debug "Step 6: Bob fills the loan request"
+
+  -- Bob needs to split his 1000 CC to provide exactly 100
+  (bobLoanCcCid, bobRemainingCcCid) <- submit bob do
+    exerciseCmd bobCcCid Split with
+      splitAmount = 100.0
+
+  activeLoanCid <- submit bob do
+    exerciseCmd loanRequestCid FillLoan with
+      lender = bob
+      loanHoldingCid = bobLoanCcCid
+
+  debug "Loan funded! Alice received CC, collateral locked."
+
+  -- Step 7: Alice repays before deadline
+  debug "Step 7: Alice repays the loan"
+
+  -- Alice needs to provide 105 CC (100 + 5% interest)
+  (aliceRepaymentCid, aliceRepaymentRemainderCid) <- submit alice do
+    exerciseCmd aliceRepaymentCcCid Split with
+      splitAmount = 105.0
+
+  (repaidCid, collateralReturnCid) <- submit alice do
+    exerciseCmd activeLoanCid Repay with
+      repaymentHoldingCid = aliceRepaymentCid
+
+  -- Step 8: Verify final state
+  debug "Step 8: Verifying final state"
+
+  repaidHolding <- queryContractId bob repaidCid
+  case repaidHolding of
+    Some h -> debug $ "Bob received: " <> show h.amount <> " CC (repayment)"
+    None -> abort "Repayment not found"
+
+  collateralReturn <- queryContractId alice collateralReturnCid
+  case collateralReturn of
+    Some h -> debug $ "Alice recovered: " <> show h.amount <> " USDx (collateral)"
+    None -> abort "Collateral return not found"
+
+  -- Step 9: Update user profiles
+  debug "Step 9: Updating user profiles"
+  aliceProfileCid2 <- submit operator do
+    exerciseCmd aliceProfileCid RecordLoanCompletion with
+      loanAmount = 100.0
+
+  bobProfileCid2 <- submit operator do
+    exerciseCmd bobProfileCid RecordLending with
+      lentAmount = 100.0
+
+  (aLevel, aCompleted, _, aBorrowed, _) <- submit alice do
+    exerciseCmd aliceProfileCid2 GetProfileInfo
+
+  debug $ "Alice Profile: Level=" <> show aLevel
+    <> ", Completed=" <> show aCompleted
+    <> ", TotalBorrowed=" <> show aBorrowed
+
+  debug "=== Full Lending Lifecycle Test PASSED ==="
+
+-- ============================================================
+-- TEST 10: Liquidation prevented before deadline
+-- ============================================================
+
+testLiquidationPreventedBeforeDeadline : Script ()
+testLiquidationPreventedBeforeDeadline = do
+  LendingTestParties{..} <- setupLendingParties
+
+  debug "=== Test 10: Liquidation Prevented Before Deadline ==="
+
+  -- Setup
+  (ccFactoryCid, usdxFactoryCid) <- setupAssetFactories operator
+  let ccAsset = ccAssetId operator
+  let usdxAsset = usdxAssetId operator
+  let requestTime = time (date 2026 Feb 1) 12 0 0
+
+  (usdxFactoryCid2, aliceUsdxCid) <- submit operator do
+    exerciseCmd usdxFactoryCid Mint with
+      recipient = alice
+      mintAmount = 115.0
+
+  (ccFactoryCid2, bobCcCid) <- submit operator do
+    exerciseCmd ccFactoryCid Mint with
+      recipient = bob
+      mintAmount = 100.0
+
+  lendingServiceCid <- submit operator do
+    createCmd LendingService with
+      operator
+      baseCollateralRate = 1.10
+      interestRate = 0.05
+      loanDurationDays = 30
+      observers = [alice, bob]
+
+  -- Create and fill loan
+  loanRequestCid <- submitMulti [operator, alice] [] do
+    exerciseCmd lendingServiceCid RequestLoan with
+      borrower = alice
+      loanAmount = 100.0
+      loanAssetId = ccAsset
+      collateralAssetId = usdxAsset
+      collateralHoldingCid = aliceUsdxCid
+      borrowerLevel = Level1
+      requestTime
+
+  activeLoanCid <- submit bob do
+    exerciseCmd loanRequestCid FillLoan with
+      lender = bob
+      loanHoldingCid = bobCcCid
+
+  -- Try to liquidate BEFORE deadline (should fail)
+  let earlyTime = time (date 2026 Feb 15) 12 0 0  -- Only 14 days, not 30
+
+  submitMustFail bob do
+    exerciseCmd activeLoanCid Liquidate with
+      currentTime = earlyTime
+
+  debug "Correctly prevented early liquidation!"
+  debug "=== Liquidation Prevention Test PASSED ==="
+
+-- ============================================================
+-- RUN ALL LENDING TESTS
+-- ============================================================
+
+runAllLendingTests : Script ()
+runAllLendingTests = do
+  debug "================================================"
+  debug "   MICROLEND LENDING MODULE TESTS"
+  debug "================================================"
+
+  debug "\n--- Test 1: User Profile Management ---"
+  testUserProfile
+
+  debug "\n--- Test 2: Time Oracle ---"
+  testTimeOracle
+
+  debug "\n--- Test 3: Collateral Calculation ---"
+  testCollateralCalculation
+
+  debug "\n--- Test 4: Loan Request Creation ---"
+  testLoanRequest
+
+  debug "\n--- Test 5: Fill Loan (Marketplace) ---"
+  testFillLoan
+
+  debug "\n--- Test 6: Loan Repayment ---"
+  testLoanRepayment
+
+  debug "\n--- Test 7: Loan Liquidation ---"
+  testLoanLiquidation
+
+  debug "\n--- Test 8: Cancel Loan Request ---"
+  testCancelLoanRequest
+
+  debug "\n--- Test 9: Full Lending Lifecycle ---"
+  testFullLendingLifecycle
+
+  debug "\n--- Test 10: Liquidation Prevention ---"
+  testLiquidationPreventedBeforeDeadline
+
+  debug "\n================================================"
+  debug "   ALL LENDING TESTS PASSED SUCCESSFULLY!"
+  debug "================================================"

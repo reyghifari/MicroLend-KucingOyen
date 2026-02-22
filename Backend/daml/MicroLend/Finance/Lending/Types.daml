@@ -1,0 +1,78 @@
+-- | Core types for MicroLend Lending module
+-- Types for Loan management, User levels, and collateral calculation
+module MicroLend.Finance.Lending.Types where
+
+import DA.Time (days, addRelTime)
+
+-- | User level determines additional collateral rate
+-- Higher level = lower collateral requirement (more trusted)
+data UserLevel
+  = Level1  -- ^ New user, +5% collateral
+  | Level2  -- ^ +4% collateral
+  | Level3  -- ^ +3% collateral
+  | Level4  -- ^ +2% collateral
+  | Level5  -- ^ Trusted user, +1% collateral
+  deriving (Eq, Show, Ord)
+
+-- | Loan status throughout its lifecycle
+data LoanStatus
+  = Requested   -- ^ Loan request created, waiting for lender
+  | Active      -- ^ Loan funded by lender, borrower has received CC
+  | Repaid      -- ^ Borrower has repaid the loan
+  | Defaulted   -- ^ Loan past due, not yet liquidated
+  | Liquidated  -- ^ Lender has claimed collateral
+  | Cancelled   -- ^ Borrower cancelled the request
+  deriving (Eq, Show)
+
+-- | Loan terms record
+data LoanTerms = LoanTerms
+  with
+    loanAmount : Decimal         -- ^ Amount of CC requested
+    collateralAmount : Decimal   -- ^ Amount of USDx locked
+    interestRate : Decimal       -- ^ Interest rate (e.g., 0.05 for 5%)
+    durationDays : Int           -- ^ Loan duration in days
+    startTime : Optional Time    -- ^ When loan was funded (None if not yet)
+    endTime : Optional Time      -- ^ When loan expires (None if not yet)
+  deriving (Eq, Show)
+
+-- | Get the additional collateral rate for a user level
+-- Base rate is 110% (1.10), this returns the ADDITIONAL percentage
+levelCollateralBonus : UserLevel -> Decimal
+levelCollateralBonus Level1 = 0.05  -- +5%, total = 115%
+levelCollateralBonus Level2 = 0.04  -- +4%, total = 114%
+levelCollateralBonus Level3 = 0.03  -- +3%, total = 113%
+levelCollateralBonus Level4 = 0.02  -- +2%, total = 112%
+levelCollateralBonus Level5 = 0.01  -- +1%, total = 111%
+
+-- | Calculate total collateral rate (base + level bonus)
+-- Base rate is 1.10 (110%)
+totalCollateralRate : Decimal -> UserLevel -> Decimal
+totalCollateralRate baseRate level = baseRate + levelCollateralBonus level
+
+-- | Calculate required collateral amount
+-- collateral = loanAmount * totalCollateralRate
+calculateCollateral : Decimal -> Decimal -> UserLevel -> Decimal
+calculateCollateral loanAmount baseRate level =
+  loanAmount * totalCollateralRate baseRate level
+
+-- | Calculate repayment amount (principal + interest)
+calculateRepayment : Decimal -> Decimal -> Decimal
+calculateRepayment loanAmount interestRate =
+  loanAmount * (1.0 + interestRate)
+
+-- | Calculate loan end time from start time and duration days
+calculateEndTime : Time -> Int -> Time
+calculateEndTime startTime' durationDays' =
+  addRelTime startTime' (days durationDays')
+
+-- | Default base collateral rate: 110%
+defaultBaseRate : Decimal
+defaultBaseRate = 1.10
+
+-- | Default interest rate: 5%
+defaultInterestRate : Decimal
+defaultInterestRate = 0.05
+
+-- | Default loan duration: 30 days (1 month)
+defaultDurationDays : Int
+defaultDurationDays = 30

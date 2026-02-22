@@ -1,0 +1,156 @@
+-- | Loan Request template for MicroLend Lending
+-- Represents a borrower's request for a CC loan with locked USDx collateral
+-- Visible in the marketplace for lenders to fill
+module MicroLend.Finance.Lending.LoanRequest where
+
+import MicroLend.Finance.Types (AssetId)
+import MicroLend.Finance.Holding
+import MicroLend.Finance.Lending.Types
+import MicroLend.Finance.Lending.ActiveLoan (ActiveLoan(..))
+import qualified MicroLend.Finance.Lending.UserProfile as UP
+
+-- | Loan Request template
+-- Created when a borrower requests a loan with locked collateral
+-- Visible to lenders in the marketplace via observers
+template LoanRequest
+  with
+    operator : Party                   -- ^ System operator
+    borrower : Party                   -- ^ The party requesting the loan
+    loanAssetId : AssetId              -- ^ AssetId of loan token (CC)
+    collateralAssetId : AssetId        -- ^ AssetId of collateral token (USDx)
+    loanAmount : Decimal               -- ^ Amount of CC requested
+    collateralAmount : Decimal         -- ^ Amount of USDx locked as collateral
+    collateralHoldingCid : ContractId Holding  -- ^ Locked USDx holding
+    borrowerLevel : UserLevel          -- ^ Borrower's level at time of request
+    interestRate : Decimal             -- ^ Interest rate for the loan
+    durationDays : Int                 -- ^ Loan duration in days
+    requestedAt : Time                 -- ^ When the request was created
+    observers : [Party]                -- ^ Parties who can see this (marketplace)
+  where
+    signatory operator, borrower
+    observer observers
+
+    -- | Lender fills the loan request
+    -- Lender provides CC holdings to fund the loan
+    -- Creates an ActiveLoan and transfers CC to borrower
+    choice FillLoan : ContractId ActiveLoan
+      with
+        lender : Party
+        loanHoldingCid : ContractId Holding  -- ^ CC holding from lender
+      controller lender
+      do
+        -- Verify the lender is not the borrower
+        assertMsg "Lender cannot be the borrower" (lender /= borrower)
+
+        -- Verify the loan holding
+        loanHolding <- fetch loanHoldingCid
+        assertMsg "Loan holding must be CC token"
+          (loanHolding.assetId == loanAssetId)
+        assertMsg "Loan holding amount must match loan amount"
+          (loanHolding.amount >= loanAmount)
+        assertMsg "Lender must own the loan holding"
+          (loanHolding.owner == lender)
+
+        -- Transfer CC from lender to borrower
+        exercise loanHoldingCid Transfer with newOwner = borrower
+
+        -- Calculate end time
+        let endTime' = calculateEndTime requestedAt durationDays
+
+        -- Create ActiveLoan
+        create ActiveLoan with
+          operator
+          borrower
+          lender
+          loanAssetId
+          collateralAssetId
+          loanAmount
+          collateralAmount
+          collateralHoldingCid
+          interestRate
+          startTime = requestedAt
+          endTime = endTime'
+          status = Active
+
+    -- | Lender fills the loan request with automatic split
+    -- If lender's holding is larger than loan amount, splits and returns remainder
+    -- Records lending activity in lender's profile (if provided)
+    choice FillLoanWithSplit : (ContractId ActiveLoan, ContractId Holding)
+      with
+        lender : Party
+        loanHoldingCid : ContractId Holding  -- ^ CC holding from lender (may be larger)
+        lenderProfileCid : Optional (ContractId UP.UserProfile)  -- ^ Lender's profile for tracking
+      controller lender
+      do
+        -- Verify the lender is not the borrower
+        assertMsg "Lender cannot be the borrower" (lender /= borrower)
+
+        -- Verify the loan holding
+        loanHolding <- fetch loanHoldingCid
+        assertMsg "Loan holding must be CC token"
+          (loanHolding.assetId == loanAssetId)
+        assertMsg ("Insufficient loan amount. Required: " <> show loanAmount <> " CC")
+          (loanHolding.amount >= loanAmount)
+        assertMsg "Lender must own the loan holding"
+          (loanHolding.owner == lender)
+
+        -- Split if holding is larger than needed
+        (loanCid, remainderCid) <- 
+          if loanHolding.amount == loanAmount
+            then pure (loanHoldingCid, loanHoldingCid)
+            else exercise loanHoldingCid Split with
+              splitAmount = loanAmount
+
+        -- Transfer exact loan amount from lender to borrower
+        exercise loanCid Transfer with newOwner = borrower
+
+        -- Calculate end time
+        let endTime' = calculateEndTime requestedAt durationDays
+
+        -- Create ActiveLoan
+        activeLoanCid <- create ActiveLoan with
+          operator
+          borrower
+          lender
+          loanAssetId
+          collateralAssetId
+          loanAmount
+          collateralAmount
+          collateralHoldingCid
+          interestRate
+          startTime = requestedAt
+          endTime = endTime'
+          status = Active
+
+        -- Record lending activity in lender's profile (if provided)
+        case lenderProfileCid of
+          Some profileCid -> do
+            exercise profileCid UP.RecordLending with
+              lentAmount = loanAmount
+            pure ()
+          None -> pure ()  -- Profile not provided, skip tracking
+
+        pure (activeLoanCid, remainderCid)
+
+    -- | Borrower cancels the loan request
+    -- Returns locked collateral back to borrower
+    choice CancelRequest : ContractId Holding
+      controller borrower
+      do
+        -- Return collateral to borrower (it's already owned by borrower,
+        -- just needs to be "unlocked" by archiving this contract)
+        pure collateralHoldingCid
+
+    -- | Operator adds observer to make request visible to more parties
+    choice AddRequestObserver : ContractId LoanRequest
+      with
+        newObserver : Party
+      controller operator
+      do
+        create this with observers = newObserver :: observers
+
+    -- | Operator can cancel a request (admin action)
+    choice AdminCancelRequest : ContractId Holding
+      controller operator
+      do
+        pure collateralHoldingCid

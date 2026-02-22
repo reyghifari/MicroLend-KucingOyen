@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,11 +32,12 @@ public class WalletService {
     private final AdminSetupService adminSetupService;
 
     /**
-     * Deposit (mint) tokens to a user's wallet.
+     * Deposit (mint) tokens to user's wallet.
+     * Automatically merges all holdings of the same asset after deposit.
      * 
      * @param email    User's email
      * @param amount   Amount to deposit
-     * @param currency Currency symbol (e.g., "CC")
+     * @param currency Currency/asset symbol (CC, USDx, etc.)
      * @return DepositResponse with contract ID and amount
      */
     public DepositResponse deposit(String email, BigDecimal amount, String currency) {
@@ -59,7 +61,7 @@ public class WalletService {
         // Key format: (issuer party, asset symbol)
         Map<String, Object> factoryKey = Map.of(
                 "_1", adminPartyId,
-                "_2", currency // "CC", "USDC", "IDR", etc.
+                "_2", currency // "CC", "USDx", etc.
         );
 
         ExerciseResponse response = damlService.exerciseChoiceByKey(
@@ -74,19 +76,90 @@ public class WalletService {
         // 3. Extract holding contract ID from response
         // Mint choice returns tuple: (newFactoryId, holdingId)
         // We only need the holdingId (second element)
+        String newHoldingCid = null;
         if (response != null && response.result() != null) {
             Object exerciseResult = response.result().exerciseResult();
-            String holdingContractId = extractSecondContractId(exerciseResult);
+            newHoldingCid = extractSecondContractId(exerciseResult);
 
-            if (holdingContractId == null) {
+            if (newHoldingCid == null) {
                 throw new IllegalStateException("Failed to extract holding contract ID from mint response");
             }
 
-            log.info("Deposit successful. Holding contract ID: {}", holdingContractId);
-            return new DepositResponse(holdingContractId, amount, currency, "SUCCESS");
+            log.info("Deposit successful. New holding contract ID: {}", newHoldingCid);
+        } else {
+            throw new IllegalStateException("Failed to mint tokens: empty response from DAML");
         }
 
-        throw new IllegalStateException("Failed to mint tokens: empty response from DAML");
+        // 4. Auto-merge: Get all holdings for this asset and merge them
+        try {
+            log.info("Auto-merging {} holdings for user {}...", currency, email);
+
+            // Query all holdings for this user and asset
+            List<ContractResult> allHoldings = damlService.queryContracts(
+                    "MicroLend.Finance.Holding:Holding",
+                    Map.of("owner", userPartyId),
+                    userPartyId);
+
+            // Filter holdings for this specific asset
+            List<String> holdingCidsToMerge = new ArrayList<>();
+            for (ContractResult result : allHoldings) {
+                HoldingContract holding = convertToHoldingContract(result);
+                if (holding.getAssetId().getSymbol().equals(currency)) {
+                    holdingCidsToMerge.add(holding.getContractId());
+                }
+            }
+
+            // If we have multiple holdings for this asset, merge them
+            if (holdingCidsToMerge.size() > 1) {
+                log.info("Found {} holdings for {}, merging...", holdingCidsToMerge.size(), currency);
+
+                String baseHoldingCid = holdingCidsToMerge.get(0);
+                BigDecimal totalAmount = amount;
+
+                // Merge each subsequent holding into the base
+                for (int i = 1; i < holdingCidsToMerge.size(); i++) {
+                    String holdingToMergeCid = holdingCidsToMerge.get(i);
+
+                    ExerciseResponse mergeResponse = damlService.exerciseChoice(
+                            "MicroLend.Finance.Holding:Holding",
+                            baseHoldingCid,
+                            "Merge",
+                            Map.of("otherHoldingCid", holdingToMergeCid),
+                            userPartyId);
+
+                    // Update base holding CID for next iteration
+                    String mergedCid = extractContractId(mergeResponse);
+                    if (mergedCid != null) {
+                        baseHoldingCid = mergedCid;
+                    }
+                }
+
+                // Query final merged holding to get total amount
+                List<ContractResult> finalResults = damlService.queryContracts(
+                        "MicroLend.Finance.Holding:Holding",
+                        Map.of("owner", userPartyId),
+                        userPartyId);
+
+                for (ContractResult result : finalResults) {
+                    if (result.contractId().equals(baseHoldingCid)) {
+                        HoldingContract holding = convertToHoldingContract(result);
+                        totalAmount = holding.getAmount();
+                        break;
+                    }
+                }
+
+                log.info("Auto-merge completed. Final holding: {}, Total: {}", baseHoldingCid, totalAmount);
+                return new DepositResponse(baseHoldingCid, totalAmount, currency, "SUCCESS - Holdings auto-merged");
+            }
+
+            // No merge needed (only one holding)
+            return new DepositResponse(newHoldingCid, amount, currency, "SUCCESS");
+
+        } catch (Exception e) {
+            log.warn("Auto-merge failed, but deposit succeeded: {}", e.getMessage());
+            // Return the new holding even if merge fails
+            return new DepositResponse(newHoldingCid, amount, currency, "SUCCESS - Auto-merge failed");
+        }
     }
 
     /**
@@ -188,7 +261,7 @@ public class WalletService {
      * Get user's token balance.
      * 
      * @param email User's email
-     * @return BalanceResponse with balances by currency
+     * @return BalanceResponse with balances by currency and individual holdings
      */
     public BalanceResponse getBalance(String email) {
         log.info("Querying balance for user: {}", email);
@@ -207,18 +280,115 @@ public class WalletService {
                 Map.of("owner", userPartyId),
                 userPartyId); // Read as User
 
-        // Sum up balances by currency
+        // Sum up balances by currency AND collect individual holdings
         Map<String, BigDecimal> balances = new HashMap<>();
+        Map<String, List<HoldingDto>> holdingsBySymbol = new HashMap<>();
 
         for (ContractResult result : contractResults) {
             HoldingContract holding = convertToHoldingContract(result);
             String symbol = holding.getAssetId().getSymbol();
+
+            // Add to aggregate balance
             balances.merge(symbol, holding.getAmount(), BigDecimal::add);
+
+            // Add to holdings list
+            HoldingDto holdingDto = new HoldingDto(
+                    holding.getContractId(),
+                    holding.getAmount(),
+                    symbol,
+                    holding.getAssetId().getDescription());
+
+            holdingsBySymbol.computeIfAbsent(symbol, k -> new ArrayList<>()).add(holdingDto);
         }
 
-        log.info("Balance query completed. Found {} currencies", balances.size());
+        log.info("Balance query completed. Found {} currencies, {} total holdings",
+                balances.size(), contractResults.size());
 
-        return new BalanceResponse(balances);
+        return new BalanceResponse(balances, holdingsBySymbol);
+    }
+
+    /**
+     * Merge multiple holdings of the same asset into a single holding.
+     * This reduces the number of contracts and simplifies collateral management.
+     *
+     * @param email   User's email
+     * @param request Merge request with holding contract IDs
+     * @return MergeHoldingsResponse with merged holding details
+     */
+    public MergeHoldingsResponse mergeHoldings(String email, MergeHoldingsRequest request) {
+        log.info("Merging {} holdings for user: {}", request.getHoldingContractIds().size(), email);
+
+        if (request.getHoldingContractIds().size() < 2) {
+            throw new IllegalArgumentException("At least 2 holdings are required to merge");
+        }
+
+        Users user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("User not found: " + email));
+
+        String userPartyId = user.getDamlPartyId();
+        if (userPartyId == null) {
+            throw new IllegalStateException("User does not have a DAML party ID");
+        }
+
+        try {
+            // Start with the first holding as the base
+            String baseHoldingCid = request.getHoldingContractIds().get(0);
+            BigDecimal totalAmount = BigDecimal.ZERO;
+
+            // Merge each subsequent holding into the base
+            for (int i = 1; i < request.getHoldingContractIds().size(); i++) {
+                String holdingToMergeCid = request.getHoldingContractIds().get(i);
+
+                log.debug("Merging holding {} into base holding {}", holdingToMergeCid, baseHoldingCid);
+
+                // Exercise Merge choice on base holding
+                ExerciseResponse response = damlService.exerciseChoice(
+                        "MicroLend.Finance.Holding:Holding",
+                        baseHoldingCid,
+                        "Merge",
+                        Map.of("otherCid", holdingToMergeCid),
+                        userPartyId);
+
+                // Merge returns the new merged holding contract ID
+                String mergedCid = extractContractId(response);
+                if (mergedCid == null) {
+                    throw new IllegalStateException("Failed to extract merged contract ID");
+                }
+
+                // Update base for next iteration
+                baseHoldingCid = mergedCid;
+            }
+
+            // Query the final merged holding to get the total amount
+            List<ContractResult> results = damlService.queryContracts(
+                    "MicroLend.Finance.Holding:Holding",
+                    Map.of("owner", userPartyId),
+                    userPartyId);
+
+            // Find the merged holding
+            for (ContractResult result : results) {
+                if (result.contractId().equals(baseHoldingCid)) {
+                    HoldingContract holding = convertToHoldingContract(result);
+                    totalAmount = holding.getAmount();
+                    break;
+                }
+            }
+
+            log.info("Holdings merged successfully. Final contract ID: {}, Total: {}",
+                    baseHoldingCid, totalAmount);
+
+            return new MergeHoldingsResponse(
+                    baseHoldingCid,
+                    totalAmount,
+                    request.getAssetSymbol(),
+                    request.getHoldingContractIds().size(),
+                    String.format("Successfully merged %d holdings into one",
+                            request.getHoldingContractIds().size()));
+
+        } catch (Exception e) {
+            log.error("Failed to merge holdings: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to merge holdings: " + e.getMessage(), e);
+        }
     }
 
     /**
@@ -271,6 +441,20 @@ public class WalletService {
         }
 
         return bestMatch;
+    }
+
+    /**
+     * Extract contract ID from ExerciseResponse.
+     * Used for Merge choice which returns a single contract ID.
+     */
+    private String extractContractId(ExerciseResponse response) {
+        if (response != null && response.result() != null) {
+            Object result = response.result().exerciseResult();
+            if (result instanceof String) {
+                return (String) result;
+            }
+        }
+        return null;
     }
 
     /**

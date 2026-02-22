@@ -1,0 +1,46 @@
+-- | Time Oracle for MicroLend Lending
+-- Operator-maintained time contract for validating loan expiry
+-- Since DAML Canton does not provide getTime in choices,
+-- we use this oracle pattern where the Backend periodically updates the time
+module MicroLend.Finance.Lending.TimeOracle where
+
+-- | Time Oracle template
+-- Maintained by operator (Backend cron job updates periodically)
+-- Used by lending contracts to check if loans have expired
+template TimeOracle
+  with
+    operator : Party      -- ^ System operator who maintains the oracle
+    currentTime : Time    -- ^ Current ledger time as maintained by operator
+    observers : [Party]   -- ^ Parties who can read the current time
+  where
+    signatory operator
+    observer observers
+
+    -- | Update the current time (called by Backend cron)
+    choice UpdateTime : ContractId TimeOracle
+      with
+        newTime : Time
+      controller operator
+      do
+        create this with currentTime = newTime
+
+    -- | Add observer so a party can read the time
+    choice AddTimeObserver : ContractId TimeOracle
+      with
+        newObserver : Party
+      controller operator
+      do
+        create this with observers = newObserver :: observers
+
+    -- | Remove observer
+    choice RemoveTimeObserver : ContractId TimeOracle
+      with
+        observerToRemove : Party
+      controller operator
+      do
+        create this with observers = filter (/= observerToRemove) observers
+
+    -- | Get current time (non-consuming)
+    nonconsuming choice GetCurrentTime : Time
+      controller operator
+      do pure currentTime

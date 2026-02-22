@@ -72,4 +72,23 @@ public class WalletController {
 
         return ResponseEntity.ok(response);
     }
+
+    /**
+     * Merge multiple holdings of the same asset into one.
+     *
+     * @param user    Authenticated user details
+     * @param request Merge request with holding contract IDs
+     * @return MergeHoldingsResponse with merged holding details
+     */
+    @PostMapping("/merge")
+    public ResponseEntity<MergeHoldingsResponse> mergeHoldings(
+            @AuthenticationPrincipal UserDetails user,
+            @RequestBody MergeHoldingsRequest request) {
+
+        MergeHoldingsResponse response = walletService.mergeHoldings(
+                user.getUsername(),
+                request);
+
+        return ResponseEntity.ok(response);
+    }
 }

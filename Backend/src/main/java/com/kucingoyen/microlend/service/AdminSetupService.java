@@ -100,7 +100,6 @@ public class AdminSetupService {
 
             log.info("Created CC AssetFactory via exerciseByKey");
 
-            // Create USDx Token Factory for USD Stablecoin deposits
             damlService.exerciseChoiceByKey(
                     "MicroLend.Finance.Asset:AssetIssuerService",
                     adminPartyId,

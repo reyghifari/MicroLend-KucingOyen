@@ -1,0 +1,99 @@
+-- | Active Loan template for MicroLend Lending
+-- Represents a funded loan with collateral locked
+-- Supports repayment and liquidation lifecycle
+module MicroLend.Finance.Lending.ActiveLoan where
+
+import MicroLend.Finance.Types (AssetId)
+import MicroLend.Finance.Holding
+import MicroLend.Finance.Lending.Types
+
+-- | Active Loan template
+-- Created when a lender fills a loan request
+-- Borrower can repay to get collateral back
+-- Lender can liquidate if loan is past due
+template ActiveLoan
+  with
+    operator : Party                   -- ^ System operator
+    borrower : Party                   -- ^ The borrower
+    lender : Party                     -- ^ The lender who funded the loan
+    loanAssetId : AssetId              -- ^ AssetId of loan token (CC)
+    collateralAssetId : AssetId        -- ^ AssetId of collateral token (USDx)
+    loanAmount : Decimal               -- ^ Amount of CC borrowed
+    collateralAmount : Decimal         -- ^ Amount of USDx locked
+    collateralHoldingCid : ContractId Holding  -- ^ Locked USDx holding
+    interestRate : Decimal             -- ^ Interest rate
+    startTime : Time                   -- ^ When loan was funded
+    endTime : Time                     -- ^ When loan expires
+    status : LoanStatus               -- ^ Current loan status
+  where
+    signatory operator, borrower
+    observer lender
+
+    -- | Borrower repays the loan
+    -- Borrower provides CC (principal + interest) to lender
+    -- Collateral USDx is returned to borrower
+    choice Repay : (ContractId Holding, ContractId Holding)
+      with
+        repaymentHoldingCid : ContractId Holding  -- ^ CC holding for repayment
+      controller borrower
+      do
+        assertMsg "Loan must be Active to repay" (status == Active)
+
+        -- Verify repayment holding
+        repaymentHolding <- fetch repaymentHoldingCid
+        let requiredRepayment = calculateRepayment loanAmount interestRate
+        assertMsg "Repayment must be in CC token"
+          (repaymentHolding.assetId == loanAssetId)
+        assertMsg ("Repayment amount insufficient. Required: " <> show requiredRepayment)
+          (repaymentHolding.amount >= requiredRepayment)
+        assertMsg "Borrower must own the repayment holding"
+          (repaymentHolding.owner == borrower)
+
+        -- Transfer CC repayment from borrower to lender
+        repaidHoldingCid <- exercise repaymentHoldingCid Transfer with
+          newOwner = lender
+
+        -- Return collateral USDx to borrower (it's already borrower-owned
+        -- but was locked in this contract. Archiving this contract "unlocks" it)
+        -- The collateral holding is already owned by borrower
+        let collateralReturnCid = collateralHoldingCid
+
+        pure (repaidHoldingCid, collateralReturnCid)
+
+    -- | Lender liquidates the loan (claims collateral)
+    -- Only available after loan has expired
+    -- Lender provides oracle time proof for expiry validation
+    choice Liquidate : ContractId Holding
+      with
+        currentTime : Time  -- ^ Current time from TimeOracle (passed by Backend)
+      controller lender
+      do
+        assertMsg "Loan must be Active to liquidate" (status == Active)
+        assertMsg "Loan has not expired yet. Cannot liquidate before end time."
+          (currentTime > endTime)
+
+        -- Transfer collateral USDx from borrower to lender
+        exercise collateralHoldingCid Transfer with
+          newOwner = lender
+
+    -- | Operator marks loan as defaulted (admin action)
+    -- Does not transfer collateral, just updates status
+    choice MarkDefaulted : ContractId ActiveLoan
+      with
+        currentTime : Time
+      controller operator
+      do
+        assertMsg "Loan must be Active" (status == Active)
+        assertMsg "Loan has not expired yet"
+          (currentTime > endTime)
+        create this with status = Defaulted
+
+    -- | Get loan info (non-consuming)
+    nonconsuming choice GetLoanInfo : (Party, Party, Decimal, Decimal, LoanStatus)
+      controller borrower
+      do pure (borrower, lender, loanAmount, collateralAmount, status)
+
+    -- | Lender can also get loan info
+    nonconsuming choice GetLoanInfoAsLender : (Party, Party, Decimal, Decimal, LoanStatus)
+      controller lender
+      do pure (borrower, lender, loanAmount, collateralAmount, status)
