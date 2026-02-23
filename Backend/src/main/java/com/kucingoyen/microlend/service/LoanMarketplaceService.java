@@ -229,7 +229,7 @@ public class LoanMarketplaceService {
                 (String) payload.get("borrower"),
                 "User", // Could fetch from Users table
                 DamlPayloadParser.parseBigDecimal(payload.get("loanAmount")),
-                DamlPayloadParser.parseBigDecimal(payload.get("requiredCollateral")),
+                DamlPayloadParser.parseBigDecimal(payload.get("collateralAmount")),
                 "CC",
                 "USDx",
                 DamlPayloadParser.parseBigDecimal(payload.get("interestRate")),
@@ -237,7 +237,7 @@ public class LoanMarketplaceService {
                 (String) payload.get("borrowerLevel"),
                 (String) payload.get("requestedAt"),
                 DamlPayloadParser.parseBigDecimal(payload.get("requiredRepayment")),
-                new BigDecimal("1.15"));
+                new BigDecimal("0.16"));
     }
 
     private Map<String, String> extractTupleResult(ExerciseResponse response) {

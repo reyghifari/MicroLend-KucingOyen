@@ -65,9 +65,11 @@ calculateEndTime : Time -> Int -> Time
 calculateEndTime startTime' durationDays' =
   addRelTime startTime' (days durationDays')
 
--- | Default base collateral rate: 110%
+-- | Default base collateral rate: 16% (1 CC = 0.16 USDx)
+-- Collateral = loanAmount (CC) * 0.16 = equivalent USDx value
+-- Example: 100 CC loan requires 100 * 0.16 = 16 USDx collateral (+ level bonus)
 defaultBaseRate : Decimal
-defaultBaseRate = 1.10
+defaultBaseRate = 0.16
 
 -- | Default interest rate: 5%
 defaultInterestRate : Decimal

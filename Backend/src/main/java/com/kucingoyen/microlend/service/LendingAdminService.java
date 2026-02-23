@@ -56,7 +56,7 @@ public class LendingAdminService {
             log.info("Lending system not initialized. Setting up with default configuration...");
 
             LendingSetupRequest defaultConfig = new LendingSetupRequest(
-                    new BigDecimal("1.10"), // 110% base collateral rate
+                    new BigDecimal(LendingConstants.DEFAULT_BASE_COLLATERAL_RATE), // 1 CC = 0.16 USDx
                     new BigDecimal("0.05"), // 5% interest rate
                     30); // 30 days loan duration
 

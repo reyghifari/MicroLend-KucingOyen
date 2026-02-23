@@ -39,6 +39,14 @@ public class ActiveLoanController {
         return ResponseEntity.ok(loans);
     }
 
+    @GetMapping("/requests")
+    public ResponseEntity<List<ActiveLoanDto>> getFundedRequest(
+            @AuthenticationPrincipal UserDetails user) {
+
+        List<ActiveLoanDto> loans = activeLoanService.getFundedRequest(user.getUsername());
+        return ResponseEntity.ok(loans);
+    }
+
     @PostMapping("/{contractId}/repay")
     public ResponseEntity<RepayLoanResponse> repayLoan(
             @AuthenticationPrincipal UserDetails user,

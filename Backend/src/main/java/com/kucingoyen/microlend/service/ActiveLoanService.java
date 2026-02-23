@@ -80,6 +80,24 @@ public class ActiveLoanService {
                 .collect(Collectors.toList());
     }
 
+    public List<ActiveLoanDto> getFundedRequest(String borrowerEmail) {
+        Users lender = userRepository.findByEmail(borrowerEmail)
+                .orElseThrow(() -> new NotFoundException("Borrower not found"));
+
+        String lenderPartyId = lender.getDamlPartyId();
+
+        // Query all active loans where user is lender
+        List<ContractResult> results = damlService.queryContracts(
+                LendingConstants.TEMPLATE_ACTIVE_LOAN,
+                Map.of("borrower", lenderPartyId),
+                lenderPartyId);
+
+        // Convert to DTOs
+        return results.stream()
+                .map(this::convertToActiveLoanDto)
+                .collect(Collectors.toList());
+    }
+
     /**
      * Repay a loan.
      */

@@ -19,8 +19,14 @@ public class LendingConstants {
     public static final String CONFIG_TIME_ORACLE_CID = "lending.timeoracle.contract.id";
     public static final String CONFIG_USER_PROFILE_FACTORY_CID = "lending.userprofilefactory.contract.id";
 
+    // CC to USDx conversion rate: 1 CC = 0.16 USDx
+    // Collateral formula: collateral (USDx) = loanAmount (CC) * CC_TO_USDX_RATE
+    // Example: 100 CC loan requires 100 * 0.16 = 16 USDx collateral (base, before
+    // level bonus)
+    public static final String CC_TO_USDX_RATE = "0.16";
+
     // Default Configuration Values
-    public static final String DEFAULT_BASE_COLLATERAL_RATE = "1.10";
+    public static final String DEFAULT_BASE_COLLATERAL_RATE = "0.16"; // 1 CC = 0.16 USDx
     public static final String DEFAULT_INTEREST_RATE = "0.05";
     public static final int DEFAULT_LOAN_DURATION_DAYS = 30;
 
