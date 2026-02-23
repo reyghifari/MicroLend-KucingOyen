@@ -1,95 +1,295 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MicroLend - P2P Lending Platform</title>
+  <title>MicroLend — Private Micro-Lending Made Simple</title>
+  <meta name="description"
+    content="MicroLend is a privacy-preserving P2P micro-lending platform built on Canton Network. Secure, collateral-backed, and reputation-based lending." />
   <link rel="icon" type="image/svg+xml"
     href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💰</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
   <style>
-    * {
+    *,
+    *::before,
+    *::after {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
 
+    :root {
+      --primary: #6C5CE7;
+      --primary-light: #A29BFE;
+      --primary-dark: #4A3CB5;
+      --accent: #00D2FF;
+      --accent-secondary: #7F5AF0;
+      --gradient-start: #0F0C29;
+      --gradient-mid: #1A1640;
+      --gradient-end: #24243E;
+      --surface: rgba(255, 255, 255, 0.05);
+      --surface-hover: rgba(255, 255, 255, 0.08);
+      --text-primary: #FFFFFF;
+      --text-secondary: rgba(255, 255, 255, 0.7);
+      --text-muted: rgba(255, 255, 255, 0.45);
+      --success: #00E676;
+      --warning: #FFD600;
+      --border: rgba(255, 255, 255, 0.08);
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-mid), var(--gradient-end));
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
     }
 
     /* Custom Scrollbar */
     ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
+      width: 6px;
     }
 
     ::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 4px;
+      background: transparent;
     }
 
     ::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 4px;
+      background: var(--primary-light);
+      border-radius: 3px;
     }
 
     ::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 255, 255, 0.5);
+      background: var(--primary);
     }
 
-    /* Input focus styles */
-    input:focus,
-    select:focus {
-      border-color: #667eea !important;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2) !important;
-    }
-
-    /* Button hover effects */
-    button:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2) !important;
-    }
-
-    button:active:not(:disabled) {
-      transform: translateY(0);
-    }
-
-    /* Card hover effects */
-    section>div[style*="loanCard"]:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-    }
-
-    /* Selection color */
     ::selection {
-      background: rgba(102, 126, 234, 0.3);
-      color: inherit;
+      background: rgba(108, 92, 231, 0.4);
+      color: #fff;
     }
 
-    /* Animations */
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
+    /* ─── Background Effects ─── */
+    .bg-orbs {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .bg-orbs .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.25;
+      animation: orbFloat 20s ease-in-out infinite alternate;
+    }
+
+    .bg-orbs .orb:nth-child(1) {
+      width: 500px;
+      height: 500px;
+      background: var(--primary);
+      top: -10%;
+      left: -5%;
+    }
+
+    .bg-orbs .orb:nth-child(2) {
+      width: 400px;
+      height: 400px;
+      background: var(--accent);
+      bottom: -10%;
+      right: -5%;
+      animation-delay: -7s;
+    }
+
+    .bg-orbs .orb:nth-child(3) {
+      width: 350px;
+      height: 350px;
+      background: var(--accent-secondary);
+      top: 40%;
+      left: 50%;
+      animation-delay: -14s;
+    }
+
+    @keyframes orbFloat {
+      0% {
+        transform: translate(0, 0) scale(1);
       }
 
-      to {
+      100% {
+        transform: translate(40px, -60px) scale(1.15);
+      }
+    }
+
+    /* ─── Utility ─── */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ─── Navbar ─── */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 16px 0;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      background: rgba(15, 12, 41, 0.6);
+      border-bottom: 1px solid var(--border);
+      transition: background 0.3s;
+    }
+
+    nav .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text-primary);
+    }
+
+    .logo-icon {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .logo-text {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .logo-text span {
+      background: linear-gradient(135deg, var(--primary-light), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+
+    nav ul li a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 0.25s;
+    }
+
+    nav ul li a:hover {
+      color: var(--text-primary);
+    }
+
+    .nav-cta {
+      background: linear-gradient(135deg, var(--primary), var(--accent-secondary));
+      color: #fff !important;
+      padding: 10px 22px;
+      border-radius: 10px;
+      font-weight: 600 !important;
+      transition: transform 0.25s, box-shadow 0.25s !important;
+    }
+
+    .nav-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(108, 92, 231, 0.35);
+    }
+
+    /* ─── Hero Section ─── */
+    .hero {
+      padding: 160px 0 100px;
+      text-align: center;
+      position: relative;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--accent);
+      margin-bottom: 28px;
+      animation: fadeInUp 0.6s ease-out both;
+    }
+
+    .hero-badge .dot {
+      width: 8px;
+      height: 8px;
+      background: var(--success);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
         opacity: 1;
-        transform: translateY(0);
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.5;
+        transform: scale(0.85);
       }
     }
 
-    section {
-      animation: fadeIn 0.4s ease-out;
+    .hero h1 {
+      font-size: clamp(40px, 6vw, 72px);
+      font-weight: 900;
+      line-height: 1.08;
+      letter-spacing: -2px;
+      margin-bottom: 24px;
+      animation: fadeInUp 0.6s 0.1s ease-out both;
     }
 
-    /* Gradient text animation */
+    .hero h1 .gradient-text {
+      background: linear-gradient(135deg, var(--primary-light), var(--accent), var(--primary-light));
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: gradientShift 4s ease-in-out infinite;
+    }
+
     @keyframes gradientShift {
 
       0%,
@@ -101,12 +301,1174 @@
         background-position: 100% 50%;
       }
     }
+
+    .hero p {
+      font-size: 18px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      max-width: 620px;
+      margin: 0 auto 40px;
+      animation: fadeInUp 0.6s 0.2s ease-out both;
+    }
+
+    .hero-buttons {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      animation: fadeInUp 0.6s 0.3s ease-out both;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 32px;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--accent-secondary));
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(108, 92, 231, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 35px rgba(108, 92, 231, 0.5);
+    }
+
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--surface-hover);
+      transform: translateY(-3px);
+      border-color: var(--primary-light);
+    }
+
+    .btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Coming Soon Badge */
+    .coming-soon-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: rgba(255, 214, 0, 0.12);
+      border: 1px solid rgba(255, 214, 0, 0.25);
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--warning);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ─── Hero Mockup ─── */
+    .hero-mockup {
+      margin-top: 64px;
+      display: flex;
+      justify-content: center;
+      animation: fadeInUp 0.8s 0.5s ease-out both;
+    }
+
+    .mockup-frame {
+      position: relative;
+      max-width: 900px;
+      width: 100%;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--border);
+    }
+
+    .mockup-frame img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .mockup-glow {
+      position: absolute;
+      inset: -2px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, var(--primary), var(--accent), var(--accent-secondary));
+      opacity: 0.2;
+      z-index: -1;
+      filter: blur(30px);
+    }
+
+    /* ─── Stats ─── */
+    .stats {
+      padding: 60px 0;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 24px;
+    }
+
+    .stat-card {
+      text-align: center;
+      padding: 32px 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+      background: var(--surface-hover);
+      transform: translateY(-4px);
+      border-color: var(--primary-light);
+    }
+
+    .stat-number {
+      font-size: 36px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary-light), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-top: 6px;
+      font-weight: 500;
+    }
+
+    /* ─── Section Titles ─── */
+    .section-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--primary-light);
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: clamp(30px, 4vw, 44px);
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 16px;
+      line-height: 1.15;
+    }
+
+    .section-subtitle {
+      font-size: 17px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      max-width: 550px;
+    }
+
+    /* ─── Features ─── */
+    .features {
+      padding: 100px 0;
+    }
+
+    .features-header {
+      text-align: center;
+      margin-bottom: 64px;
+    }
+
+    .features-header .section-subtitle {
+      margin: 0 auto;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+    }
+
+    .feature-card {
+      padding: 32px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      transition: all 0.35s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      opacity: 0;
+      transition: opacity 0.35s;
+    }
+
+    .feature-card:hover {
+      background: var(--surface-hover);
+      transform: translateY(-6px);
+      border-color: rgba(108, 92, 231, 0.3);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+    }
+
+    .feature-card:hover::before {
+      opacity: 1;
+    }
+
+    .feature-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+
+    .feature-card h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      letter-spacing: -0.3px;
+    }
+
+    .feature-card p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+
+    /* ─── How It Works ─── */
+    .how-it-works {
+      padding: 100px 0;
+    }
+
+    .how-header {
+      text-align: center;
+      margin-bottom: 64px;
+    }
+
+    .how-header .section-subtitle {
+      margin: 0 auto;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 32px;
+      position: relative;
+    }
+
+    .step {
+      text-align: center;
+      padding: 40px 24px;
+      position: relative;
+    }
+
+    .step-number {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--primary), var(--accent-secondary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 800;
+      color: #fff;
+      margin: 0 auto 20px;
+      box-shadow: 0 8px 25px rgba(108, 92, 231, 0.3);
+    }
+
+    .step h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .step p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+
+    /* ─── Tier System ─── */
+    .tiers {
+      padding: 100px 0;
+    }
+
+    .tiers-header {
+      text-align: center;
+      margin-bottom: 64px;
+    }
+
+    .tiers-header .section-subtitle {
+      margin: 0 auto;
+    }
+
+    .tiers-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+    }
+
+    .tier-card {
+      padding: 28px 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      text-align: center;
+      transition: all 0.35s ease;
+      position: relative;
+    }
+
+    .tier-card:hover {
+      transform: translateY(-6px);
+      border-color: rgba(108, 92, 231, 0.4);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+    }
+
+    .tier-card.highlight {
+      border-color: var(--primary);
+      background: rgba(108, 92, 231, 0.08);
+    }
+
+    .tier-card.highlight::before {
+      content: 'BEST';
+      position: absolute;
+      top: -10px;
+      right: 20px;
+      padding: 4px 12px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .tier-emoji {
+      font-size: 36px;
+      margin-bottom: 14px;
+    }
+
+    .tier-name {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .tier-level {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+      margin-bottom: 18px;
+    }
+
+    .tier-detail {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+    }
+
+    .tier-detail-label {
+      color: var(--text-secondary);
+    }
+
+    .tier-detail-value {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* ─── App Screenshots ─── */
+    .screenshots {
+      padding: 100px 0;
+    }
+
+    .screenshots-header {
+      text-align: center;
+      margin-bottom: 64px;
+    }
+
+    .screenshots-header .section-subtitle {
+      margin: 0 auto;
+    }
+
+    .screenshots-scroll {
+      display: flex;
+      gap: 20px;
+      overflow-x: auto;
+      padding: 20px 0 40px;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .screenshots-scroll::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .screenshots-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .screenshots-scroll::-webkit-scrollbar-thumb {
+      background: var(--primary-light);
+      border-radius: 2px;
+    }
+
+    .screenshot-item {
+      flex: 0 0 auto;
+      width: 280px;
+      scroll-snap-align: center;
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      transition: all 0.35s ease;
+      position: relative;
+    }
+
+    .screenshot-item:hover {
+      transform: scale(1.03);
+      border-color: var(--primary-light);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+    }
+
+    .screenshot-item img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .screenshot-label {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 20px 16px 14px;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    /* ─── Tech Stack ─── */
+    .tech-stack {
+      padding: 80px 0;
+    }
+
+    .tech-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .tech-header .section-subtitle {
+      margin: 0 auto;
+    }
+
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+    }
+
+    .tech-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      transition: all 0.3s;
+    }
+
+    .tech-card:hover {
+      background: var(--surface-hover);
+      transform: translateY(-3px);
+    }
+
+    .tech-card-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .tech-card h4 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .tech-card p {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* ─── CTA Section ─── */
+    .cta {
+      padding: 100px 0;
+    }
+
+    .cta-box {
+      text-align: center;
+      padding: 64px 40px;
+      background: linear-gradient(135deg, rgba(108, 92, 231, 0.15), rgba(0, 210, 255, 0.08));
+      border: 1px solid rgba(108, 92, 231, 0.25);
+      border-radius: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-box::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 30% 50%, rgba(108, 92, 231, 0.1), transparent 60%);
+      pointer-events: none;
+    }
+
+    .cta-box h2 {
+      font-size: clamp(28px, 4vw, 40px);
+      font-weight: 800;
+      margin-bottom: 16px;
+      letter-spacing: -1px;
+      position: relative;
+    }
+
+    .cta-box p {
+      font-size: 17px;
+      color: var(--text-secondary);
+      margin-bottom: 36px;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+      line-height: 1.6;
+      position: relative;
+    }
+
+    .cta-buttons {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      position: relative;
+    }
+
+    .cta-note {
+      margin-top: 20px;
+      position: relative;
+    }
+
+    /* ─── Footer ─── */
+    footer {
+      padding: 48px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .footer-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .footer-left p {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .footer-right {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .footer-right a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      transition: color 0.25s;
+    }
+
+    .footer-right a:hover {
+      color: var(--text-primary);
+    }
+
+    .team-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    /* ─── Animations ─── */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(24px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 768px) {
+      nav ul {
+        display: none;
+      }
+
+      .hero {
+        padding: 130px 0 60px;
+      }
+
+      .hero h1 {
+        letter-spacing: -1px;
+      }
+
+      .hero p {
+        font-size: 16px;
+      }
+
+      .btn {
+        padding: 14px 24px;
+        font-size: 15px;
+      }
+
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .tiers-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .steps {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .cta-box {
+        padding: 40px 24px;
+      }
+
+      .footer-content {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .footer-right {
+        justify-content: center;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .tiers-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .steps {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-buttons {
+        flex-direction: column;
+      }
+
+      .cta-buttons {
+        flex-direction: column;
+      }
+    }
   </style>
 </head>
 
 <body>
-  <div id="root"></div>
-  <script type="module" src="/src/main.tsx"></script>
+  <!-- Background Orbs -->
+  <div class="bg-orbs">
+    <div class="orb"></div>
+    <div class="orb"></div>
+    <div class="orb"></div>
+  </div>
+
+  <!-- ─── Navbar ─── -->
+  <nav>
+    <div class="container">
+      <a href="#" class="logo">
+        <div class="logo-icon">M</div>
+        <div class="logo-text"><span>Micro</span>Lend</div>
+      </a>
+      <ul>
+        <li><a href="#features">Features</a></li>
+        <li><a href="#how-it-works">How It Works</a></li>
+        <li><a href="#tiers">Tiers</a></li>
+        <li><a href="#screenshots">App</a></li>
+        <li><a href="#download" class="nav-cta">Download App</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- ─── Hero ─── -->
+  <section class="hero" id="hero">
+    <div class="container">
+      <div class="hero-badge">
+        <span class="dot"></span>
+        Built on Canton Network
+      </div>
+      <h1>
+        Private Micro-Lending<br />
+        <span class="gradient-text">Made Simple</span>
+      </h1>
+      <p>
+        MicroLend is a privacy-preserving P2P micro-lending platform powered by Daml smart contracts on Canton Network.
+        Secure, collateral-backed, and reputation-based lending for everyone.
+      </p>
+      <div class="hero-buttons">
+        <a href="#download" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          Download for Android
+        </a>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+          <a href="#features" class="btn btn-secondary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+              <line x1="8" y1="21" x2="16" y2="21" />
+              <line x1="12" y1="17" x2="12" y2="21" />
+            </svg>
+            Web Version
+          </a>
+          <span class="coming-soon-badge">
+            🚧 Coming Soon
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Stats ─── -->
+  <section class="stats reveal">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number">5</div>
+          <div class="stat-label">Reputation Tiers</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">100%</div>
+          <div class="stat-label">Collateral Backed</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">🔐</div>
+          <div class="stat-label">Privacy Preserving</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">⚡</div>
+          <div class="stat-label">Automated Workflows</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Features ─── -->
+  <section class="features reveal" id="features">
+    <div class="container">
+      <div class="features-header">
+        <div class="section-tag">✨ Features</div>
+        <h2 class="section-title">Why Choose MicroLend?</h2>
+        <p class="section-subtitle">A secure, transparent, and fair micro-lending ecosystem built on blockchain
+          technology.</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon" style="background: rgba(108,92,231,0.15);">🔒</div>
+          <h3>Stablecoin Collateral</h3>
+          <p>Every loan is secured with stablecoin collateral, providing protection for lenders and peace of mind for
+            all participants.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background: rgba(0,210,255,0.15);">⭐</div>
+          <h3>Reputation Tiering</h3>
+          <p>A 5-level system from Starter to Elite that rewards consistent borrowers with lower collateral requirements
+            as their reputation grows.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background: rgba(0,230,118,0.15);">💰</div>
+          <h3>Fair Interest System</h3>
+          <p>Borrowers with good reputations receive benefits without reducing the yield that lenders receive. Fair for
+            both sides.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background: rgba(255,64,129,0.15);">🔐</div>
+          <h3>Privacy by Design</h3>
+          <p>Built on Canton's privacy-preserving architecture — only the borrower and lender can view loan details.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background: rgba(255,214,0,0.15);">📊</div>
+          <h3>Full Audit Trail</h3>
+          <p>Complete action history for every loan, enabling compliance reporting and transparent record-keeping.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon" style="background: rgba(127,90,240,0.15);">⚡</div>
+          <h3>Automated Workflows</h3>
+          <p>The entire loan lifecycle — from request to repayment — is automated through Daml smart contracts.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── How It Works ─── -->
+  <section class="how-it-works reveal" id="how-it-works">
+    <div class="container">
+      <div class="how-header">
+        <h2 class="section-title">How It Works</h2>
+        <p class="section-subtitle">Simple, transparent, and automated from start to finish.</p>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <h3>Connect</h3>
+          <p>Users connect to the platform with their unique Party ID on Canton Network.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <h3>Create Request</h3>
+          <p>Borrowers submit loan requests specifying amount, interest rate, due date, and collateral.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <h3>Review & Approve</h3>
+          <p>Lenders review requests with collateral info and borrower tier, then approve or decline.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">4</div>
+          <h3>Repay & Complete</h3>
+          <p>Borrowers repay through the interface. Collateral releases and reputation score updates.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Tier System ─── -->
+  <section class="tiers reveal" id="tiers">
+    <div class="container">
+      <div class="tiers-header">
+        <h2 class="section-title">Borrower Tier System</h2>
+        <p class="section-subtitle">A fair tier system that rewards consistent borrowers while protecting lenders.</p>
+      </div>
+      <div class="tiers-grid">
+        <div class="tier-card">
+          <div class="tier-emoji">🥉</div>
+          <div class="tier-name">Starter</div>
+          <div class="tier-level">Level 1</div>
+          <div class="tier-detail">
+            <span class="tier-detail-label">Collateral Rate</span>
+            <span class="tier-detail-value">115%</span>
+          </div>
+          <div class="tier-detail">
+            <span class="tier-detail-label">Benefit</span>
+            <span class="tier-detail-value" style="text-align: right;">Baseline, new user</span>
+          </div>
+        </div>
+        <div class="tier-card">
+          <div class="tier-emoji">🥈</div>
+          <div class="tier-name">Reliable</div>
+          <div class="tier-level">Level 2</div>
+          <div class="tier-detail">
+            <span class="tier-detail-label">Collateral Rate</span>
+            <span class="tier-detail-value">114%</span>
+          </div>
+          <div class="tier-detail">
+            <span class="tier-detail-label">Benefit</span>
+            <span class="tier-detail-value" style="text-align: right;">Lower collateral</span>
+          </div>
+        </div>
+        <div class="tier-card">
+          <div class="tier-emoji">🥇</div>
+          <div class="tier-name">Trusted</div>
+          <div class="tier-level">Level 3</div>
+          <div class="tier-detail">
+            <span class="tier-detail-label">Collateral Rate</span>
+            <span class="tier-detail-value">113%</span>
+          </div>
+          <div class="tier-detail">
+            <span class="tier-detail-label">Benefit</span>
+            <span class="tier-detail-value" style="text-align: right;">Highly trusted</span>
+          </div>
+        </div>
+        <div class="tier-card">
+          <div class="tier-emoji">💎</div>
+          <div class="tier-name">Prime</div>
+          <div class="tier-level">Level 4</div>
+          <div class="tier-detail">
+            <span class="tier-detail-label">Collateral Rate</span>
+            <span class="tier-detail-value">112%</span>
+          </div>
+          <div class="tier-detail">
+            <span class="tier-detail-label">Benefit</span>
+            <span class="tier-detail-value" style="text-align: right;">Experienced borrower</span>
+          </div>
+        </div>
+        <div class="tier-card highlight">
+          <div class="tier-emoji">�</div>
+          <div class="tier-name">Elite</div>
+          <div class="tier-level">Level 5</div>
+          <div class="tier-detail">
+            <span class="tier-detail-label">Collateral Rate</span>
+            <span class="tier-detail-value">111%</span>
+          </div>
+          <div class="tier-detail">
+            <span class="tier-detail-label">Benefit</span>
+            <span class="tier-detail-value" style="text-align: right;">Top-tier, minimum collateral</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── App Screenshots ─── -->
+  <section class="screenshots reveal" id="screenshots">
+    <div class="container">
+      <div class="screenshots-header">
+        <div class="section-tag">📱 Mobile App</div>
+        <h2 class="section-title">Experience MicroLend</h2>
+        <p class="section-subtitle">Download the Android app now and start lending or borrowing securely.</p>
+      </div>
+      <div class="screenshots-scroll">
+        <div class="screenshot-item">
+          <img src="assets/login.png" alt="Login Screen" />
+          <div class="screenshot-label">Login</div>
+        </div>
+        <div class="screenshot-item">
+          <img src="assets/dashboard.png" alt="Dashboard" />
+          <div class="screenshot-label">Dashboard</div>
+        </div>
+        <div class="screenshot-item">
+          <img src="assets/deposit-token.png" alt="Deposit Token" />
+          <div class="screenshot-label">Deposit Token</div>
+        </div>
+        <div class="screenshot-item">
+          <img src="assets/request-loan.png" alt="Request Loan" />
+          <div class="screenshot-label">Request Loan</div>
+        </div>
+        <div class="screenshot-item">
+          <img src="assets/marketplace-list-loan.png" alt="Loan Marketplace" />
+          <div class="screenshot-label">Loan Marketplace</div>
+        </div>
+        <div class="screenshot-item">
+          <img src="assets/fund-loan.png" alt="Fund Loan" />
+          <div class="screenshot-label">Fund Loan</div>
+        </div>
+        <div class="screenshot-item">
+          <img src="assets/detail-funded-loan.png" alt="Detail Funded Loan" />
+          <div class="screenshot-label">Detail Funded Loan</div>
+        </div>
+        <div class="screenshot-item">
+          <img src="assets/portfolio-lender.png" alt="Portfolio" />
+          <div class="screenshot-label">Portfolio</div>
+        </div>
+        <div class="screenshot-item">
+          <img src="assets/profile.png" alt="Profile" />
+          <div class="screenshot-label">Profile</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Tech Stack ─── -->
+  <section class="tech-stack reveal">
+    <div class="container">
+      <div class="tech-header">
+        <div class="section-tag">🛠 Technology</div>
+        <h2 class="section-title">Built With the Best</h2>
+        <p class="section-subtitle">Leveraging cutting-edge blockchain and smart contract technology.</p>
+      </div>
+      <div class="tech-grid">
+        <div class="tech-card">
+          <div class="tech-card-icon" style="background:rgba(108,92,231,0.15);">⛓️</div>
+          <div>
+            <h4>Canton Network</h4>
+            <p>Privacy-preserving blockchain</p>
+          </div>
+        </div>
+        <div class="tech-card">
+          <div class="tech-card-icon" style="background:rgba(0,210,255,0.15);">📜</div>
+          <div>
+            <h4>Daml Smart Contracts</h4>
+            <p>Automated loan workflows</p>
+          </div>
+        </div>
+        <div class="tech-card">
+          <div class="tech-card-icon" style="background:rgba(0,230,118,0.15);">🔐</div>
+          <div>
+            <h4>Privacy Architecture</h4>
+            <p>Data visible only to parties</p>
+          </div>
+        </div>
+        <div class="tech-card">
+          <div class="tech-card-icon" style="background:rgba(255,214,0,0.15);">💵</div>
+          <div>
+            <h4>Stablecoin Collateral</h4>
+            <p>Secure, value-stable backing</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── CTA / Download Section ─── -->
+  <section class="cta reveal" id="download">
+    <div class="container">
+      <div class="cta-box">
+        <h2>Get Started with MicroLend</h2>
+        <p>Download the Android app today and experience private, secure micro-lending on Canton Network.</p>
+        <div class="cta-buttons">
+          <a href="#" class="btn btn-primary" id="download-btn">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+              <path
+                d="M17.523 2.237a.8.8 0 0 0-.907.164L12 6.905 7.384 2.4a.8.8 0 0 0-.907-.164.8.8 0 0 0-.477.727v10.064a.8.8 0 0 0 .235.567l5.2 5.2a.8.8 0 0 0 1.131 0l5.2-5.2a.8.8 0 0 0 .234-.567V2.964a.8.8 0 0 0-.477-.727z" />
+            </svg>
+            Download Now — Android
+          </a>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+            <span class="btn btn-secondary" style="cursor:default;opacity:0.7;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" width="20" height="20">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+                <line x1="8" y1="21" x2="16" y2="21" />
+                <line x1="12" y1="17" x2="12" y2="21" />
+              </svg>
+              Web Version
+            </span>
+            <span class="coming-soon-badge">🚧 Coming Soon</span>
+          </div>
+        </div>
+        <div class="cta-note">
+          <span class="team-badge">🐈 Built by Team Kucing Oyen</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── Footer ─── -->
+  <footer>
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-left">
+          <a href="#" class="logo" style="text-decoration:none;">
+            <div class="logo-icon" style="width:30px;height:30px;font-size:14px;border-radius:8px;">M</div>
+            <div class="logo-text" style="font-size:16px;"><span>Micro</span>Lend</div>
+          </a>
+          <p>&copy; 2026 Team Kucing Oyen. All rights reserved.</p>
+        </div>
+        <div class="footer-right">
+          <a href="#features">Features</a>
+          <a href="#how-it-works">How It Works</a>
+          <a href="#tiers">Tiers</a>
+          <a href="#download">Download</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ─── Scripts ─── -->
+  <script>
+    // Intersection Observer for reveal animations
+    const reveals = document.querySelectorAll('.reveal');
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+    reveals.forEach(el => revealObserver.observe(el));
+
+    // Navbar scroll effect
+    const nav = document.querySelector('nav');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 50) {
+        nav.style.background = 'rgba(15, 12, 41, 0.9)';
+      } else {
+        nav.style.background = 'rgba(15, 12, 41, 0.6)';
+      }
+    });
+
+    // Smooth scroll for all anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+  </script>
 </body>
 
 </html>
