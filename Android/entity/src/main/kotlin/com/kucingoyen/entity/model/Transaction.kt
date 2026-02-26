@@ -10,5 +10,7 @@ data class Transaction(
 
 enum class TransactionType {
     SENT,
-    RECEIVED
+    RECEIVED,
+    BORROWED,
+    FUNDED
 }

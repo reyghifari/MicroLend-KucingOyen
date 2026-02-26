@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Named
+import com.kucingoyen.data.cache.database.room.TransactionDao
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
@@ -29,6 +30,7 @@ class AuthViewModel @Inject constructor(
     private val repository: AuthRepository,
     val userInfoCache: UserInfoCache,
     val appSessionCache: AppSessionCache,
+    private val transactionDao: TransactionDao,
     ) : BaseViewModel(viewModelUtils) {
 
     private val _showSheetLogin = MutableStateFlow(false)
@@ -70,15 +72,16 @@ class AuthViewModel @Inject constructor(
                     LoadingAction.show(false)
                 }
                 .collect { response ->
-                    userInfoCache.apply {
-                        level = response.level
-                        email = response.email
-                        partyId = response.damlPartyId
-                    }
-                    appSessionCache.token = response.token
-                    if (userInfoCache.isLoggedInBefore){
+                    if (userInfoCache.isLoggedInBefore && userInfoCache.email == response.email){
                         onSuccess()
                     }else{
+                        userInfoCache.apply {
+                            level = response.level
+                            email = response.email
+                            partyId = response.damlPartyId
+                        }
+                        appSessionCache.token = response.token
+                        transactionDao.deleteAll()
                         createProfile {
                             onSuccess()
                         }

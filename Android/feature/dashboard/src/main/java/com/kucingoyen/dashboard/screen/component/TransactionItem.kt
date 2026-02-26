@@ -62,7 +62,12 @@ fun TransactionItem(transaction: Transaction, onClick : (Transaction) -> Unit) {
             modifier = Modifier.weight(1f)
         ) {
             Text(
-                text = if (transaction.type == TransactionType.RECEIVED) "Received" else "Sent",
+                text = when (transaction.type) {
+                    TransactionType.RECEIVED -> "Received"
+                    TransactionType.SENT -> "Sent"
+                    TransactionType.BORROWED -> "Borrowed"
+                    TransactionType.FUNDED -> "Funded"
+                },
                 color = Color.Black,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
@@ -81,8 +86,14 @@ fun TransactionItem(transaction: Transaction, onClick : (Transaction) -> Unit) {
             horizontalAlignment = Alignment.End
         ) {
             Text(
-                text = (if (transaction.type == TransactionType.RECEIVED) "+" else "-") +"${transaction.tokenAmount} ${transaction.tokenSymbol}",
-                color = if (transaction.type == TransactionType.RECEIVED) BaseColor.Irish.Normal else BaseColor.JetBlack.Normal,
+                text = (when (transaction.type) {
+                    TransactionType.RECEIVED, TransactionType.BORROWED -> "+"
+                    else -> "-"
+                }) +"${transaction.tokenAmount} ${transaction.tokenSymbol}",
+                color = when (transaction.type) {
+                    TransactionType.RECEIVED, TransactionType.BORROWED -> BaseColor.Irish.Normal
+                    else -> BaseColor.JetBlack.Normal
+                },
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = FontFamily.Monospace

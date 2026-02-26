@@ -313,6 +313,14 @@ class DashboardViewModel @Inject constructor(
                     .collect { response ->
                         if (response.success){
                             updateBottomSuccessRequestLoan(true)
+                            setTransaction(
+                                Transaction(
+                                    type = TransactionType.BORROWED,
+                                    tokenSymbol = "CC",
+                                    tokenAmount = amount,
+                                    address = "Loan Request"
+                                )
+                            )
                             getBalance()
                             getProfile()
                         }else{
@@ -373,6 +381,14 @@ class DashboardViewModel @Inject constructor(
                     .collect { response ->
                         if (response.success){
                             updateBottomSuccessFundLoan(true)
+                            setTransaction(
+                                Transaction(
+                                    type = TransactionType.FUNDED,
+                                    tokenSymbol = "CC",
+                                    tokenAmount = loanAmount.toString(),
+                                    address = loanContractId
+                                )
+                            )
                             getBalance()
                             getProfile()
                         }else{
