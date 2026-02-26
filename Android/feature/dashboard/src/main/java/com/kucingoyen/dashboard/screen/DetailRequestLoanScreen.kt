@@ -51,6 +51,7 @@ import com.kucingoyen.dashboard.screen.component.TermsAgreementNoticeTring
 fun DetailRequestLoanScreen(
     dashboardViewModel: DashboardViewModel,
     modifier: Modifier = Modifier,
+    onBackClick: () -> Unit
 ) {
     Box(
         modifier = modifier
@@ -59,8 +60,8 @@ fun DetailRequestLoanScreen(
             .padding(WindowInsets.systemBars.asPaddingValues())
     ) {
         Column {
-            NavbarMicroLend(title = "Create Loan")
-            ContentRequestLoan(modifier.weight(1f),dashboardViewModel)
+            NavbarMicroLend(title = "Create Loan", onBack = { onBackClick() })
+            ContentRequestLoan(modifier.weight(1f),dashboardViewModel, onBackClick = onBackClick)
             StickyContentLoan(dashboardViewModel)
         }
     }
@@ -69,6 +70,7 @@ fun DetailRequestLoanScreen(
 @Composable
 fun ContentRequestLoan(modifier: Modifier = Modifier,
                        dashboardViewModel: DashboardViewModel,
+                       onBackClick: () -> Unit
 ) {
     val loanAmount by dashboardViewModel.loanAmount.collectAsStateWithLifecycle()
     val bottomSheetLevelInfo by dashboardViewModel.bottomSheetLevelInfo.collectAsStateWithLifecycle()
@@ -134,6 +136,7 @@ fun ContentRequestLoan(modifier: Modifier = Modifier,
             desc = "Success Request loan"
         ) {
             dashboardViewModel.updateBottomSuccessRequestLoan(false)
+            onBackClick()
         }
     }
     if (bottomSheetNotEnoughCollateral){

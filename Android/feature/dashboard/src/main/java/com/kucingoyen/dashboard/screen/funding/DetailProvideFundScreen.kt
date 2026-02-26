@@ -187,6 +187,7 @@ fun DetailProvideFundScreen(
                 desc = "Success fund loan"
             ) {
                 dashboardViewModel.updateBottomSuccessFundLoan(false)
+                onBackClick()
             }
         }
         if (bottomSheetNotEnoughFund) {

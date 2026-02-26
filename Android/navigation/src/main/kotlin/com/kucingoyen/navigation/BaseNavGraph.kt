@@ -96,7 +96,10 @@ fun DashboardNavigation(
             })
         }
         composable(route = BaseNav.Dashboard.DetailRequestLoanScreen.name) { navBackStackEntry ->
-            DetailRequestLoanScreen(dashboardViewModel)
+            DetailRequestLoanScreen(
+                dashboardViewModel,
+                onBackClick = { dashboardNavController.navigateUp() }
+            )
         }
         composable(route = BaseNav.Dashboard.RequestBalanceScreen.name + "?index={index}") { navBackStackEntry ->
             val indexTab = navBackStackEntry.arguments?.getString("index") ?: ""
