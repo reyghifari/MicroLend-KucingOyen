@@ -12,6 +12,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kucingoyen.core.components.LoanRequestItem
 import com.kucingoyen.dashboard.DashboardViewModel
@@ -27,17 +28,37 @@ fun ProvideFundingScreen(dashboardViewModel: DashboardViewModel, modifier: Modif
 
     Column {
         NavbarMicroLend(title = "List loan")
-        LazyColumn(
-            modifier = modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            items(listLoanRequest) { loan ->
-                LoanRequestItem(loan){
-                    dashboardViewModel.setDetailLoanRequest(it)
-                    onClickDetail()
+        if (listLoanRequest.isEmpty()) {
+            Column(
+                modifier = modifier.fillMaxSize(),
+                horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                androidx.compose.foundation.Image(
+                    painter = androidx.compose.ui.res.painterResource(id = com.kucingoyen.core.R.drawable.ic_empty),
+                    contentDescription = "Empty Data",
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+                androidx.compose.material3.Text(
+                    text = "No list loan request found",
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                    fontSize = 16.sp,
+                    color = androidx.compose.ui.graphics.Color.Gray
+                )
+            }
+        } else {
+            LazyColumn(
+                modifier = modifier
+                    .fillMaxSize()
+                    .statusBarsPadding()
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                items(listLoanRequest) { loan ->
+                    LoanRequestItem(loan) {
+                        dashboardViewModel.setDetailLoanRequest(it)
+                        onClickDetail()
+                    }
                 }
             }
         }

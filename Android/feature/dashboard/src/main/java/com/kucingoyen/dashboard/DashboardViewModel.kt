@@ -342,7 +342,8 @@ class DashboardViewModel @Inject constructor(
             5 -> 0.11
             else -> 0.15
         }
-        val total = amount + (amount * interestRate)
+
+        val total = (amount + (amount * interestRate)) * 0.16
         val USDx = _balance.value.holdings.USDx.filter { it.amount > total }
         return USDx.first()
     }

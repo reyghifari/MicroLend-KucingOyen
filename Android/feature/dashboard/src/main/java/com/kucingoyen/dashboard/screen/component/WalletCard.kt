@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Wallet
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -74,19 +75,22 @@ fun WalletCard(
                     modifier = Modifier.size(70.dp)
                 )
 
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        text = "Total Balance",
-                        fontSize = 18.sp,
-                        color = BaseColor.White,
-                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                    )
-                    Text(
-                        text = "$ ${"%.2f".format(totalBalance)}",                        fontSize = 18.sp,
-                        color = Color.White.copy(alpha = 0.85f),
-                        fontWeight = FontWeight.Medium,
-                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            text = "Total Balance",
+                            fontSize = 18.sp,
+                            color = BaseColor.White,
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                        )
+                        Text(
+                            text = "$ ${"%.2f".format(totalBalance)}",
+                            fontSize = 18.sp,
+                            color = Color.White.copy(alpha = 0.85f),
+                            fontWeight = FontWeight.Medium,
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                        )
+                    }
                 }
             }
 

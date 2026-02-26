@@ -44,7 +44,12 @@ import com.kucingoyen.dashboard.screen.component.TabsSection
 import com.kucingoyen.dashboard.screen.component.TransactionItem
 import com.kucingoyen.dashboard.screen.component.WalletCard
 import com.kucingoyen.entity.model.Transaction
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun HomeScreen(
     dashboardViewModel: DashboardViewModel,
@@ -58,62 +63,83 @@ fun HomeScreen(
     val listActivity by dashboardViewModel.listTransactionActivity.collectAsState()
     val balance by dashboardViewModel.balance.collectAsState()
 
-    LazyColumn(
+    val isRefreshing = false
+
+    val pullRefreshState = rememberPullRefreshState(
+        refreshing = isRefreshing,
+        onRefresh = {
+            dashboardViewModel.getBalance()
+            dashboardViewModel.getProfile()
+        }
+    )
+
+    Box(
         modifier = Modifier
-            .background(BaseColor.White)
+            .fillMaxSize()
             .padding(paddingValues)
-            .fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp)
+            .pullRefresh(pullRefreshState)
     ) {
-        item {
-            LoopProfileBar(
-                dashboardViewModel.getPartyId()
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-
-        item {
-            WalletCard(
-                dashboardViewModel,
-                onClickSend = onClickSend,
-                onClickDeposit = onClickDeposit,
-                onClickRequest = requestLoan,
-                onClickProvideFund = provideLoan
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-
-        item {
-            TabsSection("My Token")
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-
-        item {
-            AssetSection(
-                assetName = "Canton",
-                assetSymbol = "CC",
-                balance = balance.balances.CC.toString(),
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            AssetSection(
-                assetName = "Stablecoin",
-                assetSymbol = "USDx",
-                balance = balance.balances.USDx.toString(),
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-
-        item {
-            TabsSection("Activity")
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-
-        items(listActivity) { transaction ->
-            TransactionItem(transaction = transaction) {
-                onClickTransaction(it)
+        LazyColumn(
+            modifier = Modifier
+                .background(BaseColor.White)
+                .fillMaxSize(),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp)
+        ) {
+            item {
+                LoopProfileBar(
+                    dashboardViewModel.getPartyId()
+                )
+                Spacer(modifier = Modifier.height(16.dp))
             }
-            Spacer(modifier = Modifier.height(4.dp))
+
+            item {
+                WalletCard(
+                    dashboardViewModel,
+                    onClickSend = onClickSend,
+                    onClickDeposit = onClickDeposit,
+                    onClickRequest = requestLoan,
+                    onClickProvideFund = provideLoan
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            item {
+                TabsSection("My Token")
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            item {
+                AssetSection(
+                    assetName = "Canton",
+                    assetSymbol = "CC",
+                    balance = balance.balances.CC.toString(),
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                AssetSection(
+                    assetName = "Stablecoin",
+                    assetSymbol = "USDx",
+                    balance = balance.balances.USDx.toString(),
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            item {
+                TabsSection("Activity")
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            items(listActivity) { transaction ->
+                TransactionItem(transaction = transaction) {
+                    onClickTransaction(it)
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+            }
         }
+        PullRefreshIndicator(
+            refreshing = isRefreshing,
+            state = pullRefreshState,
+            modifier = Modifier.align(Alignment.TopCenter)
+        )
     }
 }
 @Composable

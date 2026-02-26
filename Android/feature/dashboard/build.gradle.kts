@@ -29,5 +29,6 @@ dependencies {
     implementation(project(":entity"))
     implementation(libs.hilt.android)
     implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.androidx.compose.material)
     ksp(libs.hilt.android.compiler)
 }

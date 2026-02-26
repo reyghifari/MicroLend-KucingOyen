@@ -72,6 +72,7 @@ class AuthViewModel @Inject constructor(
                     LoadingAction.show(false)
                 }
                 .collect { response ->
+                    appSessionCache.token = response.token
                     if (userInfoCache.isLoggedInBefore && userInfoCache.email == response.email){
                         onSuccess()
                     }else{
@@ -80,7 +81,6 @@ class AuthViewModel @Inject constructor(
                             email = response.email
                             partyId = response.damlPartyId
                         }
-                        appSessionCache.token = response.token
                         transactionDao.deleteAll()
                         createProfile {
                             onSuccess()
