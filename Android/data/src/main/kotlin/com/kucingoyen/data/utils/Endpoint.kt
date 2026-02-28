@@ -23,7 +23,7 @@ object Endpoint {
 
     const val MY_LOAN = "api/lending/loan/requests"
 
-    const val REPAY_LOAN = "api/lending/loan/{contractId}/repay"
+    const val REPAY_LOAN = "api/lending/loan/repay"
 
     const val REVIEWS = "api/reviews"
 

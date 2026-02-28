@@ -69,7 +69,6 @@ interface DashboardService {
 
     @POST(Endpoint.REPAY_LOAN)
     suspend fun repayLoan(
-        @Path("contractId") contractId: String,
         @Body request: com.kucingoyen.entity.model.RepayLoanRequest
     ): com.kucingoyen.entity.model.RepayLoanResponse
 

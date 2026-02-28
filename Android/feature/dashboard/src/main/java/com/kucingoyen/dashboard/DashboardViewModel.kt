@@ -448,8 +448,8 @@ class DashboardViewModel @Inject constructor(
     }
 
     private fun getHoldingLoanContractId(loanAmount: Double) : String{
-        val getContractId = _balance.value.holdings.CC.filter { it.amount > loanAmount }
-        return getContractId.first().contractId
+        val getContractId = _balance.value.holdings.CC.filter { it.amount >= loanAmount }
+        return getContractId.firstOrNull()?.contractId ?: ""
     }
 
     fun repayLoan(loanContractId: String, requiredRepayment: Double) {
@@ -458,8 +458,8 @@ class DashboardViewModel @Inject constructor(
         if (repaymentHoldingId.isNotEmpty()) {
             viewModelScope.launch {
                 dashboardRepository.repayLoan(
-                    contractId = loanContractId,
                     request = com.kucingoyen.entity.model.RepayLoanRequest(
+                        contractId = loanContractId,
                         repaymentHoldingContractId = repaymentHoldingId
                     )
                 )
