@@ -258,13 +258,13 @@ class DashboardViewModel @Inject constructor(
         _selectedTransaction.value = transaction
     }
 
-    fun transfer(amount: String, recipientAddress: String) {
+    fun transfer(amount: String, recipientAddress: String, currency: String = "CC") {
         viewModelScope.launch(exceptionHandler) {
             dashboardRepository.transferToken(
                 TransferRequest(
                     recipientPartyId = recipientAddress,
                     amount = amount.toDouble(),
-                    currency = "CC",
+                    currency = currency,
                     note = ""
                 )
             )
@@ -279,7 +279,7 @@ class DashboardViewModel @Inject constructor(
                     setTransaction(
                         Transaction(
                             type = TransactionType.SENT,
-                            tokenSymbol = "CC",
+                            tokenSymbol = currency,
                             tokenAmount = amount,
                             address = recipientAddress
                         )

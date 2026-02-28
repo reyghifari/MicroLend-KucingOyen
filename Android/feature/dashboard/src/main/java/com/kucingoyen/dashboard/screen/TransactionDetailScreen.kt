@@ -66,11 +66,20 @@ fun TransactionDetailScreen(
                 modifier = Modifier
                     .size(80.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF5C6BC0)),
+                    .background(
+                        when (transaction.type) {
+                            TransactionType.RECEIVED, TransactionType.BORROWED -> Color(0xFF4CAF50)
+                            TransactionType.SENT, TransactionType.FUNDED -> Color(0xFF5C6BC0)
+                            TransactionType.REPAID -> Color(0xFFFF9800)
+                        }
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = if (transaction.type == TransactionType.RECEIVED) Icons.Default.CallReceived else Icons.Default.CallMade,
+                    imageVector = when (transaction.type) {
+                        TransactionType.RECEIVED, TransactionType.BORROWED -> Icons.Default.CallReceived
+                        else -> Icons.Default.CallMade
+                    },
                     contentDescription = null,
                     tint = Color.White,
                     modifier = Modifier.size(40.dp)
@@ -81,7 +90,13 @@ fun TransactionDetailScreen(
 
             // Title
             Text(
-                text = "${if (transaction.type == TransactionType.RECEIVED) "Received" else "Sent"} ${transaction.tokenSymbol}",
+                text = "${when (transaction.type) {
+                    TransactionType.RECEIVED -> "Received"
+                    TransactionType.SENT -> "Sent"
+                    TransactionType.BORROWED -> "Borrowed"
+                    TransactionType.FUNDED -> "Funded"
+                    TransactionType.REPAID -> "Repaid"
+                }} ${transaction.tokenSymbol}",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = FontFamily.Monospace,
@@ -125,7 +140,10 @@ fun TransactionDetailScreen(
             Divider()
 
             DetailRow(
-                label = if (transaction.type == TransactionType.RECEIVED) "From" else "To",
+                label = when (transaction.type) {
+                    TransactionType.RECEIVED, TransactionType.BORROWED -> "From"
+                    else -> "To"
+                },
                 value = maskString(transaction.address, front = 6, back = 4)
             )
 

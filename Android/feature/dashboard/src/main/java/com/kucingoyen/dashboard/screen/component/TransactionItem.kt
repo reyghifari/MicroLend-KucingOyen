@@ -45,14 +45,23 @@ fun TransactionItem(transaction: Transaction, onClick : (Transaction) -> Unit) {
             modifier = Modifier
                 .size(48.dp)
                 .clip(CircleShape)
-                .background(Color(0xFF5C6BC0)),
+                .background(
+                    when (transaction.type) {
+                        TransactionType.RECEIVED, TransactionType.BORROWED -> Color(0xFF4CAF50)
+                        TransactionType.SENT, TransactionType.FUNDED -> Color(0xFF5C6BC0)
+                        TransactionType.REPAID -> Color(0xFFFF9800)
+                    }
+                ),
             contentAlignment = Alignment.Center
         ) {
-             Icon(
-                imageVector = if (transaction.type == TransactionType.RECEIVED) Icons.Default.CallReceived else Icons.Default.CallMade,
+            Icon(
+                imageVector = when (transaction.type) {
+                    TransactionType.RECEIVED, TransactionType.BORROWED -> Icons.Default.CallReceived
+                    else -> Icons.Default.CallMade
+                },
                 contentDescription = null,
                 tint = Color.White,
-                 modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(24.dp)
             )
         }
 

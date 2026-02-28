@@ -1,6 +1,7 @@
 package com.kucingoyen.dashboard.deposit
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Share
@@ -49,7 +51,13 @@ fun SendContent(
 
     var recipientAddress by remember { mutableStateOf("") }
     var amount by remember { mutableStateOf("") }
-    val userBalance = balance.balances.CC.toString()
+    var selectedToken by remember { mutableStateOf("CC") }
+
+    val userBalance = if (selectedToken == "CC") {
+        balance.balances.CC.toString()
+    } else {
+        balance.balances.USDx.toString()
+    }
 
     Column(
         modifier = Modifier
@@ -57,6 +65,40 @@ fun SendContent(
             .padding(horizontal = 4.dp),
         horizontalAlignment = Alignment.Start
     ) {
+
+        // Token Selector
+        Text(
+            text = "Select Token",
+            fontSize = 14.sp,
+            fontFamily = FontFamily.Monospace,
+            fontWeight = FontWeight.SemiBold,
+            color = BaseColor.JetBlack.Normal,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            TokenChip(
+                label = "CC",
+                isSelected = selectedToken == "CC",
+                onClick = {
+                    selectedToken = "CC"
+                    amount = ""
+                }
+            )
+            TokenChip(
+                label = "USDx",
+                isSelected = selectedToken == "USDx",
+                onClick = {
+                    selectedToken = "USDx"
+                    amount = ""
+                }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
 
         Text(
             text = "Available Balance",
@@ -67,7 +109,7 @@ fun SendContent(
         )
 
         Text(
-            text = "$${balance.balances.CC} CC",
+            text = "$userBalance $selectedToken",
             fontSize = 28.sp,
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.Bold,
@@ -161,8 +203,8 @@ fun SendContent(
             },
             leadingIcon = {
                 Text(
-                    text = "$",
-                    fontSize = 18.sp,
+                    text = selectedToken,
+                    fontSize = 14.sp,
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.Bold,
                     color = BaseColor.JetBlack.Normal,
@@ -205,10 +247,10 @@ fun SendContent(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            QuickAmountButton("$10", onClick = { amount = "10" })
-            QuickAmountButton("$50", onClick = { amount = "50" })
-            QuickAmountButton("$100", onClick = { amount = "100" })
-            QuickAmountButton("$500", onClick = { amount = "500" })
+            QuickAmountButton("10", onClick = { amount = "10" })
+            QuickAmountButton("50", onClick = { amount = "50" })
+            QuickAmountButton("100", onClick = { amount = "100" })
+            QuickAmountButton("500", onClick = { amount = "500" })
         }
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -228,7 +270,7 @@ fun SendContent(
                 color = BaseColor.JetBlack.Minus40
             )
             Text(
-                text = "$0.50",
+                text = "0.50 $selectedToken",
                 fontSize = 14.sp,
                 fontFamily = FontFamily.Monospace,
                 fontWeight = FontWeight.SemiBold,
@@ -251,7 +293,7 @@ fun SendContent(
                 color = BaseColor.JetBlack.Normal
             )
             Text(
-                text = "$${calculateTotal(amount)}",
+                text = "${calculateTotal(amount)} $selectedToken",
                 fontSize = 16.sp,
                 fontFamily = FontFamily.Monospace,
                 fontWeight = FontWeight.Bold,
@@ -263,7 +305,7 @@ fun SendContent(
 
         // Send Button
         Button(
-            onClick = { dashboardViewModel.transfer(amount, recipientAddress) },
+            onClick = { dashboardViewModel.transfer(amount, recipientAddress, selectedToken) },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
@@ -275,7 +317,7 @@ fun SendContent(
             shape = RoundedCornerShape(0)
         ) {
             Text(
-                text = "Send",
+                text = "Send $selectedToken",
                 fontSize = 18.sp,
                 fontFamily = FontFamily.Monospace,
                 fontWeight = FontWeight.Bold,
@@ -305,6 +347,38 @@ fun SendContent(
                 dashboardViewModel.updateShowSuccessTransferSheet(false)
             }
         }
+    }
+}
+
+@Composable
+private fun TokenChip(
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .height(44.dp)
+            .width(100.dp)
+            .background(
+                if (isSelected) BaseColor.JetBlack.Normal else BaseColor.White,
+                RoundedCornerShape(0)
+            )
+            .border(
+                width = 1.dp,
+                color = if (isSelected) BaseColor.JetBlack.Normal else BaseColor.JetBlack.Minus70,
+                shape = RoundedCornerShape(0)
+            )
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = label,
+            fontSize = 14.sp,
+            fontFamily = FontFamily.Monospace,
+            fontWeight = FontWeight.SemiBold,
+            color = if (isSelected) BaseColor.White else BaseColor.JetBlack.Normal
+        )
     }
 }
 
