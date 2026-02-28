@@ -126,4 +126,11 @@ internal class DashboardRepositoryImpl @Inject constructor(
             )
         }.flowOn(dispatcher.io)
 
+    override fun repayLoan(contractId: String, request: com.kucingoyen.entity.model.RepayLoanRequest): Flow<com.kucingoyen.entity.model.RepayLoanResponse> =
+        flow {
+            emit(
+                dashboardService.repayLoan(contractId, request)
+            )
+        }.flowOn(dispatcher.io)
+
 }

@@ -81,6 +81,12 @@ class DashboardViewModel @Inject constructor(
     private val _bottomSheetSuccessFundLoan = MutableStateFlow(false)
     val bottomSheetSuccessFundLoan: StateFlow<Boolean> = _bottomSheetSuccessFundLoan.asStateFlow()
 
+    private val _bottomSheetSuccessRepayLoan = MutableStateFlow(false)
+    val bottomSheetSuccessRepayLoan: StateFlow<Boolean> = _bottomSheetSuccessRepayLoan.asStateFlow()
+
+    private val _bottomSheetNotEnoughRepaymentFund = MutableStateFlow(false)
+    val bottomSheetNotEnoughRepaymentFund: StateFlow<Boolean> = _bottomSheetNotEnoughRepaymentFund.asStateFlow()
+
     private val _listLoanRequest = MutableStateFlow<List<LoanRequestItem>>(emptyList())
     val listLoanRequest: StateFlow<List<LoanRequestItem>> = _listLoanRequest.asStateFlow()
 
@@ -127,6 +133,14 @@ class DashboardViewModel @Inject constructor(
 
     fun updateBottomSuccessFundLoan(value: Boolean) {
         _bottomSheetSuccessFundLoan.value = value
+    }
+
+    fun updateBottomSuccessRepayLoan(value: Boolean) {
+        _bottomSheetSuccessRepayLoan.value = value
+    }
+
+    fun updateBottomBarNotEnoughRepaymentFund(value: Boolean) {
+        _bottomSheetNotEnoughRepaymentFund.value = value
     }
 
 
@@ -436,6 +450,47 @@ class DashboardViewModel @Inject constructor(
     private fun getHoldingLoanContractId(loanAmount: Double) : String{
         val getContractId = _balance.value.holdings.CC.filter { it.amount > loanAmount }
         return getContractId.first().contractId
+    }
+
+    fun repayLoan(loanContractId: String, requiredRepayment: Double) {
+        val repaymentHoldingId = getHoldingLoanContractId(requiredRepayment)
+
+        if (repaymentHoldingId.isNotEmpty()) {
+            viewModelScope.launch {
+                dashboardRepository.repayLoan(
+                    contractId = loanContractId,
+                    request = com.kucingoyen.entity.model.RepayLoanRequest(
+                        repaymentHoldingContractId = repaymentHoldingId
+                    )
+                )
+                    .onStart {
+                        LoadingAction.show(true)
+                    }
+                    .onCompletion {
+                        LoadingAction.show(false)
+                    }
+                    .collect { response ->
+                        if (response.success) {
+                            updateBottomSuccessRepayLoan(true)
+                            setTransaction(
+                                Transaction(
+                                    type = TransactionType.REPAID,
+                                    tokenSymbol = "CC",
+                                    tokenAmount = requiredRepayment.toString(),
+                                    address = loanContractId
+                                )
+                            )
+                            getBalance()
+                            getProfile()
+                            myListLoan()
+                        } else {
+                            updateBottomBarNotEnoughRepaymentFund(true)
+                        }
+                    }
+            }
+        } else {
+            updateBottomBarNotEnoughRepaymentFund(true)
+        }
     }
 
     fun setDetailLoanRequest(loanRequestItem: LoanRequestItem){

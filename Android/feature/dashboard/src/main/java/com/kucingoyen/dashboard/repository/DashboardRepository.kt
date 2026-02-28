@@ -39,4 +39,6 @@ interface DashboardRepository {
     fun createReview(request: CreateReviewRequest): Flow<CreateReviewResponse>
     fun getReviewSummary(partyId: String): Flow<ReviewSummaryResponse>
 
+    fun repayLoan(contractId: String, request: com.kucingoyen.entity.model.RepayLoanRequest): Flow<com.kucingoyen.entity.model.RepayLoanResponse>
+
 }

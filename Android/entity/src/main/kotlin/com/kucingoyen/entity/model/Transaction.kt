@@ -12,5 +12,6 @@ enum class TransactionType {
     SENT,
     RECEIVED,
     BORROWED,
-    FUNDED
+    FUNDED,
+    REPAID
 }

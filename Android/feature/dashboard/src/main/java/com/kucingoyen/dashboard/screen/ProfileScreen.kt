@@ -158,7 +158,7 @@ fun LevelCard(level: Int) {
         Spacer(modifier = Modifier.height(16.dp))
 
         LinearProgressIndicator(
-            progress = { 0.1f },
+            progress = { 0.01f },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(8.dp)

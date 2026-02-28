@@ -67,6 +67,7 @@ fun TransactionItem(transaction: Transaction, onClick : (Transaction) -> Unit) {
                     TransactionType.SENT -> "Sent"
                     TransactionType.BORROWED -> "Borrowed"
                     TransactionType.FUNDED -> "Funded"
+                    TransactionType.REPAID -> "Repaid"
                 },
                 color = Color.Black,
                 fontSize = 16.sp,

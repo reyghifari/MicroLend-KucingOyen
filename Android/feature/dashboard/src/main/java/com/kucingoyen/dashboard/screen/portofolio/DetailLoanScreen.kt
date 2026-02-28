@@ -46,6 +46,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kucingoyen.core.components.BaseButtonSlider
+import com.kucingoyen.core.components.bottomsheet.ErrorBottomSheet
+import com.kucingoyen.core.components.bottomsheet.SuccessTransferSheet
 import com.kucingoyen.core.extensions.formatReadableDateTime
 import com.kucingoyen.core.theme.BaseColor
 import com.kucingoyen.dashboard.DashboardViewModel
@@ -65,6 +68,8 @@ fun DetailLoanScreen(
     onBackClick: () -> Unit = {}
 ) {
     val loan by dashboardViewModel.selectedLoanItem.collectAsStateWithLifecycle()
+    val bottomSheetSuccessRepay by dashboardViewModel.bottomSheetSuccessRepayLoan.collectAsStateWithLifecycle()
+    val bottomSheetNotEnoughRepayment by dashboardViewModel.bottomSheetNotEnoughRepaymentFund.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     val contractIdShort = if (loan.contractId.length > 12) {
@@ -146,6 +151,36 @@ fun DetailLoanScreen(
             )
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            if (loan.status.equals("Active", ignoreCase = true) && loan.borrower == dashboardViewModel.getPartyId()) {
+                BaseButtonSlider(
+                    idleText = "Slide to Pay Loan",
+                    onConfirmed = {
+                        dashboardViewModel.repayLoan(
+                            loanContractId = loan.contractId,
+                            requiredRepayment = loan.requiredRepayment
+                        )
+                    }
+                )
+            }
+        }
+
+        if (bottomSheetSuccessRepay) {
+            SuccessTransferSheet(
+                title = "Success",
+                desc = "Successfully repaid loan"
+            ) {
+                dashboardViewModel.updateBottomSuccessRepayLoan(false)
+                onBackClick()
+            }
+        }
+        if (bottomSheetNotEnoughRepayment) {
+            ErrorBottomSheet(
+                title = "Failed",
+                desc = "Not enough repayment fund"
+            ) {
+                dashboardViewModel.updateBottomBarNotEnoughRepaymentFund(false)
+            }
         }
     }
 }
