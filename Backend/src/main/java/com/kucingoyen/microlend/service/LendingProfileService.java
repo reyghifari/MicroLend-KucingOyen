@@ -174,6 +174,129 @@ public class LendingProfileService {
         return new BigDecimal(LendingConstants.DEFAULT_BASE_COLLATERAL_RATE);
     }
 
+    /**
+     * Record a successfully repaid loan on the borrower's profile and
+     * auto-upgrade their level if they hit a milestone.
+     * Milestones: every 5 completed loans = level up (max Level5).
+     * Non-fatal — a failure does not block the repayment flow.
+     *
+     * @param borrowerPartyId DAML party ID of the borrower
+     * @param loanAmount      The loan principal that was repaid
+     */
+    public void recordBorrowCompletion(String borrowerPartyId, BigDecimal loanAmount) {
+        log.info("Recording loan completion for borrower {}, amount {}", borrowerPartyId, loanAmount);
+        String operatorPartyId = adminSetupService.getAdminPartyId();
+        try {
+            ContractResult profileContract = findProfileByPartyId(borrowerPartyId, operatorPartyId);
+            if (profileContract == null) {
+                log.warn("No profile found for borrower {}, skipping activity record", borrowerPartyId);
+                return;
+            }
+
+            // Record the loan completion
+            ExerciseResponse resp = damlService.exerciseChoice(
+                    LendingConstants.TEMPLATE_USER_PROFILE,
+                    profileContract.contractId(),
+                    "RecordLoanCompletion",
+                    Map.of("loanAmount", loanAmount.toPlainString()),
+                    operatorPartyId);
+
+            // Auto-upgrade: re-query to get the new loansCompleted count
+            String updatedProfileCid = resp != null && resp.result() != null
+                    && resp.result().exerciseResult() instanceof String s ? s : null;
+
+            if (updatedProfileCid != null) {
+                // Re-fetch the updated profile to check milestone
+                List<ContractResult> updated = damlService.queryContracts(
+                        LendingConstants.TEMPLATE_USER_PROFILE,
+                        Map.of("user", borrowerPartyId),
+                        operatorPartyId);
+                if (!updated.isEmpty()) {
+                    Map<String, Object> payload = updated.get(0).payload();
+                    int completed = Integer.parseInt(payload.get("loansCompleted").toString());
+                    String currentLevel = (String) payload.get("level");
+                    String nextLevel = getNextLevel(completed, currentLevel);
+                    if (nextLevel != null) {
+                        log.info("Upgrading borrower {} from {} to {} after {} completions",
+                                borrowerPartyId, currentLevel, nextLevel, completed);
+                        damlService.exerciseChoice(
+                                LendingConstants.TEMPLATE_USER_PROFILE,
+                                updated.get(0).contractId(),
+                                "UpgradeLevel",
+                                Map.of("newLevel", nextLevel),
+                                operatorPartyId);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Failed to record borrow completion for {}: {}", borrowerPartyId, e.getMessage());
+        }
+    }
+
+    /**
+     * Record lending activity on the lender's profile (totalLent counter).
+     * Non-fatal — a failure does not block the fill-loan flow.
+     *
+     * @param lenderPartyId DAML party ID of the lender
+     * @param lentAmount    Amount of CC lent
+     */
+    public void recordLendingActivity(String lenderPartyId, BigDecimal lentAmount) {
+        log.info("Recording lending activity for lender {}, amount {}", lenderPartyId, lentAmount);
+        String operatorPartyId = adminSetupService.getAdminPartyId();
+        try {
+            ContractResult profileContract = findProfileByPartyId(lenderPartyId, operatorPartyId);
+            if (profileContract == null) {
+                log.warn("No profile found for lender {}, skipping activity record", lenderPartyId);
+                return;
+            }
+            damlService.exerciseChoice(
+                    LendingConstants.TEMPLATE_USER_PROFILE,
+                    profileContract.contractId(),
+                    "RecordLending",
+                    Map.of("lentAmount", lentAmount.toPlainString()),
+                    operatorPartyId);
+        } catch (Exception e) {
+            log.warn("Failed to record lending activity for {}: {}", lenderPartyId, e.getMessage());
+        }
+    }
+
+    /**
+     * Find a UserProfile contract by party ID, querying as operator.
+     * Returns null if not found.
+     */
+    private ContractResult findProfileByPartyId(String partyId, String operatorPartyId) {
+        List<ContractResult> results = damlService.queryContracts(
+                LendingConstants.TEMPLATE_USER_PROFILE,
+                Map.of("user", partyId),
+                operatorPartyId);
+        return results.isEmpty() ? null : results.get(0);
+    }
+
+    /**
+     * Determine the next level after a milestone, or null if no upgrade needed.
+     * Rule: upgrade every 5 completed loans, up to Level5.
+     *
+     * Level thresholds: L2 ≥ 5, L3 ≥ 10, L4 ≥ 15, L5 ≥ 20
+     */
+    private String getNextLevel(int loansCompleted, String currentLevel) {
+        String targetLevel = switch (loansCompleted / 5) {
+            case 0 -> LendingConstants.LEVEL_1;
+            case 1 -> LendingConstants.LEVEL_2;
+            case 2 -> LendingConstants.LEVEL_3;
+            case 3 -> LendingConstants.LEVEL_4;
+            default -> LendingConstants.LEVEL_5;
+        };
+        // Only upgrade, never downgrade via this path
+        return !targetLevel.equals(currentLevel) && isHigher(targetLevel, currentLevel) ? targetLevel : null;
+    }
+
+    private boolean isHigher(String candidate, String current) {
+        List<String> order = List.of(
+                LendingConstants.LEVEL_1, LendingConstants.LEVEL_2, LendingConstants.LEVEL_3,
+                LendingConstants.LEVEL_4, LendingConstants.LEVEL_5);
+        return order.indexOf(candidate) > order.indexOf(current);
+    }
+
     private String extractContractId(ExerciseResponse response) {
         if (response != null && response.result() != null) {
             Object result = response.result().exerciseResult();

@@ -47,14 +47,13 @@ public class ActiveLoanController {
         return ResponseEntity.ok(loans);
     }
 
-    @PostMapping("/{contractId}/repay")
+    @PostMapping("/repay")
     public ResponseEntity<RepayLoanResponse> repayLoan(
             @AuthenticationPrincipal UserDetails user,
-            @PathVariable String contractId,
             @RequestBody RepayLoanRequest request) {
 
         RepayLoanResponse response = activeLoanService.repayLoan(
-                user.getUsername(), contractId, request);
+                user.getUsername(), request);
         return ResponseEntity.ok(response);
     }
 

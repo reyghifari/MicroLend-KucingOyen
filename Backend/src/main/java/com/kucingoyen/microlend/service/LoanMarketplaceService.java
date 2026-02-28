@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -155,6 +156,8 @@ public class LoanMarketplaceService {
      * Fill a loan request.
      * Uses multi-party exercise: operator provides visibility, lender executes.
      * Automatically splits CC holding if larger than needed and returns remainder.
+     * After fill, auto-merges the borrower's CC holdings so the received CC is
+     * consolidated with any CC the borrower already held.
      */
     public FillLoanResponse fillLoanRequest(String lenderEmail, FillLoanRequest request) {
         Users lender = userRepository.findByEmail(lenderEmail)
@@ -164,22 +167,75 @@ public class LoanMarketplaceService {
         String lenderPartyId = lender.getDamlPartyId();
 
         try {
+            // Pre-fetch the LoanRequest to get the borrower's party ID for the post-fill
+            // merge
+            ContractResult loanRequestContract = damlService.queryContracts(
+                    LendingConstants.TEMPLATE_LOAN_REQUEST,
+                    Map.of(),
+                    operatorPartyId)
+                    .stream()
+                    .filter(c -> c.contractId().equals(request.getContractId()))
+                    .findFirst()
+                    .orElseThrow(() -> new NotFoundException("LoanRequest not found: " + request.getContractId()));
+            String borrowerPartyId = (String) loanRequestContract.payload().get("borrower");
+
             // Use multi-party exercise:
             // - Operator provides READ access (can see all LoanRequest contracts)
             // - Lender provides ACT authority (controller of FillLoanWithSplit choice)
             ExerciseResponse response = damlService.exerciseChoiceMulti(
                     LendingConstants.TEMPLATE_LOAN_REQUEST,
                     request.getContractId(),
-                    "FillLoanWithSplit", // Use split version!
+                    "FillLoanWithSplit",
                     Map.of(
                             "lender", lenderPartyId,
                             "loanHoldingCid", request.getLoanHoldingContractId()),
                     List.of(operatorPartyId, lenderPartyId));
 
             // Extract result tuple: (activeLoanCid, remainderCid)
+            // DAML tuples serialize as {"_1": ..., "_2": ...}
             Map<String, String> contractIds = extractTupleResult(response);
-            String activeLoanCid = contractIds.get("first");
-            String remainderCid = contractIds.get("second");
+            String activeLoanCid = contractIds.get("_1");
+            String remainderCid = contractIds.get("_2");
+
+            // Auto-merge borrower's CC holdings — the newly received CC is now in their
+            // wallet alongside any CC they already held.
+            try {
+                List<ContractResult> borrowerCcHoldings = damlService.queryContracts(
+                        "MicroLend.Finance.Holding:Holding",
+                        Map.of("owner", borrowerPartyId),
+                        borrowerPartyId)
+                        .stream()
+                        .filter(h -> "CC".equals(h.payload().get("assetId") instanceof Map<?, ?> assetMap
+                                ? assetMap.get("symbol")
+                                : null))
+                        .collect(Collectors.toList());
+
+                if (borrowerCcHoldings.size() > 1) {
+                    log.info("Auto-merging {} CC holdings for borrower after loan fill", borrowerCcHoldings.size());
+                    String baseCid = borrowerCcHoldings.get(0).contractId();
+                    for (int i = 1; i < borrowerCcHoldings.size(); i++) {
+                        ExerciseResponse mergeResp = damlService.exerciseChoice(
+                                "MicroLend.Finance.Holding:Holding",
+                                baseCid,
+                                "Merge",
+                                Map.of("otherHoldingCid", borrowerCcHoldings.get(i).contractId()),
+                                borrowerPartyId);
+                        Object mergeResult = mergeResp != null && mergeResp.result() != null
+                                ? mergeResp.result().exerciseResult()
+                                : null;
+                        if (mergeResult instanceof String merged)
+                            baseCid = merged;
+                    }
+                    log.info("Borrower CC auto-merge complete after loan fill");
+                }
+            } catch (Exception mergeEx) {
+                log.warn("Auto-merge of borrower CC after fill failed (non-fatal): {}", mergeEx.getMessage());
+            }
+
+            // Update lender profile: record the amount they just lent
+            BigDecimal loanAmountFilled = DamlPayloadParser.parseBigDecimal(
+                    loanRequestContract.payload().get("loanAmount"));
+            lendingProfileService.recordLendingActivity(lenderPartyId, loanAmountFilled);
 
             return new FillLoanResponse(
                     true,
@@ -246,9 +302,10 @@ public class LoanMarketplaceService {
             if (result instanceof Map) {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> resultMap = (Map<String, Object>) result;
+                // DAML JSON serialises tuples as {"_1": ..., "_2": ...}
                 return Map.of(
-                        "loanRequest", (String) resultMap.getOrDefault("_1", ""),
-                        "remainder", (String) resultMap.getOrDefault("_2", ""));
+                        "_1", String.valueOf(resultMap.getOrDefault("_1", "")),
+                        "_2", String.valueOf(resultMap.getOrDefault("_2", "")));
             }
         }
         return Map.of();

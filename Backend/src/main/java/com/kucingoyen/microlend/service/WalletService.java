@@ -1,5 +1,6 @@
 package com.kucingoyen.microlend.service;
 
+import com.kucingoyen.microlend.constant.LendingConstants;
 import com.kucingoyen.microlend.dto.*;
 import com.kucingoyen.microlend.exception.InsufficientBalanceException;
 import com.kucingoyen.microlend.exception.NotFoundException;
@@ -15,8 +16,10 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Service for wallet operations: deposit, transfer, and balance queries.
@@ -274,13 +277,60 @@ public class WalletService {
             throw new IllegalStateException("User does not have a DAML party ID");
         }
 
-        // Query all holdings owned by user
+        String operatorPartyId = adminSetupService.getAdminPartyId();
+
+        // --- Step 1: Find locked collateral contract IDs from open LoanRequests ---
+        // Query as OPERATOR because individual users cannot see other signatories'
+        // contracts.
+        // We filter by borrower party ID to get only THIS user's loan requests.
+        Set<String> lockedHoldingCids = new HashSet<>();
+        List<LockedCollateralDto> lockedHoldingsList = new ArrayList<>();
+        Map<String, BigDecimal> lockedCollateral = new HashMap<>();
+
+        try {
+            // Check open LoanRequests (before lender fills)
+            List<ContractResult> loanRequests = damlService.queryContracts(
+                    LendingConstants.TEMPLATE_LOAN_REQUEST,
+                    Map.of("borrower", userPartyId),
+                    operatorPartyId);
+
+            for (ContractResult lr : loanRequests) {
+                String collateralCid = (String) lr.payload().get("collateralHoldingCid");
+                if (collateralCid != null) {
+                    lockedHoldingCids.add(collateralCid);
+                }
+            }
+
+            // Also check active loans (after lender fills, until borrower repays)
+            // ActiveLoan also holds collateralHoldingCid — collateral stays locked
+            // until Repay or Liquidate archives the ActiveLoan contract.
+            List<ContractResult> activeLoans = damlService.queryContracts(
+                    LendingConstants.TEMPLATE_ACTIVE_LOAN,
+                    Map.of("borrower", userPartyId),
+                    operatorPartyId);
+
+            for (ContractResult al : activeLoans) {
+                String collateralCid = (String) al.payload().get("collateralHoldingCid");
+                if (collateralCid != null) {
+                    lockedHoldingCids.add(collateralCid);
+                }
+            }
+
+            log.info("Found {} locked collateral holdings for user {} ({} LoanRequests, {} ActiveLoans)",
+                    lockedHoldingCids.size(), email, loanRequests.size(), activeLoans.size());
+        } catch (Exception e) {
+            // Non-fatal: if we can't query loan/active contracts, fall back to showing all
+            // holdings
+            log.warn("Could not query contracts for collateral lock check: {}", e.getMessage());
+        }
+
+        // --- Step 2: Query all holdings owned by user ---
         List<ContractResult> contractResults = damlService.queryContracts(
                 "MicroLend.Finance.Holding:Holding",
                 Map.of("owner", userPartyId),
-                userPartyId); // Read as User
+                userPartyId);
 
-        // Sum up balances by currency AND collect individual holdings
+        // --- Step 3: Partition into spendable vs locked ---
         Map<String, BigDecimal> balances = new HashMap<>();
         Map<String, List<HoldingDto>> holdingsBySymbol = new HashMap<>();
 
@@ -288,23 +338,31 @@ public class WalletService {
             HoldingContract holding = convertToHoldingContract(result);
             String symbol = holding.getAssetId().getSymbol();
 
-            // Add to aggregate balance
-            balances.merge(symbol, holding.getAmount(), BigDecimal::add);
+            if (lockedHoldingCids.contains(holding.getContractId())) {
+                // This holding is locked as collateral — track it separately
+                lockedCollateral.merge(symbol, holding.getAmount(), BigDecimal::add);
+                lockedHoldingsList.add(new LockedCollateralDto(
+                        holding.getContractId(),
+                        null, // loanRequestContractId not needed at this stage
+                        holding.getAmount(),
+                        symbol));
+            } else {
+                // Spendable holding
+                balances.merge(symbol, holding.getAmount(), BigDecimal::add);
 
-            // Add to holdings list
-            HoldingDto holdingDto = new HoldingDto(
-                    holding.getContractId(),
-                    holding.getAmount(),
-                    symbol,
-                    holding.getAssetId().getDescription());
-
-            holdingsBySymbol.computeIfAbsent(symbol, k -> new ArrayList<>()).add(holdingDto);
+                HoldingDto holdingDto = new HoldingDto(
+                        holding.getContractId(),
+                        holding.getAmount(),
+                        symbol,
+                        holding.getAssetId().getDescription());
+                holdingsBySymbol.computeIfAbsent(symbol, k -> new ArrayList<>()).add(holdingDto);
+            }
         }
 
-        log.info("Balance query completed. Found {} currencies, {} total holdings",
-                balances.size(), contractResults.size());
+        log.info("Balance query completed. Spendable: {} currencies, {} holdings. Locked: {} holdings.",
+                balances.size(), contractResults.size() - lockedHoldingsList.size(), lockedHoldingsList.size());
 
-        return new BalanceResponse(balances, holdingsBySymbol);
+        return new BalanceResponse(balances, holdingsBySymbol, lockedCollateral, lockedHoldingsList);
     }
 
     /**

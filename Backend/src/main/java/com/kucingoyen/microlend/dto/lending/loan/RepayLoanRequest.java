@@ -12,5 +12,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class RepayLoanRequest {
 
+    private String contractId;
     private String repaymentHoldingContractId;
 }
