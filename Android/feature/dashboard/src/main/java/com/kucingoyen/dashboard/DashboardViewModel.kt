@@ -4,11 +4,13 @@ import androidx.lifecycle.viewModelScope
 import com.kucingoyen.core.base.BaseViewModel
 import com.kucingoyen.core.utils.ViewModelUtils
 import com.kucingoyen.core.utils.loading.LoadingAction
+import com.kucingoyen.core.components.error.ErrorGeneralAction
 import com.kucingoyen.dashboard.repository.DashboardRepository
 import com.kucingoyen.data.cache.UserInfoCache
 import com.kucingoyen.data.cache.database.room.TransactionDao
 import com.kucingoyen.data.cache.database.room.TransactionEntity
 import com.kucingoyen.entity.model.BalanceItem
+import com.kucingoyen.entity.model.ErrorModelData
 import com.kucingoyen.entity.model.CreateLoanRequest
 import com.kucingoyen.entity.model.CreateReviewRequest
 import com.kucingoyen.entity.model.CreateReviewResponse
@@ -26,6 +28,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
@@ -192,6 +195,15 @@ class DashboardViewModel @Inject constructor(
                 currency = asset,
                 amount = amount
             )
+                .catch {
+                    LoadingAction.show(false)
+                    ErrorGeneralAction.show(
+                        error = ErrorModelData(
+                            title = "Request Balance Failed",
+                            messageError = it.message ?: "Something went wrong"
+                        )
+                    )
+                }
                 .onStart {
                     LoadingAction.show(true)
                 }
@@ -217,6 +229,15 @@ class DashboardViewModel @Inject constructor(
     fun getBalance() {
         viewModelScope.launch(exceptionHandler) {
             dashboardRepository.getBalance()
+                .catch {
+                    LoadingAction.show(false)
+                    ErrorGeneralAction.show(
+                        error = ErrorModelData(
+                            title = "Get Balance Failed",
+                            messageError = it.message ?: "Something went wrong"
+                        )
+                    )
+                }
                 .onStart {
                     LoadingAction.show(true)
                 }
@@ -234,6 +255,15 @@ class DashboardViewModel @Inject constructor(
     fun getProfile() {
         viewModelScope.launch(exceptionHandler) {
             dashboardRepository.getProfileUser()
+                .catch {
+                    LoadingAction.show(false)
+                    ErrorGeneralAction.show(
+                        error = ErrorModelData(
+                            title = "Get Profile Failed",
+                            messageError = it.message ?: "Something went wrong"
+                        )
+                    )
+                }
                 .onStart {
                     LoadingAction.show(true)
                 }
@@ -268,6 +298,14 @@ class DashboardViewModel @Inject constructor(
                     note = ""
                 )
             )
+                .catch {
+                    LoadingAction.show(false)
+                    ErrorGeneralAction.show(
+                        error = ErrorModelData(
+                            title = "Transfer Failed",
+                        )
+                    )
+                }
                 .onStart {
                     LoadingAction.show(true)
                 }
@@ -318,6 +356,14 @@ class DashboardViewModel @Inject constructor(
                 dashboardRepository.createLoanRequestAsBorrower(
                     CreateLoanRequest(loanAmount = doubleAmount, collateralHoldingContractId = holdingItem.contractId)
                 )
+                    .catch {
+                        LoadingAction.show(false)
+                        ErrorGeneralAction.show(
+                            error = ErrorModelData(
+                                title = "Create Loan Request Failed",
+                            )
+                        )
+                    }
                     .onStart {
                         LoadingAction.show(true)
                     }
@@ -365,6 +411,14 @@ class DashboardViewModel @Inject constructor(
     fun listLoanRequestAsLender(){
         viewModelScope.launch {
             dashboardRepository.listLoanRequestAsLender()
+                .catch {
+                    LoadingAction.show(false)
+                    ErrorGeneralAction.show(
+                        error = ErrorModelData(
+                            title = "Load Loan Requests Failed",
+                        )
+                    )
+                }
                 .onStart {
                     LoadingAction.show(true)
                 }
@@ -387,6 +441,14 @@ class DashboardViewModel @Inject constructor(
                         contractId = loanContractId,
                         loanHoldingContractId = getLoanContractId
                     ))
+                    .catch {
+                        LoadingAction.show(false)
+                        ErrorGeneralAction.show(
+                            error = ErrorModelData(
+                                title = "Fill Loan Request Failed",
+                            )
+                        )
+                    }
                     .onStart {
                         LoadingAction.show(true)
                     }
@@ -420,6 +482,14 @@ class DashboardViewModel @Inject constructor(
     fun myListFunded(){
         viewModelScope.launch {
             dashboardRepository.listMyFunded()
+                .catch {
+                    LoadingAction.show(false)
+                    ErrorGeneralAction.show(
+                        error = ErrorModelData(
+                            title = "Load Funded List Failed",
+                        )
+                    )
+                }
                 .onStart {
                     LoadingAction.show(true)
                 }
@@ -435,6 +505,14 @@ class DashboardViewModel @Inject constructor(
     fun myListLoan(){
         viewModelScope.launch {
             dashboardRepository.listMyLoan()
+                .catch {
+                    LoadingAction.show(false)
+                    ErrorGeneralAction.show(
+                        error = ErrorModelData(
+                            title = "Load Loan List Failed",
+                        )
+                    )
+                }
                 .onStart {
                     LoadingAction.show(true)
                 }
@@ -463,6 +541,14 @@ class DashboardViewModel @Inject constructor(
                         repaymentHoldingContractId = repaymentHoldingId
                     )
                 )
+                    .catch {
+                        LoadingAction.show(false)
+                        ErrorGeneralAction.show(
+                            error = ErrorModelData(
+                                title = "Repay Loan Failed",
+                            )
+                        )
+                    }
                     .onStart {
                         LoadingAction.show(true)
                     }
@@ -508,6 +594,14 @@ class DashboardViewModel @Inject constructor(
     fun createReview(request: CreateReviewRequest) {
         viewModelScope.launch(exceptionHandler) {
             dashboardRepository.createReview(request)
+                .catch {
+                    LoadingAction.show(false)
+                    ErrorGeneralAction.show(
+                        error = ErrorModelData(
+                            title = "Create Review Failed",
+                        )
+                    )
+                }
                 .onStart {
                     LoadingAction.show(true)
                 }

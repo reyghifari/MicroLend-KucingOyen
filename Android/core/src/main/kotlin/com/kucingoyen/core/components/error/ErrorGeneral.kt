@@ -62,7 +62,7 @@ fun ErrorGeneralHost(navController: NavController) {
     if (show) {
         BottomSheetRowButton(
             useImage = true,
-            image = R.drawable.ic_error,
+            image = R.drawable.img_error_network,
             title = title,
             description = description,
             buttonTitleOne = buttonTitleOne,

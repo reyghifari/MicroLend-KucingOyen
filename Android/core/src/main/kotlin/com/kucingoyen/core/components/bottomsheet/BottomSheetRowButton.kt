@@ -43,7 +43,8 @@ fun BottomSheetRowButton(
 ) {
     BaseBottomSheet(
         bottomSheetState,
-        onDismiss
+        onDismiss,
+        titleHeader = title
     ) {
         Column(
             modifier = Modifier
@@ -52,70 +53,11 @@ fun BottomSheetRowButton(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            if (useImage) {
-                Image(
-                    painter = painterResource(image),
-                    contentDescription = title
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-            Text(
-                text = title,
-                color = BaseColor.JetBlack.Normal,
-                style = BaseFont.titleMediumBold,
-                textAlign = TextAlign.Center,
-                fontFamily = FontFamily.Monospace
+            Image(
+                painter = painterResource(image),
+                contentDescription = title,
+                modifier = Modifier.fillMaxWidth().height(200.dp).padding(16.dp)
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = description,
-                color = BaseColor.JetBlack.Minus20,
-                style = BaseFont.bodyMedium,
-                textAlign = TextAlign.Center,
-            )
-            if (annotatedDescription != null) {
-                Text(
-                    text = annotatedDescription,
-                    color = BaseColor.JetBlack.Minus20,
-                    style = BaseFont.bodyMedium,
-                    textAlign = TextAlign.Center,
-                )
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-
-            if (buttonTitleTwo.isNotEmpty()) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    BaseOutlineButton(
-                        text = buttonTitleOne,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(BaseDp.heightButton),
-                        isEnabled = true,
-                        onClickButton = onClickButtonOne
-                    )
-                    BaseButton(
-                        text = buttonTitleTwo,
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(BaseDp.heightButton),
-                        isEnabled = true,
-                        onClickButton = onClickButtonTwo
-                    )
-
-                }
-            } else {
-                BaseButton(
-                    modifier = Modifier.height(BaseDp.heightButton)
-                        .fillMaxWidth(),
-                    text = buttonTitleOne,
-                    isEnabled = true,
-                    onClickButton = onClickButtonOne
-                )
-            }
         }
     }
 }
