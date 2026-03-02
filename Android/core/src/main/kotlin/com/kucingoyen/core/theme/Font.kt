@@ -63,49 +63,49 @@ object BaseFont {
 	val titleMediumBold = TextStyle(
 		fontFamily = Nunito,
 		fontWeight = FontWeight.Bold,
-		fontSize = 18.sp,
+		fontSize = 16.sp,
 		lineHeight = 26.sp
 	)
 	val titleMedium = TextStyle(
 		fontFamily = Nunito,
 		fontWeight = FontWeight.SemiBold,
-		fontSize = 18.sp,
+		fontSize = 16.sp,
 		lineHeight = 26.sp
 	)
 	val titleSmallBold = TextStyle(
 		fontFamily = Nunito,
 		fontWeight = FontWeight.Bold,
-		fontSize = 16.sp,
+		fontSize = 14.sp,
 		lineHeight = 24.sp
 	)
 	val titleSmall = TextStyle(
 		fontFamily = Nunito,
 		fontWeight = FontWeight.SemiBold,
-		fontSize = 16.sp,
+		fontSize = 14.sp,
 		lineHeight = 24.sp
 	)
 	val bodyLargeBold = TextStyle(
 		fontFamily = Nunito,
 		fontWeight = FontWeight.Bold,
-		fontSize = 16.sp,
+		fontSize = 14.sp,
 		lineHeight = 22.sp
 	)
 	val bodyLarge = TextStyle(
 		fontFamily = Nunito,
 		fontWeight = FontWeight.SemiBold,
-		fontSize = 16.sp,
+		fontSize = 14.sp,
 		lineHeight = 22.sp
 	)
 	val bodyMediumBold = TextStyle(
 		fontFamily = Nunito,
 		fontWeight = FontWeight.Bold,
-		fontSize = 14.sp,
+		fontSize = 12.sp,
 		lineHeight = 20.sp
 	)
 	val bodyMedium = TextStyle(
 		fontFamily = Nunito,
 		fontWeight = FontWeight.SemiBold,
-		fontSize = 14.sp,
+		fontSize = 12.sp,
 		lineHeight = 20.sp
 	)
 	val bodySmallBold = TextStyle(
@@ -147,14 +147,14 @@ object BaseFont {
 	val placeholderTextField = TextStyle(
 		fontFamily = Nunito,
 		fontWeight = FontWeight.Normal,
-		fontSize = 14.sp,
+		fontSize = 12.sp,
 		lineHeight = 24.sp
 	)
 	val valueTextField = TextStyle(
 		color = BaseColor.FocusTextField,
 		fontFamily = Nunito,
 		fontWeight = FontWeight.Normal,
-		fontSize = 14.sp,
+		fontSize = 12.sp,
 		lineHeight = 24.sp
 	)
 	val errorTextField = TextStyle(
@@ -166,7 +166,7 @@ object BaseFont {
 	val buttonText = TextStyle(
 		fontFamily = Nunito,
 		fontWeight = FontWeight.Bold,
-		fontSize = 16.sp,
+		fontSize = 14.sp,
 		lineHeight = 24.sp
 	)
 }

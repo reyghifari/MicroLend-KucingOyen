@@ -71,7 +71,7 @@ fun ReceiveContent(
 
         Text(
             text = walletAddress,
-            fontSize = 18.sp,
+            fontSize = 12.sp,
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.Bold,
             color = BaseColor.JetBlack.Normal
@@ -81,7 +81,7 @@ fun ReceiveContent(
 
         Text(
             text = truncatedAddress,
-            fontSize = 14.sp,
+            fontSize = 12.sp,
             fontFamily = FontFamily.Monospace,
             color = BaseColor.JetBlack.Minus40,
             textAlign = TextAlign.Center
@@ -118,7 +118,7 @@ fun ReceiveContent(
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "Copy",
-                    fontSize = 14.sp,
+                    fontSize = 12.sp,
                     color = BaseColor.JetBlack.Minus40
                 )
             }
@@ -146,7 +146,7 @@ fun ReceiveContent(
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "Request CC",
-                    fontSize = 14.sp,
+                    fontSize = 12.sp,
                     color = BaseColor.JetBlack.Minus40
                 )
             }
@@ -175,7 +175,7 @@ fun ReceiveContent(
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "Request USDx",
-                    fontSize = 14.sp,
+                    fontSize = 12.sp,
                     color = BaseColor.JetBlack.Minus40
                 )
             }
@@ -209,7 +209,7 @@ fun ReceiveContent(
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "Share",
-                    fontSize = 14.sp,
+                    fontSize = 12.sp,
                     fontFamily = FontFamily.Monospace,
                     color = BaseColor.JetBlack.Minus40
                 )

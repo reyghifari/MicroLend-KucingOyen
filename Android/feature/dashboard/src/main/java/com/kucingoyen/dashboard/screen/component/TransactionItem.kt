@@ -79,14 +79,14 @@ fun TransactionItem(transaction: Transaction, onClick : (Transaction) -> Unit) {
                     TransactionType.REPAID -> "Repaid"
                 },
                 color = Color.Black,
-                fontSize = 16.sp,
+                fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = FontFamily.Monospace
             )
             Text(
                 text = formatDate(transaction.timestamp),
                 color = Color.Gray,
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 fontFamily = FontFamily.Monospace
             )
         }
@@ -104,7 +104,7 @@ fun TransactionItem(transaction: Transaction, onClick : (Transaction) -> Unit) {
                     TransactionType.RECEIVED, TransactionType.BORROWED -> BaseColor.Irish.Normal
                     else -> BaseColor.JetBlack.Normal
                 },
-                fontSize = 16.sp,
+                fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = FontFamily.Monospace
             )

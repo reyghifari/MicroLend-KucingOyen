@@ -102,14 +102,14 @@ fun LoanDetailsCard(
             ) {
                 Text(
                     text = formattedAmount,
-                    fontSize = 18.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = BaseColor.JetBlack.Normal,
                     fontFamily = FontFamily.Monospace,
                 )
                 Text(
                     text = "Interest Rate: ${interestRate}%",
-                    fontSize = 14.sp,
+                    fontSize = 12.sp,
                     color = Color.Gray,
                     fontFamily = FontFamily.Monospace,
                     modifier = Modifier.padding(bottom = 6.dp)
@@ -164,7 +164,7 @@ fun LoanDetailsCard(
                 isCompleted -> {
                     Text(
                         text = "Loan fully paid off",
-                        fontSize = 14.sp,
+                        fontSize = 12.sp,
                         color = Color(0xFF4CAF50), // Green
                         fontFamily = FontFamily.Monospace,
                         fontWeight = FontWeight.Medium,
@@ -185,7 +185,7 @@ fun LoanDetailsCard(
                     ) {
                         Text(
                             text = "CANCEL REQUEST",
-                            fontSize = 16.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             fontFamily = FontFamily.Monospace,
                             color = Color.White
@@ -205,7 +205,7 @@ fun LoanDetailsCard(
                     ) {
                         Text(
                             text = "PAY NOW",
-                            fontSize = 16.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             fontFamily = FontFamily.Monospace,
                         )
@@ -251,7 +251,7 @@ fun DetailItem(icon: ImageVector, label: String, value: String) {
             )
             Text(
                 text = value,
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
                 color = Color(0xFF111827),
                 fontFamily = FontFamily.Monospace,

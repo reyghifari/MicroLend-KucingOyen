@@ -218,7 +218,7 @@ private fun LoanStatusBanner(
                     text = status,
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
+                    fontSize = 12.sp,
                     fontFamily = FontFamily.Monospace
                 )
             }
@@ -266,7 +266,7 @@ private fun LoanDetailSummaryCard(
             Text(
                 text = "Loan Summary",
                 fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
+                fontSize = 12.sp,
                 fontFamily = FontFamily.Monospace,
                 color = BaseColor.JetBlack.Normal
             )
@@ -349,7 +349,7 @@ private fun LoanDetailSummaryCard(
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = requiredRepayment,
-                        fontSize = 14.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
                         fontFamily = FontFamily.Monospace,
                         color = BaseColor.JetBlack.Minus20
@@ -379,7 +379,7 @@ private fun LoanParticipantsCard(
             Text(
                 text = "Participants",
                 fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
+                fontSize = 12.sp,
                 fontFamily = FontFamily.Monospace,
                 color = BaseColor.JetBlack.Normal
             )
@@ -507,7 +507,7 @@ private fun LoanTimelineCard(
             Text(
                 text = "Timeline",
                 fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
+                fontSize = 12.sp,
                 fontFamily = FontFamily.Monospace,
                 color = BaseColor.JetBlack.Normal
             )
@@ -523,14 +523,14 @@ private fun LoanTimelineCard(
             ) {
                 Text(
                     text = "Start Date",
-                    fontSize = 14.sp,
+                    fontSize = 12.sp,
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.Medium,
                     color = BaseColor.JetBlack.Normal
                 )
                 Text(
                     text = if (startTime.isNotEmpty()) formatReadableDateTime(startTime) else "-",
-                    fontSize = 14.sp,
+                    fontSize = 12.sp,
                     fontFamily = FontFamily.Monospace,
                     color = BaseColor.JetBlack.Minus20
                 )
@@ -545,14 +545,14 @@ private fun LoanTimelineCard(
             ) {
                 Text(
                     text = "End Date",
-                    fontSize = 14.sp,
+                    fontSize = 12.sp,
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.Medium,
                     color = BaseColor.JetBlack.Normal
                 )
                 Text(
                     text = if (endTime.isNotEmpty()) formatReadableDateTime(endTime) else "-",
-                    fontSize = 14.sp,
+                    fontSize = 12.sp,
                     fontFamily = FontFamily.Monospace,
                     color = BaseColor.JetBlack.Minus20
                 )
@@ -567,14 +567,14 @@ private fun LoanTimelineCard(
             ) {
                 Text(
                     text = "Duration",
-                    fontSize = 14.sp,
+                    fontSize = 12.sp,
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.Medium,
                     color = BaseColor.JetBlack.Normal
                 )
                 Text(
                     text = "$durationDays Days",
-                    fontSize = 14.sp,
+                    fontSize = 12.sp,
                     fontFamily = FontFamily.Monospace,
                     color = BaseColor.JetBlack.Minus20
                 )

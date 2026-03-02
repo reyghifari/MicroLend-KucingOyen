@@ -207,7 +207,7 @@ private fun ReviewsSection(reviewSummary: ReviewSummaryResponse) {
         Text(
             text = "Reviews",
             fontWeight = FontWeight.Bold,
-            fontSize = 18.sp,
+            fontSize = 12.sp,
             fontFamily = FontFamily.Monospace,
             color = BaseColor.JetBlack.Normal
         )
@@ -233,7 +233,7 @@ private fun ReviewsSection(reviewSummary: ReviewSummaryResponse) {
             Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = "out of 5",
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 fontFamily = FontFamily.Monospace,
                 color = BaseColor.JetBlack.Minus20
             )
@@ -257,7 +257,7 @@ private fun ReviewsSection(reviewSummary: ReviewSummaryResponse) {
             Spacer(modifier = Modifier.height(12.dp))
             Text(
                 text = "No reviews yet",
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 fontFamily = FontFamily.Monospace,
                 color = BaseColor.JetBlack.Minus40
             )

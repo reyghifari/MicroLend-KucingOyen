@@ -107,7 +107,7 @@ fun ContentRequestLoan(modifier: Modifier = Modifier,
             text = "Loan Data",
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.SemiBold,
-            fontSize = 16.sp,
+            fontSize = 12.sp,
             color = BaseColor.JetBlack.Normal,
         )
         Box(
@@ -176,7 +176,7 @@ fun StickyContentLoan(dashboardViewModel: DashboardViewModel) {
                         text = "Total Collateral",
                         fontFamily = FontFamily.Monospace,
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 14.sp,
+                        fontSize = 12.sp,
                         color = BaseColor.JetBlack.Minus20
                     )
                     Text(
@@ -186,7 +186,7 @@ fun StickyContentLoan(dashboardViewModel: DashboardViewModel) {
                         text = "$totalCollateral USDCx",
                         fontFamily = FontFamily.Monospace,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
+                        fontSize = 12.sp,
                         color = BaseColor.JetBlack.Normal
                     )
                     Spacer(modifier = Modifier.height(4.dp))
@@ -211,7 +211,7 @@ fun StickyContentLoan(dashboardViewModel: DashboardViewModel) {
                         text = "PAY",
                         fontFamily = FontFamily.Monospace,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
+                        fontSize = 12.sp,
                         color = BaseColor.White
                     )
                 }

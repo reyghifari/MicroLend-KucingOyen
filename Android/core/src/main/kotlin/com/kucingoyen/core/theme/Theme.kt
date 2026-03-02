@@ -3,7 +3,10 @@ package com.kucingoyen.core.theme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 
 private val LightColorScheme = lightColorScheme(
 	primary = BaseColor.Primary,
@@ -22,10 +25,18 @@ private val LightColorScheme = lightColorScheme(
 fun BaseTheme(
 	content: @Composable () -> Unit
 ) {
-	MaterialTheme(
-		colorScheme = LightColorScheme,
-		shapes = Shapes,
-		content = content
+	val density = LocalDensity.current
+	val fixedDensity = Density(
+		density = density.density,
+		fontScale = 1f
 	)
+
+	CompositionLocalProvider(LocalDensity provides fixedDensity) {
+		MaterialTheme(
+			colorScheme = LightColorScheme,
+			shapes = Shapes,
+			content = content
+		)
+	}
 }
 

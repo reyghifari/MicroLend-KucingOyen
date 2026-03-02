@@ -60,7 +60,7 @@ fun NavbarMicroLend(modifier: Modifier = Modifier,
                 color = BaseColor.JetBlack.Normal,
                 fontFamily = FontFamily.Monospace,
                 fontWeight = FontWeight.SemiBold,
-                fontSize = 16.sp,
+                fontSize = 12.sp,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
             )

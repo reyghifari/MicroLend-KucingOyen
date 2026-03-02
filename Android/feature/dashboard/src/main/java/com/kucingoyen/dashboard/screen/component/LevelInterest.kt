@@ -62,7 +62,7 @@ fun LevelInterest(
                     text = "Level $level",
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.SemiBold,
-                    fontSize = 14.sp,
+                    fontSize = 12.sp,
                     color = BaseColor.White,
                     )
                 Spacer(modifier = Modifier.height(2.dp))

@@ -81,7 +81,7 @@ fun BottomSheetRegister(
 
                     Text(
                         text = "Sign up with Google",
-                        fontSize = 16.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace,
                         color = Color.Black.copy(alpha = 0.8f)

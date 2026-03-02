@@ -54,7 +54,7 @@ fun BottomSheetLogin(
             ) {
                 Text(
                     text = "Hello, Welcome back",
-                    fontSize = 18.sp,
+                    fontSize = 12.sp,
                     color = BaseColor.MicroLend.TextPurple,
                     fontWeight = FontWeight.SemiBold,
                     fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
@@ -87,7 +87,7 @@ fun BottomSheetLogin(
 
                     Text(
                         text = "Sign in with Google",
-                        fontSize = 16.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.Black.copy(alpha = 0.8f)
                     )

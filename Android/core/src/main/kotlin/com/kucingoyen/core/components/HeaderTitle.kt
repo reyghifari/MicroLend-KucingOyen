@@ -48,7 +48,7 @@ fun HeaderTitle(
                 text = textHeader,
                 fontFamily = FontFamily.Monospace,
                 fontWeight = FontWeight.Normal,
-                fontSize = 32.sp,
+                fontSize = 24.sp,
                 color = BaseColor.JetBlack.Normal,
                 modifier = Modifier .weight(1f)
             )

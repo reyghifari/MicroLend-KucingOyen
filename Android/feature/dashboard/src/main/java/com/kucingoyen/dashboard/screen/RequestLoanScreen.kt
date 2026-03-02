@@ -50,7 +50,7 @@ fun RequestLoanScreen(dashboardViewModel: DashboardViewModel, onRequestLoan: () 
         ) {
             Text(
                 text = "Request New Loan",
-                fontSize = 16.sp,
+                fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = FontFamily.Monospace,
                 color = Color.White

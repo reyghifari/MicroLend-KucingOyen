@@ -100,7 +100,7 @@ fun RequestBalanceScreen(
                 ) {
                     Text(
                         text = "Send",
-                        fontSize = 16.sp,
+                        fontSize = 12.sp,
                         fontFamily = FontFamily.Monospace,
                         fontWeight = if (selectedTab == 0) FontWeight.SemiBold else FontWeight.Normal,
                         color = if (selectedTab == 0) BaseColor.White else BaseColor.JetBlack.Normal
@@ -121,7 +121,7 @@ fun RequestBalanceScreen(
                 ) {
                     Text(
                         text = "Receive",
-                        fontSize = 16.sp,
+                        fontSize = 12.sp,
                         fontFamily = FontFamily.Monospace,
                         fontWeight = if (selectedTab == 1) FontWeight.SemiBold else FontWeight.Normal,
                         color = if (selectedTab == 1) BaseColor.White else BaseColor.JetBlack.Normal

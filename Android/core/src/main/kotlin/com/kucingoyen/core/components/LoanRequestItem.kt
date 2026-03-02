@@ -72,13 +72,13 @@ fun LoanRequestItem(loan: LoanRequestItem, onClick : (LoanRequestItem) -> Unit =
                     Text(
                         text = loan.borrowerDisplayName,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
+                        fontSize = 12.sp,
                         fontFamily = FontFamily.Monospace,
                     )
                     Text(
                         text = "Level${loan.borrowerLevel}",
                         color = Color.Gray,
-                        fontSize = 14.sp,
+                        fontSize = 12.sp,
                         fontFamily = FontFamily.Monospace
                     )
                 }
@@ -108,7 +108,7 @@ fun LoanRequestItem(loan: LoanRequestItem, onClick : (LoanRequestItem) -> Unit =
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(text = "Loan: ", fontSize = 16.sp)
+                Text(text = "Loan: ", fontSize = 12.sp)
                 Text(
                     text = loan.loanAmount.toString(),
                     fontWeight = FontWeight.Bold,
@@ -117,7 +117,7 @@ fun LoanRequestItem(loan: LoanRequestItem, onClick : (LoanRequestItem) -> Unit =
                 )
                 Text(text = " ${loan.loanAsset}",
                     fontFamily = FontFamily.Monospace,
-                    fontSize = 16.sp)
+                    fontSize = 12.sp)
 
                 Spacer(modifier = Modifier.width(4.dp))
             }
@@ -128,7 +128,7 @@ fun LoanRequestItem(loan: LoanRequestItem, onClick : (LoanRequestItem) -> Unit =
                 text = "Requested: ${loan.requestedAt}",
                 color = Color.Gray,
                 fontFamily = FontFamily.Monospace,
-                fontSize = 14.sp
+                fontSize = 12.sp
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -150,7 +150,7 @@ fun LoanRequestItem(loan: LoanRequestItem, onClick : (LoanRequestItem) -> Unit =
             ) {
                 Text(
                     text = "Detail Loan",
-                    fontSize = 16.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                     fontFamily = FontFamily.Monospace
                 )

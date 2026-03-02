@@ -42,7 +42,7 @@ fun ProvideFundingScreen(dashboardViewModel: DashboardViewModel, modifier: Modif
                 androidx.compose.material3.Text(
                     text = "No list loan request found",
                     fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                    fontSize = 16.sp,
+                    fontSize = 12.sp,
                     color = androidx.compose.ui.graphics.Color.Gray
                 )
             }

@@ -108,7 +108,7 @@ fun TransactionDetailScreen(
             // Date
             Text(
                 text = formatDate(transaction.timestamp),
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 color = Color.Gray,
                 fontFamily = FontFamily.Monospace
             )
@@ -166,7 +166,7 @@ fun DetailRow(label: String, value: String) {
     DetailRow(label = label, content = {
         Text(
             text = value,
-            fontSize = 16.sp,
+            fontSize = 12.sp,
             color = BaseColor.JetBlack.Normal,
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.Medium
@@ -185,7 +185,7 @@ fun DetailRow(label: String, content: @Composable () -> Unit) {
     ) {
         Text(
             text = label,
-            fontSize = 16.sp,
+            fontSize = 12.sp,
             color = BaseColor.JetBlack.Normal,
             fontFamily = FontFamily.Monospace
         )

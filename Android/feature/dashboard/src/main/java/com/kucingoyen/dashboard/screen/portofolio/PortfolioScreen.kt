@@ -76,7 +76,7 @@ fun PortfolioScreen(
                 title = {
                     Text(
                         "Portfolio",
-                        fontSize = 18.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold
                     )
                 },
@@ -200,7 +200,7 @@ fun EmptyPortfolioState(isLender: Boolean, onButtonClick : () -> Unit) {
 
         Text(
             text = message,
-            fontSize = 18.sp,
+            fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
             color = Color.Black,
             fontFamily = FontFamily.Monospace
@@ -220,7 +220,7 @@ fun EmptyPortfolioState(isLender: Boolean, onButtonClick : () -> Unit) {
         ) {
             Text(
                 text = buttonText,
-                fontSize = 16.sp,
+                fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = Color.White
             )

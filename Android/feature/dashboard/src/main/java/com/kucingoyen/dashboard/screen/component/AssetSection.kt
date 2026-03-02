@@ -60,13 +60,13 @@ fun AssetSection(
                 Text(
                     text = assetName,
                     color = BaseColor.JetBlack.Normal,
-                    fontSize = 16.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     fontFamily = FontFamily.Monospace
                 )
                 Text(
                     text = assetSymbol,
-                    fontSize = 14.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Medium
                 )
             }
@@ -75,7 +75,7 @@ fun AssetSection(
                 Text(
                     text = balance,
                     color = BaseColor.JetBlack.Normal,
-                    fontSize = 18.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     fontFamily = FontFamily.Monospace
                 )

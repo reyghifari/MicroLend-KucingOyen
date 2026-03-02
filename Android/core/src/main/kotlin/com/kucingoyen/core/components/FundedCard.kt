@@ -87,7 +87,7 @@ fun FundedCard(
 
                     Text(
                         text = status,
-                        fontSize = 16.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = BaseColor.JetBlack.Normal,
                         fontFamily = FontFamily.Monospace
@@ -98,7 +98,7 @@ fun FundedCard(
 
                 Text(
                     text = "Funded: $loan CC",
-                    fontSize = 14.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color =  BaseColor.JetBlack.Normal,
                     fontFamily = FontFamily.Monospace
@@ -108,7 +108,7 @@ fun FundedCard(
 
                 Text(
                     text = "End: ${formatReadableDateTime(expiredDate)}",
-                    fontSize = 14.sp,
+                    fontSize = 12.sp,
                     color = BaseColor.JetBlack.Minus20,
                     fontFamily = FontFamily.Monospace
                 )

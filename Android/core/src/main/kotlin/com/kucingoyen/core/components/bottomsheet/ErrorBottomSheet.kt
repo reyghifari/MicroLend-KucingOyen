@@ -80,7 +80,7 @@ fun ErrorBottomSheet(title : String, desc : String, onDismiss: () -> Unit) {
             Text(
                 text = desc,
                 style = TextStyle(
-                    fontSize = 16.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Normal,
                     color =  BaseColor.JetBlack.Normal,
                     lineHeight = 22.sp
@@ -103,7 +103,7 @@ fun ErrorBottomSheet(title : String, desc : String, onDismiss: () -> Unit) {
                 Text(
                     text = "Got It",
                     style = TextStyle(
-                        fontSize = 16.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color.White
                     )

@@ -69,7 +69,7 @@ fun SendContent(
         // Token Selector
         Text(
             text = "Select Token",
-            fontSize = 14.sp,
+            fontSize = 12.sp,
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.SemiBold,
             color = BaseColor.JetBlack.Normal,
@@ -102,7 +102,7 @@ fun SendContent(
 
         Text(
             text = "Available Balance",
-            fontSize = 14.sp,
+            fontSize = 12.sp,
             fontFamily = FontFamily.Monospace,
             color = BaseColor.JetBlack.Minus40,
             modifier = Modifier.padding(bottom = 4.dp)
@@ -119,7 +119,7 @@ fun SendContent(
 
         Text(
             text = "Recipient Address",
-            fontSize = 14.sp,
+            fontSize = 12.sp,
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.SemiBold,
             color = BaseColor.JetBlack.Normal,
@@ -137,7 +137,7 @@ fun SendContent(
                 placeholder = {
                     Text(
                         text = "Enter address or scan QR",
-                        fontSize = 14.sp,
+                        fontSize = 12.sp,
                         fontFamily = FontFamily.Monospace,
                         color = BaseColor.JetBlack.Minus40
                     )
@@ -151,7 +151,7 @@ fun SendContent(
                 ),
                 shape = RoundedCornerShape(0),
                 textStyle = androidx.compose.ui.text.TextStyle(
-                    fontSize = 14.sp,
+                    fontSize = 12.sp,
                     fontFamily = FontFamily.Monospace
                 )
             )
@@ -177,7 +177,7 @@ fun SendContent(
         // Amount Section
         Text(
             text = "Amount",
-            fontSize = 14.sp,
+            fontSize = 12.sp,
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.SemiBold,
             color = BaseColor.JetBlack.Normal,
@@ -196,7 +196,7 @@ fun SendContent(
             placeholder = {
                 Text(
                     text = "0.00",
-                    fontSize = 16.sp,
+                    fontSize = 12.sp,
                     fontFamily = FontFamily.Monospace,
                     color = BaseColor.JetBlack.Minus40
                 )
@@ -204,7 +204,7 @@ fun SendContent(
             leadingIcon = {
                 Text(
                     text = selectedToken,
-                    fontSize = 14.sp,
+                    fontSize = 12.sp,
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.Bold,
                     color = BaseColor.JetBlack.Normal,
@@ -234,7 +234,7 @@ fun SendContent(
             ),
             shape = RoundedCornerShape(0),
             textStyle = androidx.compose.ui.text.TextStyle(
-                fontSize = 18.sp,
+                fontSize = 12.sp,
                 fontFamily = FontFamily.Monospace,
                 fontWeight = FontWeight.SemiBold
             )
@@ -265,13 +265,13 @@ fun SendContent(
         ) {
             Text(
                 text = "Network Fee",
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 fontFamily = FontFamily.Monospace,
                 color = BaseColor.JetBlack.Minus40
             )
             Text(
                 text = "0.50 $selectedToken",
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 fontFamily = FontFamily.Monospace,
                 fontWeight = FontWeight.SemiBold,
                 color = BaseColor.JetBlack.Normal
@@ -287,14 +287,14 @@ fun SendContent(
         ) {
             Text(
                 text = "Total",
-                fontSize = 16.sp,
+                fontSize = 12.sp,
                 fontFamily = FontFamily.Monospace,
                 fontWeight = FontWeight.Bold,
                 color = BaseColor.JetBlack.Normal
             )
             Text(
                 text = "${calculateTotal(amount)} $selectedToken",
-                fontSize = 16.sp,
+                fontSize = 12.sp,
                 fontFamily = FontFamily.Monospace,
                 fontWeight = FontWeight.Bold,
                 color = BaseColor.JetBlack.Normal
@@ -318,7 +318,7 @@ fun SendContent(
         ) {
             Text(
                 text = "Send $selectedToken",
-                fontSize = 18.sp,
+                fontSize = 12.sp,
                 fontFamily = FontFamily.Monospace,
                 fontWeight = FontWeight.Bold,
                 color = BaseColor.White
@@ -374,7 +374,7 @@ private fun TokenChip(
     ) {
         Text(
             text = label,
-            fontSize = 14.sp,
+            fontSize = 12.sp,
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.SemiBold,
             color = if (isSelected) BaseColor.White else BaseColor.JetBlack.Normal

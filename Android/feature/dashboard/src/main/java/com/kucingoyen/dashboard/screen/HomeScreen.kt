@@ -157,7 +157,7 @@ fun LoopProfileBar(
         Text(
             text = "Microlend",
             color = BaseColor.JetBlack.Normal,
-            fontSize = 18.sp,
+            fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
             fontFamily = FontFamily.Monospace
         )

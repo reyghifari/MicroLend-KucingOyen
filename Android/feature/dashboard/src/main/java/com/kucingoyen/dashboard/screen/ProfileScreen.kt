@@ -149,7 +149,7 @@ fun LevelCard(level: Int) {
                     text = "Active",
                     color = BaseColor.JetBlack.Normal,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
+                    fontSize = 12.sp,
                     fontFamily = FontFamily.Monospace,
                 )
             }
@@ -185,7 +185,7 @@ fun LevelCard(level: Int) {
                     text = "1 points",
                     color = BaseColor.JetBlack.Normal,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
+                    fontSize = 12.sp,
                     fontFamily = FontFamily.Monospace,
                 )
             }
@@ -224,7 +224,7 @@ fun LockedRewardsList() {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = "Locked rewards",
-                fontSize = 16.sp,
+                fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = FontFamily.Monospace,
                 color = BaseColor.JetBlack.Normal
@@ -291,7 +291,7 @@ fun LockedLevelItem(data: LevelData) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "Level ${data.level} • ${data.name}",
-                    fontSize = 14.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     fontFamily = FontFamily.Monospace,
                     color = BaseColor.JetBlack.Normal
@@ -341,7 +341,7 @@ fun LockedLevelItem(data: LevelData) {
                 Column {
                     Text(
                         text = data.perksTitle,
-                        fontSize = 14.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
                         fontFamily = FontFamily.Monospace,
                         color = BaseColor.JetBlack.Normal

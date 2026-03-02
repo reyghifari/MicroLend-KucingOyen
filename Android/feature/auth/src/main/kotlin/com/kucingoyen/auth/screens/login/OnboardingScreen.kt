@@ -47,7 +47,7 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(32.dp))
         Text(
             text = "Canton Network",
-            fontSize = 18.sp,
+            fontSize = 12.sp,
             color = BaseColor.MicroLend.TextPurple,
             fontWeight = FontWeight.SemiBold,
             fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
@@ -70,7 +70,7 @@ fun LoginScreen(
 
             Text(
                 text = "Let's get started!",
-                fontSize = 36.sp,
+                fontSize = 28.sp,
                 lineHeight = 40.sp,
                 color = BaseColor.MicroLend.TextPurple,
                 textAlign = TextAlign.Center,
@@ -98,7 +98,7 @@ fun LoginScreen(
             ) {
                 Text(
                     text = "Sign In With Google",
-                    fontSize = 16.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                     fontFamily = FontFamily.Monospace
                 )

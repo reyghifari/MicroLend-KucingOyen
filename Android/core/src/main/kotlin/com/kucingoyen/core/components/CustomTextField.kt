@@ -54,14 +54,14 @@ fun CustomTextField(
             Text(
                 text = label,
                 fontWeight = FontWeight.SemiBold,
-                fontSize = 14.sp
+                fontSize = 12.sp
             )
         },
         placeholder = {
             Text(
                 text = placeholder,
                 color = Color.Gray.copy(alpha = 0.6f),
-                fontSize = 14.sp
+                fontSize = 12.sp
             )
         },
         visualTransformation = if (isPassword && !isPasswordVisible) PasswordVisualTransformation() else VisualTransformation.None,

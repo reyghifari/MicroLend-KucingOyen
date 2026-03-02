@@ -32,7 +32,7 @@ fun InfoRow(
 
         Text(
             text = label,
-            fontSize = 14.sp,
+            fontSize = 12.sp,
             color = Color.Gray,
             fontFamily = FontFamily.Monospace
         )

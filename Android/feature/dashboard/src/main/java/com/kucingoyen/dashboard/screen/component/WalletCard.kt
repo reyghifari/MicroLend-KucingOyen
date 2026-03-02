@@ -79,13 +79,13 @@ fun WalletCard(
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
                             text = "Total Balance",
-                            fontSize = 18.sp,
+                            fontSize = 14.sp,
                             color = BaseColor.White,
                             fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
                         )
                         Text(
                             text = "$ ${"%.2f".format(totalBalance)}",
-                            fontSize = 18.sp,
+                            fontSize = 14.sp,
                             color = Color.White.copy(alpha = 0.85f),
                             fontWeight = FontWeight.Medium,
                             fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
@@ -101,7 +101,7 @@ fun WalletCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 WalletActionButton("Request Loan", R.drawable.ic_request_money, onClickRequest)
-                WalletActionButton("Provide Funding", R.drawable.ic_give_money, onClickProvideFund)
+                WalletActionButton("Funding", R.drawable.ic_give_money, onClickProvideFund)
                 WalletActionButton("Send", R.drawable.ic_send, onClickSend)
                 WalletActionButton("Deposit", R.drawable.ic_deposit, onClickDeposit)
             }
