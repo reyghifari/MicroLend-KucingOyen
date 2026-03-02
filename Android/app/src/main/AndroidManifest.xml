@@ -13,7 +13,7 @@
         android:icon="@drawable/img_microlend_logo"
         android:label="@string/app_name"
         android:usesCleartextTraffic="true"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@mipmap/img_microlend_logo"
         android:supportsRtl="true"
         android:theme="@style/Theme.BaseAppCompose">
 

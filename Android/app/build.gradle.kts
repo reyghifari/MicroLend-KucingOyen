@@ -26,10 +26,10 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8080/\"")
+            buildConfigField("String", "BASE_URL", "\"https://microlend-production-cf9f.up.railway.app/\"")
         }
         release {
-            buildConfigField("String", "BASE_URL", "\"https://microlend-production.up.railway.app/\"")
+            buildConfigField("String", "BASE_URL", "\"https://microlend-production-cf9f.up.railway.app/\"")
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
@@ -41,12 +41,12 @@ android {
             dimension = "default"
             applicationId = "com.kucingoyen.microlend"
             applicationIdSuffix = ".dev"
-            buildConfigField("String", "BASE_URL", "\"https://microlend-production.up.railway.app/\"")
+            buildConfigField("String", "BASE_URL", "\"https://microlend-production-cf9f.up.railway.app/\"")
         }
         create("prod") {
             dimension = "prod"
             applicationId = "com.kucingoyen.microlend"
-            buildConfigField("String", "BASE_URL", "\"https://microlend-production.up.railway.app/\"")
+            buildConfigField("String", "BASE_URL", "\"https://microlend-production-cf9f.up.railway.app/\"")
         }
     }
 
