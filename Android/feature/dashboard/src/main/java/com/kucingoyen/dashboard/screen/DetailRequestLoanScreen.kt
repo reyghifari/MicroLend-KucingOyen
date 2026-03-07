@@ -57,7 +57,6 @@ fun DetailRequestLoanScreen(
         modifier = modifier
             .fillMaxSize()
             .background(color = BaseColor.JetBlack.Minus90)
-            .padding(WindowInsets.systemBars.asPaddingValues())
     ) {
         Column {
             NavbarMicroLend(title = "Create Loan", onBack = { onBackClick() })
@@ -160,6 +159,7 @@ fun StickyContentLoan(dashboardViewModel: DashboardViewModel) {
             modifier = Modifier
                 .fillMaxWidth()
                 .background(color = BaseColor.JetBlack.Minus90)
+                .padding(WindowInsets.systemBars.asPaddingValues())
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,

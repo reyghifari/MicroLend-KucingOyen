@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -92,6 +93,7 @@ fun DetailLoanScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(BaseColor.Background)
+            .navigationBarsPadding()
     ) {
         // Top bar
         NavbarMicroLend(
@@ -149,8 +151,6 @@ fun DetailLoanScreen(
                 durationDays = durationDays,
                 progress = timelineProgress
             )
-
-            Spacer(modifier = Modifier.height(16.dp))
 
             if (loan.status.equals("Active", ignoreCase = true) && loan.borrower == dashboardViewModel.getPartyId()) {
                 BaseButtonSlider(
@@ -305,7 +305,7 @@ private fun LoanDetailSummaryCard(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "${collateralAmount.toInt()} USDCx",
+                        text = "$collateralAmount USDCx",
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace,
@@ -331,8 +331,8 @@ private fun LoanDetailSummaryCard(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = interestRate,
-                        fontSize = 22.sp,
+                        text = "10% + Level Rate $interestRate",
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace,
                         color = BaseColor.JetBlack.Normal

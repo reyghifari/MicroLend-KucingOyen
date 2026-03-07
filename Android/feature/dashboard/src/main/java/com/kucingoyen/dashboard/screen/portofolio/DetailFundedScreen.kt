@@ -270,7 +270,7 @@ private fun LoanSummaryCard(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "${collateralAmount.toInt()} USDCx",
+                        text = "$collateralAmount USDCx",
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace,
@@ -296,8 +296,8 @@ private fun LoanSummaryCard(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = interestRate,
-                        fontSize = 22.sp,
+                        text = "10% + Level Rate $interestRate",
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace,
                         color = BaseColor.JetBlack.Normal
@@ -314,7 +314,7 @@ private fun LoanSummaryCard(
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = expectedReturn,
-                        fontSize = 12.sp,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
                         fontFamily = FontFamily.Monospace,
                         color = BaseColor.JetBlack.Minus20

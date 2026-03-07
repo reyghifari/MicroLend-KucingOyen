@@ -25,14 +25,29 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.kucingoyen.core.R
 import com.kucingoyen.core.theme.BaseColor
 import com.kucingoyen.entity.model.LoanRequest
 import com.kucingoyen.entity.model.LoanRequestItem
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+
+fun formatRequestedDate(isoDateString: String): String {
+    return try {
+        val formatter = DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm")
+            .withZone(ZoneId.systemDefault())
+        formatter.format(Instant.parse(isoDateString))
+    } catch (e: Exception) {
+        isoDateString // Fallback to raw string if parsing fails
+    }
+}
 
 @Composable
 fun LoanRequestItem(loan: LoanRequestItem, onClick : (LoanRequestItem) -> Unit = {}) {
@@ -59,9 +74,9 @@ fun LoanRequestItem(loan: LoanRequestItem, onClick : (LoanRequestItem) -> Unit =
                     modifier = Modifier.size(40.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Person,
+                        painter = painterResource(R.drawable.ic_profile),
                         contentDescription = null,
-                        tint = Color.White,
+                        tint = Color.Unspecified,
                         modifier = Modifier.padding(4.dp)
                     )
                 }
@@ -70,13 +85,13 @@ fun LoanRequestItem(loan: LoanRequestItem, onClick : (LoanRequestItem) -> Unit =
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = loan.borrowerDisplayName,
+                        text = formatMaskedAddress(loan.borrower),
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.sp,
                         fontFamily = FontFamily.Monospace,
                     )
                     Text(
-                        text = "Level${loan.borrowerLevel}",
+                        text = loan.borrowerLevel,
                         color = Color.Gray,
                         fontSize = 12.sp,
                         fontFamily = FontFamily.Monospace
@@ -125,7 +140,7 @@ fun LoanRequestItem(loan: LoanRequestItem, onClick : (LoanRequestItem) -> Unit =
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "Requested: ${loan.requestedAt}",
+                text = "Requested: ${formatRequestedDate(loan.requestedAt)}",
                 color = Color.Gray,
                 fontFamily = FontFamily.Monospace,
                 fontSize = 12.sp
@@ -157,4 +172,13 @@ fun LoanRequestItem(loan: LoanRequestItem, onClick : (LoanRequestItem) -> Unit =
             }
         }
     }
+}
+
+fun formatMaskedAddress(address: String): String {
+    if (address.length <= 12) return address
+
+    val firstPart = "${address.substring(0, 3)}...${address.substring(6, 9)}"
+    val secondPart = "${address.substring(address.length - 6, address.length - 3)}...${address.substring(address.length - 3)}"
+
+    return "$firstPart::$secondPart"
 }
